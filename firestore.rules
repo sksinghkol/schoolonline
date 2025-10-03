@@ -1,0 +1,68 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getAdminData() {
+      return exists(/databases/$(database)/documents/admin/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/admin/$(request.auth.uid)).data
+        : null;
+    }
+
+    function isApprovedAdmin() {
+      let adminData = getAdminData();
+      return isSignedIn() && adminData != null;
+    }
+
+    function isAdminOfSchool(schoolId) {
+      let adminData = getAdminData();
+      return isApprovedAdmin() && adminData != null && adminData.schoolId == schoolId;
+    }
+
+    function isSuperAdmin() {
+      let adminData = getAdminData();
+      return isApprovedAdmin() && adminData != null && adminData.role == 'super-admin';
+    }
+
+    // Admins collection
+    match /admin/{adminId} {
+      allow read, write: if isSignedIn() && request.auth.uid == adminId;
+
+      // Per-admin login records
+      match /login_records/{recordId} {
+        allow read, write: if isSignedIn() && request.auth.uid == adminId;
+      }
+    }
+
+    // Schools collection
+    match /schools/{schoolId} {
+      allow read: if isSignedIn();
+      allow create: if isSuperAdmin(); // Only super-admins can create schools
+      allow update, delete: if isSuperAdmin() || isAdminOfSchool(schoolId);
+    }
+
+    // Directors collection (within a school)
+    match /schools/{schoolId}/directors/{directorId} {
+      allow read: if isSignedIn();
+      allow create: if isAdminOfSchool(schoolId);
+      allow update, delete: if isAdminOfSchool(schoolId);
+    }
+
+    // Subscriptions collection
+    match /subscription/{subId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isApprovedAdmin();
+    }
+
+    // Global admin login history
+    match /admin_login_history/{docId} {
+      allow create: if isSignedIn();
+      allow read: if isApprovedAdmin();
+    }
+  }
+}

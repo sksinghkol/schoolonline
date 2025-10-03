@@ -1,0 +1,137 @@
+<div class="container mt-5">
+  <div class="card shadow-lg p-4 rounded-4">
+    <h2 class="mb-4 text-center text-primary fw-bold">🏫 School Details</h2>
+
+    <form [formGroup]="schoolForm" (ngSubmit)="updateSchool()">
+      <div class="row g-3">
+        <!-- General Info -->
+        <div class="col-md-6">
+          <label class="form-label fw-bold">School Name</label>
+          <input type="text" formControlName="name" class="form-control" placeholder="Enter school name">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">School Code</label>
+          <input type="text" formControlName="code" class="form-control" placeholder="Unique code">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold">School Type</label>
+          <select formControlName="school_type" class="form-select">
+            <option value="">-- Select Type --</option>
+            <option value="primary">Primary</option>
+            <option value="secondary">Secondary</option>
+            <option value="high">High School</option>
+            <option value="k-12">K-12</option>
+            <option value="special_needs">Special Needs</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Establishment Year</label>
+          <input type="number" formControlName="establishment_year" class="form-control" min="1800" max="2100">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Ownership Type</label>
+          <select formControlName="ownership_type" class="form-select">
+            <option value="">-- Select Ownership --</option>
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+            <option value="government_aided">Government Aided</option>
+            <option value="non_profit">Non-Profit</option>
+          </select>
+        </div>
+
+        <!-- Location -->
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Address Line 1</label>
+          <input type="text" formControlName="address_line1" class="form-control" placeholder="Street address">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Address Line 2</label>
+          <input type="text" formControlName="address_line2" class="form-control" placeholder="Apartment, suite">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-bold">State</label>
+          <select formControlName="state" class="form-select" (change)="onStateChange($event)">
+            <option value="">-- Select State --</option>
+            <option *ngFor="let st of states" [value]="st">{{ st }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-bold">City</label>
+          <select formControlName="city" class="form-select">
+            <option value="">-- Select City --</option>
+            <option *ngFor="let ct of cities" [value]="ct">{{ ct }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-bold">ZIP Code</label>
+          <input type="text" formControlName="zip_code" class="form-control">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Country</label>
+          <input type="text" formControlName="country" class="form-control" readonly>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Latitude</label>
+          <input type="text" formControlName="latitude" class="form-control" placeholder="e.g. 25.5941">
+        </div>
+
+        <!-- Contact -->
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Primary Phone</label>
+          <input type="text" formControlName="phone_primary" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Secondary Phone</label>
+          <input type="text" formControlName="phone_secondary" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Email</label>
+          <input type="email" formControlName="email" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Website</label>
+          <input type="text" formControlName="website" class="form-control">
+        </div>
+
+        <!-- Academic -->
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Enrollment Capacity</label>
+          <input type="number" formControlName="enrollment_capacity" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Curriculum Type</label>
+          <select formControlName="curriculum_type" class="form-select">
+            <option value="">-- Select Curriculum --</option>
+            <option value="national">National</option>
+            <option value="international">International</option>
+            <option value="state_board">State Board</option>
+            <option value="ib">IB</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="d-flex justify-content-between mt-4 flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-secondary px-4" (click)="back()">⬅ Back to Schools</button>
+
+        <div *ngIf="!isEditing">
+          <button type="button" class="btn btn-primary px-5" (click)="toggleEdit()">✏️ Edit</button>
+        </div>
+        <div *ngIf="isEditing" class="d-flex gap-2">
+          <button type="submit" class="btn btn-success px-5" [disabled]="schoolForm.invalid">💾 Save</button>
+          <button type="button" class="btn btn-secondary px-4" (click)="cancelEdit()">❌ Cancel</button>
+        </div>
+        <button type="button" class="btn btn-info px-4" (click)="goToAddDirector()">➕ Add Director</button>
+      </div>
+    </form>
+  </div>
+</div>

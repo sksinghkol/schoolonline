@@ -1,0 +1,29 @@
+<div class="container mt-4">
+  <h3 class="mb-3">Add Director</h3>
+  <form [formGroup]="form" (ngSubmit)="saveDirector()">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Full Name</label>
+        <input class="form-control" type="text" formControlName="fullName" placeholder="Director full name" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="email" formControlName="email" placeholder="director@example.com" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Phone</label>
+        <input class="form-control" type="text" formControlName="phone" placeholder="Phone number" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Photo URL (optional)</label>
+        <input class="form-control" type="text" formControlName="photoUrl" placeholder="https://...">
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2 align-items-center">
+      <button class="btn btn-success" type="submit" [disabled]="form.invalid || saving">Save Director</button>
+      <button class="btn btn-secondary" type="button" (click)="cancel()">Cancel</button>
+      <span *ngIf="saving" class="text-muted">Saving...</span>
+    </div>
+  </form>
+</div>

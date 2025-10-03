@@ -1,0 +1,116 @@
+<div class="container mt-4">
+  <h2 class="mb-4">Manage Subscriptions</h2>
+
+  <!-- Add/Edit Form -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form [formGroup]="subscriptionForm" (ngSubmit)="editingId ? update() : add()">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Plan Name</label>
+            <input type="text" class="form-control" formControlName="name">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Description</label>
+            <input type="text" class="form-control" formControlName="description">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Price</label>
+            <input type="number" class="form-control" formControlName="price">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Currency</label>
+            <select class="form-select" formControlName="currency">
+              <option value="INR">INR</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Billing Cycle</label>
+            <select class="form-select" formControlName="billing_cycle">
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" formControlName="status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Features -->
+        <div class="mt-3">
+          <label class="form-label">Features</label>
+          <div formArrayName="features">
+            <div *ngFor="let f of featuresArray.controls; let i = index" class="d-flex mb-2">
+              <input class="form-control me-2" [formControlName]="i" placeholder="Enter feature">
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeFeatureField(i)">X</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm mt-2" (click)="addFeatureField()">+ Add Feature</button>
+        </div>
+
+        <div class="mt-3">
+          <button type="submit" class="btn btn-primary me-2" [disabled]="subscriptionForm.invalid">
+            {{ editingId ? 'Update' : 'Add' }} Subscription
+          </button>
+          <button *ngIf="editingId" type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Subscription List -->
+  <ng-container *ngIf="(subscriptions$ | async) as subs; else loading">
+    <ng-container *ngIf="subs.length; else empty">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th class="text-end">Price</th>
+              <th>Currency</th>
+              <th>Billing</th>
+              <th>Status</th>
+              <th>Features</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of subs; trackBy: trackById">
+              <td><strong>{{ item.name }}</strong></td>
+              <td class="text-truncate" style="max-width: 320px;" title="{{ item.description }}">{{ item.description }}</td>
+              <td class="text-end">{{ item.price }}</td>
+              <td>{{ item.currency }}</td>
+              <td class="text-capitalize">{{ item.billing_cycle }}</td>
+              <td>
+                <span class="badge" [ngClass]="item.status === 'active' ? 'text-bg-success' : 'text-bg-secondary'">{{ item.status }}</span>
+              </td>
+              <td>
+                <span *ngFor="let f of item.features; let i = index">
+                  {{ f }}<span *ngIf="i < item.features.length - 1">, </span>
+                </span>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-warning me-2" (click)="edit(item)">Edit</button>
+                <button class="btn btn-sm btn-danger" (click)="remove(item.id!)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </ng-container>
+
+  <ng-template #loading>
+    <div class="alert alert-info">Loading subscriptions...</div>
+  </ng-template>
+  <ng-template #empty>
+    <div class="alert alert-secondary">No subscriptions found. Add your first plan above.</div>
+  </ng-template>
+</div>

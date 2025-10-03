@@ -1,0 +1,17 @@
+<app-home-menu></app-home-menu>
+
+
+<div class="container mt-4">
+  <h2>Select Your School</h2>
+
+  <ul class="list-group mt-3">
+    <li 
+      *ngFor="let school of schools$ | async"
+      class="list-group-item list-group-item-action"
+      (click)="goToLogin(school.id)">
+      {{ school.name }}
+    </li>
+  </ul>
+</div>
+
+<router-outlet></router-outlet>

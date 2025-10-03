@@ -1,0 +1,72 @@
+<div class="container mt-4">
+  <div class="card shadow-lg p-4">
+    <h2 class="mb-3 text-center text-primary">👔 Add Director(s)</h2>
+
+    <form [formGroup]="directorForm" (ngSubmit)="saveDirectors()">
+      <div formArrayName="directors">
+        <div *ngFor="let director of directors.controls; let i = index" [formGroupName]="i" class="card mb-3 p-3 shadow-sm">
+          <h5>Director {{ i + 1 }}</h5>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label>Name</label>
+              <input type="text" formControlName="name" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label>Designation</label>
+              <input type="text" formControlName="designation" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label>Phone</label>
+              <input type="text" formControlName="phone" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label>Email</label>
+              <input type="email" formControlName="email" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label>Image</label>
+              <input type="file" class="form-control" (change)="uploadImage($event, i)">
+            </div>
+
+            <div class="col-md-6" *ngIf="director.value.imageUrl">
+              <img [src]="director.value.imageUrl" class="img-thumbnail mt-2" style="height:100px;">
+            </div>
+
+            <!-- Rich Text Editor -->
+            <div class="col-12">
+              <label>Message</label>
+              <quill-editor
+                formControlName="message"
+                [styles]="{height: '150px', width: '100%'}"
+                placeholder="Enter message"
+                [modules]="{ toolbar: [['bold','italic','underline'], [{list:'ordered'},{list:'bullet'}], ['link','image']] }">
+              </quill-editor>
+
+              <!-- Live Preview -->
+              <div class="mt-2 p-2 border rounded bg-light" [innerHTML]="director.value.message"></div>
+            </div>
+          </div>
+
+          <div class="mt-2 text-end">
+            <button type="button" class="btn btn-danger btn-sm" (click)="removeDirector(i)" [disabled]="directors.length === 1">
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-secondary" (click)="addDirector()">➕ Add More</button>
+        <div>
+          <button type="button" class="btn btn-outline-secondary me-2" (click)="skip()">Skip</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
