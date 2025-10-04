@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Firestore, collection, addDoc, collectionData, doc, updateDoc, deleteDoc } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { CloudinaryService } from './../../core/services/cloudinary.service';
+import { Observable, map } from 'rxjs';
+import { CloudinaryService } from '../../../core/services/cloudinary.service';
 
 interface PhotoItem {
   name: string;
@@ -19,20 +19,28 @@ interface VisitingCardItem {
 }
 
 @Component({
-  selector: 'app-visiting-cards',
+  selector: 'app-visiting-card',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './visiting-cards.html',
   styleUrls: ['./visiting-cards.scss']
 })
-export class VisitingCardsComponent implements OnInit {
+export class VisitingCard implements OnInit {
   visitingCards$: Observable<VisitingCardItem[]>;
   visitingCardForm: FormGroup;
-  editingId: string | null = null;
+  editId: string | null = null;
+  zoomImage: string | null = null;
 
-  constructor(private fb: FormBuilder, private firestore: Firestore, private cloudinary: CloudinaryService) {
-    const vcCol = collection(this.firestore, 'visiting_cards');
-    this.visitingCards$ = collectionData(vcCol, { idField: 'id' }) as Observable<VisitingCardItem[]>;
+  constructor(
+    private fb: FormBuilder,
+    private firestore: Firestore,
+    private cloudinary: CloudinaryService
+  ) {
+    const visitingCardCol = collection(this.firestore, 'visiting_cards');
+
+    this.visitingCards$ = collectionData(visitingCardCol, { idField: 'id' }).pipe(
+      map((cards: any[]) => cards.map(c => ({ ...c, photo: c.photo || [] })))
+    ) as Observable<VisitingCardItem[]>;
 
     this.visitingCardForm = this.fb.group({
       card_name: ['', Validators.required],
@@ -44,7 +52,7 @@ export class VisitingCardsComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  // --- Form helpers ---
+  // --- Form Array ---
   get photoArray(): FormArray {
     return this.visitingCardForm.get('photo') as FormArray;
   }
@@ -62,82 +70,75 @@ export class VisitingCardsComponent implements OnInit {
 
   removePhotoField(index: number) {
     this.photoArray.removeAt(index);
+    if (this.photoArray.length === 0) this.addPhotoField();
   }
 
   async uploadPhoto(event: Event, index: number) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
-    const file = input.files[0];
     try {
-      const url = await this.cloudinary.uploadImage(file);
+      const url = await this.cloudinary.uploadImage(input.files[0]);
       this.photoArray.at(index).patchValue({ url });
     } catch (err) {
       console.error('Cloudinary upload failed:', err);
     }
   }
 
+  // --- Modal ---
+  openModal(url: string) {
+    this.zoomImage = url;
+  }
+
   // --- CRUD ---
-  async addOrUpdateVisitingCard() {
+  async addVisitingCard() {
     if (this.visitingCardForm.invalid) return;
+
     const { card_name, description, price, photo } = this.visitingCardForm.value;
 
     try {
-      if (this.editingId) {
-        // Update existing
-        const ref = doc(this.firestore, 'visiting_cards', this.editingId);
-        await updateDoc(ref, {
-          card_name: String(card_name || ''),
-          description: String(description || ''),
-          price: Number(price || 0),
-          photo: (photo || []).map((p: any) => ({ name: String(p.name || ''), url: String(p.url || '') }))
-        });
+      if (this.editId) {
+        const docRef = doc(this.firestore, 'visiting_cards', this.editId);
+        await updateDoc(docRef, { card_name, description, price, photo });
       } else {
-        // Add new
-        await addDoc(collection(this.firestore, 'visiting_cards'), {
-          card_name: String(card_name || ''),
-          description: String(description || ''),
-          price: Number(price || 0),
-          photo: (photo || []).map((p: any) => ({ name: String(p.name || ''), url: String(p.url || '') }))
-        });
+        await addDoc(collection(this.firestore, 'visiting_cards'), { card_name, description, price, photo });
       }
-
       this.resetForm();
     } catch (err) {
-      console.error('Save failed:', err);
-    }
-  }
-
-  async deleteVisitingCard(id: string) {
-    try {
-      await deleteDoc(doc(this.firestore, 'visiting_cards', id));
-    } catch (err) {
-      console.error('Delete failed:', err);
+      console.error('Failed to add/update visiting card:', err);
     }
   }
 
   editVisitingCard(card: VisitingCardItem) {
-    this.editingId = card.id || null;
+    this.editId = card.id || null;
     this.visitingCardForm.patchValue({
       card_name: card.card_name,
       description: card.description,
       price: card.price
     });
 
-    // Reset photo array
-    while (this.photoArray.length > 0) this.photoArray.removeAt(0);
-    card.photo.forEach(ph => {
-      this.photoArray.push(this.fb.group({
-        name: [ph.name, Validators.required],
-        url: [ph.url, Validators.required]
-      }));
-    });
+    while (this.photoArray.length) this.photoArray.removeAt(0);
+
+    if (card.photo && card.photo.length) {
+      card.photo.forEach(p => this.photoArray.push(this.fb.group(p)));
+    } else {
+      this.photoArray.push(this.createPhotoItem());
+    }
+  }
+
+  async deleteVisitingCard(id?: string) {
+    if (!id || !confirm('Are you sure you want to delete this visiting card?')) return;
+    try {
+      await deleteDoc(doc(this.firestore, 'visiting_cards', id));
+    } catch (err) {
+      console.error('Failed to delete visiting card:', err);
+    }
   }
 
   resetForm() {
+    this.editId = null;
     this.visitingCardForm.reset({ card_name: '', description: '', price: 0 });
-    while (this.photoArray.length > 0) this.photoArray.removeAt(0);
+    while (this.photoArray.length) this.photoArray.removeAt(0);
     this.photoArray.push(this.createPhotoItem());
-    this.editingId = null;
   }
 }

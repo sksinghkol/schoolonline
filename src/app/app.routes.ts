@@ -20,7 +20,16 @@ import { ClipComponent } from './Admin/IdCards/clip/clip';
 import { Hooks } from './Admin/IdCards/hooks/hooks';
 import { LanyardsComponent } from './Admin/IdCards/lanyards/lanyards';
 import { CardsDesign } from './Admin/IdCards/cards-design/cards-design';
-import { VisitingCardsComponent } from './Admin/visiting-cards/visiting-cards';
+import { VisitingCard } from './Admin/SchoolMaterial/visiting-cards/visiting-cards';
+import { Prospectus } from './Admin/SchoolMaterial/prospectus/prospectus';
+import { LibraryCard } from './Admin/SchoolMaterial/library-card/library-card';
+import { GatePass } from './Admin/SchoolMaterial/gate-pass/gate-pass';
+import { StudentOutpass } from './Admin/SchoolMaterial/student-outpass/student-outpass';
+import { VistorsPass } from './Admin/SchoolMaterial/vistors-pass/vistors-pass';
+import { Medals } from './Admin/SchoolMaterial/medals/medals';
+import { KeyRing } from './Admin/Ads/key-ring/key-ring';
+import { Leaflet } from './Admin/Ads/leaflet/leaflet';
+import { Brochure } from './Admin/Ads/brochure/brochure';
 
 export const routes: Routes = [
   { path: '', component: Home, pathMatch: 'full' },
@@ -43,14 +52,25 @@ export const routes: Routes = [
       { path: 'subscriptions', component: AddSubscription },
       { path: 'holder', component: Holder },
       { path: 'cards', component: CardsComponent },
-       { path: 'cardsdesign', component: CardsDesign },
+      { path: 'cardsdesign', component: CardsDesign },
       { path: 'lanyards', component: LanyardsComponent },
       { path: 'clip', component: ClipComponent },
       { path: 'hook', component: Hooks },
-   { path: 'vitingCards', component: VisitingCardsComponent },
+
+     
       { path: 'loginHistory', component: LoginHistory },
       { path: 'director/:schoolId', component: AddDirector }, // Add Director
       { path: 'idcards/:id', component: IdCards }, // next step
+       { path: 'visitingCards', component: VisitingCard },
+       { path: 'Prospectus', component: Prospectus },
+        { path: 'LibraryCard', component: LibraryCard },
+        { path: 'GatePass', component: GatePass },
+        { path: 'StudentOutPass', component: StudentOutpass },
+        { path: 'VistorsPass', component: VistorsPass },
+        { path: 'Medals', component: Medals },
+         { path: 'KeyRing', component: KeyRing },
+          { path: 'Leaflet', component: Leaflet },
+           { path: 'Brochure', component: Brochure },
     ],
   },
 

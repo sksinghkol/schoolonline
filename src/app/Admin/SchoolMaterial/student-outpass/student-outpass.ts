@@ -10,7 +10,7 @@ interface PhotoItem {
   url: string;
 }
 
-interface BrochureItem {
+interface StudentOutpassItem {
   id?: string;
   name: string;
   description: string;
@@ -19,15 +19,15 @@ interface BrochureItem {
 }
 
 @Component({
-  selector: 'app-brochure',
+  selector: 'app-student-outpass',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './brochure.html',
-  styleUrls: ['./brochure.scss']
+  templateUrl: './student-outpass.html',
+  styleUrls: ['./student-outpass.scss']
 })
-export class Brochure implements OnInit {
-  brochureItems$: Observable<BrochureItem[]>;
-  brochureForm: FormGroup;
+export class StudentOutpass implements OnInit {
+  studentOutpassItems$: Observable<StudentOutpassItem[]>;
+  studentOutpassForm: FormGroup;
   editId: string | null = null;
   zoomImage: string | null = null;
 
@@ -36,13 +36,13 @@ export class Brochure implements OnInit {
     private firestore: Firestore,
     private cloudinary: CloudinaryService
   ) {
-    const brochureCol = collection(this.firestore, 'brochure');
+    const studentOutpassCol = collection(this.firestore, 'student_outpass');
 
-    this.brochureItems$ = collectionData(brochureCol, { idField: 'id' }).pipe(
+    this.studentOutpassItems$ = collectionData(studentOutpassCol, { idField: 'id' }).pipe(
       map((items: any[]) => items.map(i => ({ ...i, photo: i.photo || [] })))
-    ) as Observable<BrochureItem[]>;
+    ) as Observable<StudentOutpassItem[]>;
 
-    this.brochureForm = this.fb.group({
+    this.studentOutpassForm = this.fb.group({
       name: ['', Validators.required],
       description: [''],
       price: [0, [Validators.required, Validators.min(0)]],
@@ -54,7 +54,7 @@ export class Brochure implements OnInit {
 
   // --- Form Array ---
   get photoArray(): FormArray {
-    return this.brochureForm.get('photo') as FormArray;
+    return this.studentOutpassForm.get('photo') as FormArray;
   }
 
   createPhotoItem(): FormGroup {
@@ -91,27 +91,27 @@ export class Brochure implements OnInit {
   }
 
   // --- CRUD ---
-  async addBrochure() {
-    if (this.brochureForm.invalid) return;
+  async addStudentOutpass() {
+    if (this.studentOutpassForm.invalid) return;
 
-    const formValue = this.brochureForm.value;
+    const formValue = this.studentOutpassForm.value;
 
     try {
       if (this.editId) {
-        const docRef = doc(this.firestore, 'brochure', this.editId);
+        const docRef = doc(this.firestore, 'student_outpass', this.editId);
         await updateDoc(docRef, formValue);
       } else {
-        await addDoc(collection(this.firestore, 'brochure'), formValue);
+        await addDoc(collection(this.firestore, 'student_outpass'), formValue);
       }
       this.resetForm();
     } catch (err) {
-      console.error('Failed to add/update brochure:', err);
+      console.error('Failed to add/update student out-pass:', err);
     }
   }
 
-  editBrochure(item: BrochureItem) {
+  editStudentOutpass(item: StudentOutpassItem) {
     this.editId = item.id || null;
-    this.brochureForm.patchValue({
+    this.studentOutpassForm.patchValue({
       name: item.name,
       description: item.description,
       price: item.price
@@ -126,18 +126,18 @@ export class Brochure implements OnInit {
     }
   }
 
-  async deleteBrochure(id?: string) {
+  async deleteStudentOutpass(id?: string) {
     if (!id || !confirm('Are you sure you want to delete this item?')) return;
     try {
-      await deleteDoc(doc(this.firestore, 'brochure', id));
+      await deleteDoc(doc(this.firestore, 'student_outpass', id));
     } catch (err) {
-      console.error('Failed to delete brochure:', err);
+      console.error('Failed to delete student out-pass:', err);
     }
   }
 
   resetForm() {
     this.editId = null;
-    this.brochureForm.reset({ name: '', description: '', price: 0 });
+    this.studentOutpassForm.reset({ name: '', description: '', price: 0 });
     while (this.photoArray.length) this.photoArray.removeAt(0);
     this.photoArray.push(this.createPhotoItem());
   }

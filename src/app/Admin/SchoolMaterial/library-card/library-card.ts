@@ -10,7 +10,7 @@ interface PhotoItem {
   url: string;
 }
 
-interface BrochureItem {
+interface LibraryCardItem {
   id?: string;
   name: string;
   description: string;
@@ -19,15 +19,15 @@ interface BrochureItem {
 }
 
 @Component({
-  selector: 'app-brochure',
+  selector: 'app-library-card',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './brochure.html',
-  styleUrls: ['./brochure.scss']
+  templateUrl: './library-card.html',
+  styleUrls: ['./library-card.scss']
 })
-export class Brochure implements OnInit {
-  brochureItems$: Observable<BrochureItem[]>;
-  brochureForm: FormGroup;
+export class LibraryCard implements OnInit {
+  libraryCardItems$: Observable<LibraryCardItem[]>;
+  libraryCardForm: FormGroup;
   editId: string | null = null;
   zoomImage: string | null = null;
 
@@ -36,13 +36,13 @@ export class Brochure implements OnInit {
     private firestore: Firestore,
     private cloudinary: CloudinaryService
   ) {
-    const brochureCol = collection(this.firestore, 'brochure');
+    const libraryCardCol = collection(this.firestore, 'library_card');
 
-    this.brochureItems$ = collectionData(brochureCol, { idField: 'id' }).pipe(
+    this.libraryCardItems$ = collectionData(libraryCardCol, { idField: 'id' }).pipe(
       map((items: any[]) => items.map(i => ({ ...i, photo: i.photo || [] })))
-    ) as Observable<BrochureItem[]>;
+    ) as Observable<LibraryCardItem[]>;
 
-    this.brochureForm = this.fb.group({
+    this.libraryCardForm = this.fb.group({
       name: ['', Validators.required],
       description: [''],
       price: [0, [Validators.required, Validators.min(0)]],
@@ -54,7 +54,7 @@ export class Brochure implements OnInit {
 
   // --- Form Array ---
   get photoArray(): FormArray {
-    return this.brochureForm.get('photo') as FormArray;
+    return this.libraryCardForm.get('photo') as FormArray;
   }
 
   createPhotoItem(): FormGroup {
@@ -91,27 +91,27 @@ export class Brochure implements OnInit {
   }
 
   // --- CRUD ---
-  async addBrochure() {
-    if (this.brochureForm.invalid) return;
+  async addLibraryCard() {
+    if (this.libraryCardForm.invalid) return;
 
-    const formValue = this.brochureForm.value;
+    const formValue = this.libraryCardForm.value;
 
     try {
       if (this.editId) {
-        const docRef = doc(this.firestore, 'brochure', this.editId);
+        const docRef = doc(this.firestore, 'library_card', this.editId);
         await updateDoc(docRef, formValue);
       } else {
-        await addDoc(collection(this.firestore, 'brochure'), formValue);
+        await addDoc(collection(this.firestore, 'library_card'), formValue);
       }
       this.resetForm();
     } catch (err) {
-      console.error('Failed to add/update brochure:', err);
+      console.error('Failed to add/update library card:', err);
     }
   }
 
-  editBrochure(item: BrochureItem) {
+  editLibraryCard(item: LibraryCardItem) {
     this.editId = item.id || null;
-    this.brochureForm.patchValue({
+    this.libraryCardForm.patchValue({
       name: item.name,
       description: item.description,
       price: item.price
@@ -126,18 +126,18 @@ export class Brochure implements OnInit {
     }
   }
 
-  async deleteBrochure(id?: string) {
+  async deleteLibraryCard(id?: string) {
     if (!id || !confirm('Are you sure you want to delete this item?')) return;
     try {
-      await deleteDoc(doc(this.firestore, 'brochure', id));
+      await deleteDoc(doc(this.firestore, 'library_card', id));
     } catch (err) {
-      console.error('Failed to delete brochure:', err);
+      console.error('Failed to delete library card:', err);
     }
   }
 
   resetForm() {
     this.editId = null;
-    this.brochureForm.reset({ name: '', description: '', price: 0 });
+    this.libraryCardForm.reset({ name: '', description: '', price: 0 });
     while (this.photoArray.length) this.photoArray.removeAt(0);
     this.photoArray.push(this.createPhotoItem());
   }

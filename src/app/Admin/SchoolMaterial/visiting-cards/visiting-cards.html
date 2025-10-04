@@ -1,13 +1,13 @@
 <div class="container mt-4">
-  <h2 class="mb-4">Manage Brochure</h2>
+  <h2 class="mb-4">Manage Visiting Cards</h2>
 
   <!-- Form Card -->
   <div class="card shadow-sm mb-4 p-3">
-    <form [formGroup]="brochureForm" (ngSubmit)="addBrochure()">
+    <form [formGroup]="visitingCardForm" (ngSubmit)="addVisitingCard()">
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label">Name</label>
-          <input type="text" class="form-control" formControlName="name" placeholder="Enter name">
+          <label class="form-label">Card Name</label>
+          <input type="text" class="form-control" formControlName="card_name" placeholder="Enter card name">
         </div>
         <div class="col-md-6">
           <label class="form-label">Price</label>
@@ -39,36 +39,42 @@
 
       <!-- Submit Buttons -->
       <div class="mt-3">
-        <button type="submit" class="btn btn-primary">{{ editId ? 'Update' : 'Add' }}</button>
+        <button type="submit" class="btn btn-primary">{{ editId ? 'Update Card' : 'Add Card' }}</button>
         <button type="button" class="btn btn-secondary ms-2" *ngIf="editId" (click)="resetForm()">Cancel</button>
       </div>
     </form>
   </div>
 
-  <!-- Items List -->
+  <!-- Visiting Cards List -->
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    <div class="col" *ngFor="let item of brochureItems$ | async">
+    <div class="col" *ngFor="let vc of visitingCards$ | async">
       <div class="card h-100 shadow-sm card-hover">
         <div class="card-body d-flex flex-column">
-          <h5 class="card-title">{{ item.name }}</h5>
-          <p class="card-text">{{ item.description }}</p>
-          <p class="text-success fw-bold">₹{{ item.price }}</p>
+          <h5 class="card-title">{{ vc.card_name }}</h5>
+          <p class="card-text">{{ vc.description }}</p>
+          <p class="text-success fw-bold">₹{{ vc.price }}</p>
 
           <!-- Carousel for photos -->
-          <ng-container *ngIf="item.photo && item.photo.length > 0">
-            <div id="carousel{{ item.id }}" class="carousel slide" data-bs-ride="carousel">
+          <ng-container *ngIf="vc.photo && vc.photo.length > 0">
+            <div id="carousel{{ vc.id }}" class="carousel slide" data-bs-ride="carousel">
               <div class="carousel-inner">
-                <div class="carousel-item" *ngFor="let ph of item.photo; let idx = index" [class.active]="idx === 0">
+                <div class="carousel-item" *ngFor="let ph of vc.photo; let idx = index" [class.active]="idx === 0">
                   <img [src]="ph.url" class="d-block w-100 carousel-img" (click)="openModal(ph.url)" data-bs-toggle="modal" data-bs-target="#zoomModal">
                 </div>
               </div>
+              <button class="carousel-control-prev" type="button" [attr.data-bs-target]="'#carousel' + vc.id" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+              </button>
+              <button class="carousel-control-next" type="button" [attr.data-bs-target]="'#carousel' + vc.id" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+              </button>
             </div>
           </ng-container>
 
           <!-- Edit/Delete Buttons -->
           <div class="d-flex justify-content-between mt-auto pt-3">
-            <button class="btn btn-warning" (click)="editBrochure(item)">Edit</button>
-            <button class="btn btn-danger" (click)="deleteBrochure(item.id)">Delete</button>
+            <button class="btn btn-warning" (click)="editVisitingCard(vc)">Edit</button>
+            <button class="btn btn-danger" (click)="deleteVisitingCard(vc.id)">Delete</button>
           </div>
         </div>
       </div>
