@@ -4,7 +4,6 @@ import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } fr
 import { ActivatedRoute, Router } from '@angular/router';
 import { Firestore, collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDocs } from '@angular/fire/firestore';
 import { CloudinaryService } from '../../core/services/cloudinary.service';
-import { Auth } from '@angular/fire/auth';
 import { QuillModule } from 'ngx-quill';
 
 @Component({
@@ -20,7 +19,6 @@ export class AddDirector implements OnInit {
   private firestore = inject(Firestore);
   private router = inject(Router);
   private cloudinaryService = inject(CloudinaryService);
-  private auth = inject(Auth);
 
   schoolId!: string;
   directorForm!: FormGroup;
@@ -46,7 +44,7 @@ export class AddDirector implements OnInit {
       phone: [existingData?.phone || '', Validators.required],
       email: [existingData?.email || '', [Validators.email]],
       imageUrl: [existingData?.imageUrl || ''],
-      message: [existingData?.message || ''] // HTML content
+      message: [existingData?.message || '']
     });
   }
 
@@ -85,48 +83,50 @@ export class AddDirector implements OnInit {
         const data = docSnap.data();
         this.addDirector({ ...data, id: docSnap.id });
       });
-      if (this.directors.length === 0) this.addDirector(); // at least one
+      if (this.directors.length === 0) this.addDirector();
     } catch (err) {
       console.error('Failed to load directors:', err);
     }
   }
 
-  async saveDirectors() {
-    if (!this.schoolId) return alert('Missing school info');
-    if (this.directorForm.invalid) return alert('Fill all required fields');
+async saveDirectors() {
+  if (!this.schoolId) return alert('Missing school info');
+  if (this.directorForm.invalid) return alert('Fill all required fields');
 
-    const directorsCollection = collection(this.firestore, `schools/${this.schoolId}/directors`);
+  const directorsCollection = collection(this.firestore, `schools/${this.schoolId}/directors`);
 
-    for (let i = 0; i < this.directors.length; i++) {
-      const d = this.directors.at(i).value;
-      const data = {
-        name: d.name,
-        designation: d.designation,
-        phone: d.phone,
-        email: d.email,
-        imageUrl: d.imageUrl,
-        message: d.message,
-        schoolId: this.schoolId,
-        updated_at: serverTimestamp(),
-        created_at: d.id ? undefined : serverTimestamp()
-      };
+  for (let i = 0; i < this.directors.length; i++) {
+    const d = this.directors.at(i).value;
+    const data: any = {
+      name: d.name,
+      designation: d.designation,
+      phone: d.phone,
+      email: d.email,
+      imageUrl: d.imageUrl,
+      message: d.message,
+      schoolId: this.schoolId,
+      updated_at: serverTimestamp()
+    };
 
-      try {
-        if (d.id) {
-          const docRef = doc(this.firestore, `schools/${this.schoolId}/directors/${d.id}`);
-          await updateDoc(docRef, data);
-        } else {
-          await addDoc(directorsCollection, data);
-        }
-      } catch (err) {
-        console.error('Failed to save director:', err);
-        alert('Failed to save director');
+    try {
+      if (d.id) {
+        // Update existing director (do NOT include created_at)
+        const docRef = doc(this.firestore, `schools/${this.schoolId}/directors/${d.id}`);
+        await updateDoc(docRef, data);
+      } else {
+        // Create new director (include created_at)
+        data.created_at = serverTimestamp();
+        await addDoc(directorsCollection, data);
       }
+    } catch (err) {
+      console.error('Failed to save director:', err);
+      alert('Failed to save director');
     }
-
-    alert('✅ Directors saved!');
-    this.router.navigate(['/admin-dashboard/idcards', this.schoolId]);
   }
+
+  alert('✅ Directors saved!');
+  this.router.navigate(['/admin-dashboard/idcards', this.schoolId]);
+}
 
   skip() {
     this.router.navigate(['/admin-dashboard/idcards', this.schoolId]);

@@ -2,11 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import {
   Auth,
   GoogleAuthProvider,
-  getRedirectResult,
-  signInWithRedirect,
+  signInWithPopup,
+  signOut,
   User as FirebaseUser,
-  onAuthStateChanged,
-  signOut
+  onAuthStateChanged
 } from '@angular/fire/auth';
 import {
   Firestore,
@@ -33,7 +32,11 @@ export interface Admin {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private currentUser$ = new BehaviorSubject<Admin | null | undefined>(undefined);
+  private currentUserSubject = new BehaviorSubject<Admin | null>(null);
+  user$ = this.currentUserSubject.asObservable();
+
+  private loadingSubject = new BehaviorSubject(false);
+  loading$ = this.loadingSubject.asObservable();
 
   private auth = inject(Auth);
   private firestore = inject(Firestore);
@@ -41,36 +44,44 @@ export class AuthService {
   private http = inject(HttpClient);
 
   constructor() {
-    this.initializeAuthHandling();
+    this.initAuthListener();
   }
 
-  /** Expose current user as observable */
-  get user$() {
-    return this.currentUser$.asObservable().pipe(
-      filter((user): user is Admin | null => user !== undefined)
-    );
+  /** Listen to auth state changes */
+  private initAuthListener() {
+    onAuthStateChanged(this.auth, async (user) => {
+      if (user) {
+        await this.loadAdminData(user);
+      } else {
+        this.currentUserSubject.next(null);
+      }
+    });
   }
 
-  /** Start Google login with redirect */
+  /** Trigger Google popup login */
   async googleLogin(): Promise<void> {
+    this.loadingSubject.next(true);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    await signInWithRedirect(this.auth, provider);
-  }
 
-  /** Process redirect result (called in login component only) */
-  async handleRedirectResult(): Promise<void> {
-    const result = await getRedirectResult(this.auth);
-    if (result?.user) {
-      console.log('Redirect login successful');
-      await this.saveAdminData(result.user);
-      await this.saveLoginHistory(result.user);
-      // ✅ यहाँ navigate नहीं करेंगे, redirect केवल authStateChanged में होगा
+    try {
+      const result = await signInWithPopup(this.auth, provider);
+      const user = result.user;
+
+      if (user) {
+        await this.loadAdminData(user);
+        await this.saveLoginHistory(user);
+      }
+    } catch (error) {
+      console.error('Google login failed:', error);
+      throw error;
+    } finally {
+      this.loadingSubject.next(false);
     }
   }
 
-  /** Save admin data in Firestore */
-  private async saveAdminData(user: FirebaseUser) {
+  /** Load admin data from Firestore */
+  private async loadAdminData(user: FirebaseUser) {
     const adminRef = doc(this.firestore, `admin/${user.uid}`);
     const snapshot = await getDoc(adminRef);
 
@@ -85,31 +96,20 @@ export class AuthService {
 
     if (!snapshot.exists()) {
       await setDoc(adminRef, adminData);
-      this.currentUser$.next(adminData);
     } else {
-      await setDoc(
-        adminRef,
-        { displayName: user.displayName, photoURL: user.photoURL },
-        { merge: true }
-      );
-      const updatedSnapshot = await getDoc(adminRef);
-      if (updatedSnapshot.exists()) {
-        this.currentUser$.next(updatedSnapshot.data() as Admin);
-      }
+      await setDoc(adminRef, { displayName: user.displayName, photoURL: user.photoURL }, { merge: true });
     }
+
+    this.currentUserSubject.next(adminData);
   }
 
   /** Save login history */
   private async saveLoginHistory(user: FirebaseUser) {
     try {
-      const ipData: any = await firstValueFrom(
-        this.http.get('https://api.ipify.org?format=json')
-      );
+      const ipData: any = await firstValueFrom(this.http.get('https://api.ipify.org?format=json'));
       const ipAddress = ipData?.ip || 'Unknown';
 
-      const geoData: any = await firstValueFrom(
-        this.http.get(`https://ipapi.co/${ipAddress}/json/`)
-      );
+      const geoData: any = await firstValueFrom(this.http.get(`https://ipapi.co/${ipAddress}/json/`));
       const geoInfo = {
         country: geoData?.country_name || 'Unknown',
         region: geoData?.region || 'Unknown',
@@ -118,20 +118,8 @@ export class AuthService {
 
       const ua = navigator.userAgent;
       const isMobile = /Mobi|Android/i.test(ua);
-      const browser = /Chrome/.test(ua)
-        ? 'Chrome'
-        : /Firefox/.test(ua)
-        ? 'Firefox'
-        : /Safari/.test(ua)
-        ? 'Safari'
-        : 'Unknown';
-      const os = /Windows NT/.test(ua)
-        ? 'Windows'
-        : /Mac OS X/.test(ua)
-        ? 'Mac OS'
-        : /Android/.test(ua)
-        ? 'Android'
-        : 'Unknown';
+      const browser = /Chrome/.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : 'Unknown';
+      const os = /Windows NT/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac OS' : /Android/.test(ua) ? 'Android' : 'Unknown';
       const deviceInfo = { ua, browser, os, type: isMobile ? 'Mobile' : 'Desktop' };
 
       const loginRecordsRef = collection(this.firestore, `admin/${user.uid}/login_records`);
@@ -152,31 +140,7 @@ export class AuthService {
   /** Logout */
   async logout(): Promise<void> {
     await signOut(this.auth);
-    this.currentUser$.next(null);
-    this.router.navigate(['/admin-login']); // ✅ logout पर login page
-  }
-
-  /** Listen to auth state changes */
-  private initializeAuthHandling() {
-    onAuthStateChanged(this.auth, async (user) => {
-      if (user) {
-        const adminRef = doc(this.firestore, `admin/${user.uid}`);
-        const snapshot = await getDoc(adminRef);
-
-        if (snapshot.exists()) {
-          this.currentUser$.next(snapshot.data() as Admin);
-        } else {
-          await this.saveAdminData(user);
-        }
-
-        // ✅ navigate सिर्फ login पर
-        if (this.router.url === '/admin-login') {
-          this.router.navigate(['/admin-dashboard']);
-        }
-      } else {
-        this.currentUser$.next(null);
-        // 🚫 logout पर auto-redirect dashboard नहीं होगा
-      }
-    });
+    this.currentUserSubject.next(null);
+    this.router.navigate(['/admin-login']);
   }
 }

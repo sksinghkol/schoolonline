@@ -1,0 +1,31 @@
+.photo-card {
+  width: 100%;
+  max-width: 405px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fafafa;
+  text-align: center;
+  img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    object-fit: cover;
+    cursor: pointer;
+  }
+}
+
+.carousel {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.carousel-item {
+  height: 350px;
+}
+
+.carousel-img {
+  height: 100%;
+  object-fit: contain;
+  cursor: pointer;
+}

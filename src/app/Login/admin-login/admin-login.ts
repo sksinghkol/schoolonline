@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -10,34 +10,25 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './admin-login.html',
   styleUrls: ['./admin-login.scss']
 })
-export class AdminLogin implements OnInit {
+export class AdminLogin {
   loading = false;
   errorMessage: string | null = null;
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
-  ngOnInit(): void {
-    // Process Google redirect result here only
-    this.authService.handleRedirectResult().catch(err => {
-      console.error('Redirect login failed:', err);
-      this.errorMessage = 'Login failed. Please try again.';
-    });
-  }
-
-  /** Trigger Google login */
-  async loginWithGoogle(): Promise<void> {
+  async loginWithGoogle() {
     this.loading = true;
     this.errorMessage = null;
 
     try {
       await this.authService.googleLogin();
-      // Redirect will happen → then onAuthStateChanged handles navigation
+      // Navigate after successful login
+      this.router.navigate(['/admin-dashboard']);
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error(error);
       this.errorMessage = error?.message || 'Google login failed';
     } finally {
       this.loading = false;
     }
   }
 }
-

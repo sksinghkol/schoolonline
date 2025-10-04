@@ -23,33 +23,85 @@
               <i class="bi bi-link-45deg"></i> User List
             </a>
           </li>
-  <!-- Multi-level dropdown -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-menu-button-wide-fill"></i> Master
-            </a> 
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/schools']"><i class="bi bi-arrow-right-circle"></i> School</a></li>
-              <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/subscriptions']"><i class="bi bi-arrow-right-circle"></i> Subscriptions</a></li>
-               <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/loginHistory']"><i class="bi bi-arrow-right-circle"></i> Login History</a></li>
-                <li><a class="dropdown-item" routerLink="AdminSize"><i class="bi bi-arrow-right-circle"></i> Size</a></li>
-                  <li><a class="dropdown-item" routerLink="AdminProductVariant"><i class="bi bi-arrow-right-circle"></i> Varient</a></li>
-                    <li><a class="dropdown-item" routerLink="AdminDeliveryLocation"><i class="bi bi-arrow-right-circle"></i> Delivery Location</a></li>
-                   <li><a class="dropdown-item" routerLink="AdminProductImage"><i class="bi bi-arrow-right-circle"></i> Product Image</a></li>
-                   <li><a class="dropdown-item" routerLink="AdminDeliveryTracking"><i class="bi bi-arrow-right-circle"></i> Delivery Tracking</a></li>
-              <li><hr class="dropdown-divider"></li>
-
-              <!-- First level sub-dropdown -->
+         
+    <!-- Multi-level dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-menu-button-wide-fill"></i> Master
+          </a>
+          <ul class="dropdown-menu">
+          <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/schools']"><i class="bi bi-arrow-right-circle"></i> School</a></li>
+         <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/subscriptions']"><i class="bi bi-arrow-right-circle"></i> Subscriptions</a></li>
              
-            </ul>
-          </li>
+            <li><hr class="dropdown-divider"></li>
 
-        <!-- Admin Dashboard Links (kept within the left nav) -->
-          <li class="nav-item">
-            <a class="nav-link" [routerLink]="['/admin-dashboard/subscriptions']">
-              <i class="bi bi-journal-plus"></i> Subscriptions
-            </a>
-          </li>
+            <!-- First level sub-dropdown -->
+            <li class="dropend">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                <i class="bi bi-folder-fill"></i> Id Cards
+              </a>
+              <ul class="dropdown-menu">
+                 <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/holder']"><i class="bi bi-arrow-right-circle"></i> Holder</a></li>
+                  <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/cards']"><i class="bi bi-arrow-right-circle"></i> Cards Type</a></li>
+                    <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/cardsdesign']"><i class="bi bi-arrow-right-circle"></i> Cards Design</a></li>
+                 
+                    <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/lanyards']"><i class="bi bi-arrow-right-circle"></i> Lanyards</a></li>
+                   <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/clip']"><i class="bi bi-arrow-right-circle"></i> Clip</a></li>
+                   <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/hook']"><i class="bi bi-arrow-right-circle"></i> Hooks</a></li>
+
+
+                <!-- Second level sub-dropdown -->
+              
+              </ul>
+            </li>
+              <!-- First level sub-dropdown -->
+            <li class="dropend">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                <i class="bi bi-folder-fill"></i> School Materials
+              </a>
+              <ul class="dropdown-menu">
+                 <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/vitingCards']"><i class="bi bi-arrow-right-circle"></i> Visting Cards</a></li>
+                  <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/cards']"><i class="bi bi-arrow-right-circle"></i> Prospectus</a></li>
+                    <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/lanyards']"><i class="bi bi-arrow-right-circle"></i> Library card</a></li>
+                   <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/clip']"><i class="bi bi-arrow-right-circle"></i> Gate Pass</a></li>
+                   <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/hook']"><i class="bi bi-arrow-right-circle"></i> Student OutPass</a></li>
+                  <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/hook']"><i class="bi bi-arrow-right-circle"></i> Vistors Pass</a></li>
+                  <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/hook']"><i class="bi bi-arrow-right-circle"></i> Medals</a></li>
+                <!-- Second level sub-dropdown -->
+              </ul>
+            </li>
+             <li class="dropend">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                <i class="bi bi-folder-fill"></i> Ads Materials
+              </a>
+              <ul class="dropdown-menu">
+                 <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/holder']"><i class="bi bi-arrow-right-circle"></i> Key Ring</a></li>
+                  <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/cards']"><i class="bi bi-arrow-right-circle"></i> Leaflet</a></li>
+                    <li><a class="dropdown-item" [routerLink]="['/admin-dashboard/lanyards']"><i class="bi bi-arrow-right-circle"></i> Brochure</a></li>
+                                </ul>
+            </li>
+          </ul>
+        </li>
+ <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-menu-button-wide-fill"></i> Login History
+          </a>
+          <ul class="dropdown-menu">
+          <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/loginHistory']"><i class="bi bi-arrow-right-circle"></i> Admin</a></li>
+         <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/subscriptions']"><i class="bi bi-arrow-right-circle"></i> Director</a></li>
+           <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/schools']"><i class="bi bi-arrow-right-circle"></i> Admin</a></li>
+         <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/subscriptions']"><i class="bi bi-arrow-right-circle"></i> Director</a></li>
+          <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/schools']"><i class="bi bi-arrow-right-circle"></i> Principal</a></li>
+         <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/subscriptions']"><i class="bi bi-arrow-right-circle"></i> Staff</a></li>
+              <li><a class="dropdown-item"  [routerLink]="['/admin-dashboard/subscriptions']"><i class="bi bi-arrow-right-circle"></i> Students</a></li>
+       
+            <li><hr class="dropdown-divider"></li>
+
+        
+          </ul>
+        </li>
+
+      
         </ul>
 
      <!-- Right side: Search + Profile -->

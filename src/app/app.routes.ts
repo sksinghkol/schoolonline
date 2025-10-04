@@ -2,16 +2,25 @@ import { Routes } from '@angular/router';
 import { Home } from './Home/home/home';
 import { AdminDashboard } from './Admin/admin-dashboard/admin-dashboard';
 import { AdminLogin } from './Login/admin-login/admin-login';
-import { AuthGuard } from './core/gaurds/auth.guard';
 import { StudentLogin } from './Login/student-login/student-login';
 import { StudentDashboard } from './Student/student-dashboard/student-dashboard';
 import { AdminHome } from './Admin/admin-home/admin-home';
 import { AddSchool } from './Admin/add-school/add-school';
 import { AddSubscription } from './Admin/add-subscription/add-subscription';
 import { SchoolDetails } from './Admin/school-details/school-details';
-import { LoginHistory } from './Admin/login-history/login-history';
+import { LoginHistory } from './Admin/LoginHistory/login-history/login-history';
 import { AddDirector } from './Admin/add-director/add-director';
 import { IdCards } from './Admin/id-cards/id-cards';
+
+// ✅ Use the correct AdminGuard import
+import { AdminGuard } from './core/gaurds/admin.guard';
+import { Holder } from './Admin/IdCards/holder/holder';
+import { CardsComponent } from './Admin/IdCards/cards/cards';
+import { ClipComponent } from './Admin/IdCards/clip/clip';
+import { Hooks } from './Admin/IdCards/hooks/hooks';
+import { LanyardsComponent } from './Admin/IdCards/lanyards/lanyards';
+import { CardsDesign } from './Admin/IdCards/cards-design/cards-design';
+import { VisitingCardsComponent } from './Admin/visiting-cards/visiting-cards';
 
 export const routes: Routes = [
   { path: '', component: Home, pathMatch: 'full' },
@@ -26,25 +35,33 @@ export const routes: Routes = [
   {
     path: 'admin-dashboard',
     component: AdminDashboard,
-    canActivate: [AuthGuard],
+    canActivate: [AdminGuard],
     children: [
       { path: '', component: AdminHome, pathMatch: 'full' },
       { path: 'schools', component: AddSchool },
-      { path: 'schools/:id', component: SchoolDetails },  // School Details
+      { path: 'schools/:id', component: SchoolDetails }, // School Details
       { path: 'subscriptions', component: AddSubscription },
+      { path: 'holder', component: Holder },
+      { path: 'cards', component: CardsComponent },
+       { path: 'cardsdesign', component: CardsDesign },
+      { path: 'lanyards', component: LanyardsComponent },
+      { path: 'clip', component: ClipComponent },
+      { path: 'hook', component: Hooks },
+   { path: 'vitingCards', component: VisitingCardsComponent },
       { path: 'loginHistory', component: LoginHistory },
       { path: 'director/:schoolId', component: AddDirector }, // Add Director
-        { path: 'idcards/:id', component: IdCards }, // next step
-    ]
+      { path: 'idcards/:id', component: IdCards }, // next step
+    ],
   },
 
   // Student Dashboard
   {
     path: 'student-dashboard',
     component: StudentDashboard,
-    canActivate: [AuthGuard],
+    // If needed, create a separate StudentGuard
+    // canActivate: [StudentGuard],
   },
 
   // Fallback
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: '' },
 ];

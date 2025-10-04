@@ -1,0 +1,16 @@
+.card-body img {
+  border-radius: 8px;
+}
+
+.card-body .small {
+  font-size: 0.75rem;
+  text-align: center;
+  display: block;
+}
+
+.card {
+  transition: transform 0.2s;
+  &:hover {
+    transform: translateY(-5px);
+  }
+}

@@ -1,16 +1,17 @@
 /* Card wrapper */
-
 .card {
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   .ql-container {
-    min-height: 120px;   // Minimum height for the editor
-    max-height: 200px;   // Optional: scroll if too long
+    width: 100% !important; // full width
+    min-height: 150px;       // minimum height for the editor
+    max-height: 400px;       // optional: scroll if too long
     overflow-y: auto;
     border: 1px solid #ced4da;
     border-radius: 0 0 4px 4px;
+    box-sizing: border-box;  // ensures padding doesn't shrink width
   }
 
   .ql-toolbar.ql-snow {
@@ -21,15 +22,28 @@
   }
 
   .ql-editor {
-    min-height: 100px;
+    width: 100% !important;  // full width
+    min-height: 120px;
     font-family: Arial, sans-serif;
     font-size: 14px;
     line-height: 1.5;
     padding: 8px;
     background-color: #fff;
+    box-sizing: border-box;
   }
 
-  // Image inside editor (optional)
+  // Live preview
+  .live-preview {
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 100px;
+  }
+
   img {
     max-width: 100%;
     height: auto;
@@ -38,7 +52,9 @@
 
 /* Responsive fix for small screens */
 @media (max-width: 768px) {
-  .ql-container {
-    min-height: 100px;
+  .ql-container,
+  .ql-editor,
+  .live-preview {
+    width: 100% !important;
   }
 }

@@ -1,0 +1,90 @@
+<div class="container mt-4">
+  <h2 class="mb-4">Manage Cards</h2>
+
+  <div class="card mb-4 p-3">
+    <form [formGroup]="cardForm" (ngSubmit)="addCard()">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Card Name</label>
+          <input type="text" class="form-control" formControlName="card_name">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Price</label>
+          <input type="number" class="form-control" formControlName="price">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" formControlName="description" rows="2"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="form-label">Photos</label>
+        <div formArrayName="photo" class="d-flex flex-wrap gap-3">
+          <div *ngFor="let p of photoArray.controls; let i = index" [formGroupName]="i" class="card photo-card p-2 position-relative">
+            <input type="text" class="form-control mb-1" placeholder="Photo Name" formControlName="name">
+            <input type="text" class="form-control mb-1" placeholder="Photo URL" formControlName="url">
+            <img [src]="p.value.url || 'https://via.placeholder.com/200x120?text=No+Image'" class="img-fluid w-100 img-thumbnail" (click)="openModal(p.value.url)" data-bs-toggle="modal" data-bs-target="#zoomModal" style="cursor: pointer;">
+            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" (click)="removePhotoField(i)" *ngIf="photoArray.length > 1">X</button>
+            <input type="file" class="form-control form-control-sm mt-2" (change)="uploadPhoto($event, i)">
+          </div>
+        </div>
+        <div class="mt-2">
+          <button type="button" class="btn btn-sm btn-success" (click)="addPhotoField()">
+            Add Photo
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <button type="submit" class="btn btn-primary">{{ editId ? 'Update Card' : 'Add Card' }}</button>
+        <button type="button" class="btn btn-secondary ms-2" *ngIf="editId" (click)="resetForm()">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Cards List -->
+  <div class="row row-cols-1 row-cols-md-3 g-3">
+    <div class="col" *ngFor="let c of cards$ | async">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">{{ c.card_name }}</h5>
+          <p class="card-text">{{ c.description }}</p>
+          <p class="text-success fw-bold">₹{{ c.price }}</p>
+          <!-- Carousel -->
+          <ng-container *ngIf="c.photo && c.photo.length > 0">
+            <div id="carousel{{ c.id }}" class="carousel slide" data-bs-ride="carousel">
+              <div class="carousel-inner">
+                <div class="carousel-item" *ngFor="let ph of c.photo; let idx = index" [class.active]="idx === 0">
+                  <img [src]="ph.url" class="d-block w-100 carousel-img" (click)="openModal(ph.url)" data-bs-toggle="modal" data-bs-target="#zoomModal" style="cursor: pointer;">
+                </div>
+              </div>
+              <button class="carousel-control-prev" type="button" [attr.data-bs-target]="'#carousel' + c.id" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+              </button>
+              <button class="carousel-control-next" type="button" [attr.data-bs-target]="'#carousel' + c.id" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+              </button>
+            </div>
+          </ng-container>
+          <div class="d-flex justify-content-between mt-2">
+            <button class="btn btn-sm btn-warning" (click)="editCard(c)">Edit</button>
+            <button class="btn btn-sm btn-danger" (click)="deleteCard(c.id)">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Zoom Modal -->
+<div class="modal fade" id="zoomModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-body p-0">
+        <img [src]="zoomImage" class="w-100" alt="Zoomed Image">
+      </div>
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+  </div>
+</div>

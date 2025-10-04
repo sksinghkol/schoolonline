@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -10,7 +10,8 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./home-menu.scss']
 })
 export class HomeMenu {
-  cartItemCount = 3;
-
-  constructor(public auth: AuthService) {}
+cartItemCount = 3;
+  
+  // ✅ use inject() for standalone components
+  auth = inject(AuthService);
 }
