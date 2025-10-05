@@ -10,24 +10,24 @@ interface Photo {
   caption: string;
 }
 
-interface CardDesign {
+interface LanyardDesign {
   id?: string;
-  cardName: string;
-  cardCode: string;
-  card_type: string;
+  lanyardName: string;
+  lanyardCode: string;
+  lanyard_type: string;
   photos: Photo[];
 }
 
 @Component({
-  selector: 'app-cards-design',
+  selector: 'app-lanyards-design',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './cards-design.html',
-  styleUrls: ['./cards-design.scss']
+  templateUrl: './lanyards-design.html',
+  styleUrls: ['./lanyards-design.scss']
 })
-export class CardsDesign implements OnInit {
-  cardDesigns$: Observable<CardDesign[]>;
-  cardDesignForm: FormGroup;
+export class LanyardsDesign implements OnInit {
+  lanyardDesigns$: Observable<LanyardDesign[]>;
+  lanyardDesignForm: FormGroup;
   editId: string | null = null;
   zoomedPhotoUrl: string | null = null;
 
@@ -36,13 +36,13 @@ export class CardsDesign implements OnInit {
     private firestore: Firestore,
     private cloudinary: CloudinaryService
   ) {
-    const cardDesignCol = collection(this.firestore, 'card_design');
-    this.cardDesigns$ = collectionData(cardDesignCol, { idField: 'id' }) as Observable<CardDesign[]>;
+    const lanyardDesignCol = collection(this.firestore, 'lanyard_design');
+    this.lanyardDesigns$ = collectionData(lanyardDesignCol, { idField: 'id' }) as Observable<LanyardDesign[]>;
 
-    this.cardDesignForm = this.fb.group({
-      cardName: ['', Validators.required],
-      cardCode: [''],
-      card_type: ['', Validators.required],
+    this.lanyardDesignForm = this.fb.group({
+      lanyardName: ['', Validators.required],
+      lanyardCode: [''],
+      lanyard_type: ['', Validators.required],
       photos: this.fb.array([])
     });
   }
@@ -53,7 +53,7 @@ export class CardsDesign implements OnInit {
 
   // --- Form Array for Photos ---
   get photosArray(): FormArray {
-    return this.cardDesignForm.get('photos') as FormArray;
+    return this.lanyardDesignForm.get('photos') as FormArray;
   }
 
   createPhotoGroup(): FormGroup {
@@ -82,38 +82,37 @@ export class CardsDesign implements OnInit {
       this.photosArray.at(index).patchValue({ url });
     } catch (err) {
       console.error('Cloudinary upload failed:', err);
-      // Optionally, show an error to the user
     }
   }
 
   // --- CRUD Operations ---
-  async saveCardDesign(): Promise<void> {
-    if (this.cardDesignForm.invalid) return;
+  async saveLanyardDesign(): Promise<void> {
+    if (this.lanyardDesignForm.invalid) return;
 
-    const formValue = this.cardDesignForm.value;
+    const formValue = this.lanyardDesignForm.value;
 
     try {
       if (this.editId) {
         // Update existing document
-        const docRef = doc(this.firestore, 'card_design', this.editId);
+        const docRef = doc(this.firestore, 'lanyard_design', this.editId);
         await updateDoc(docRef, formValue);
       } else {
         // Create new document
-        formValue.cardCode = this.generateCardCode(); // Generate code for new cards
-        await addDoc(collection(this.firestore, 'card_design'), formValue);
+        formValue.lanyardCode = this.generateLanyardCode(); // Generate code for new lanyards
+        await addDoc(collection(this.firestore, 'lanyard_design'), formValue);
       }
       this.resetForm();
     } catch (err) {
-      console.error('Failed to save card design:', err);
+      console.error('Failed to save lanyard design:', err);
     }
   }
 
-  editCardDesign(card: CardDesign): void {
-    this.editId = card.id || null;
-    this.cardDesignForm.patchValue(card);
+  editLanyardDesign(lanyard: LanyardDesign): void {
+    this.editId = lanyard.id || null;
+    this.lanyardDesignForm.patchValue(lanyard);
 
     this.photosArray.clear();
-    card.photos.forEach(photo => this.photosArray.push(this.fb.group(photo)));
+    lanyard.photos.forEach(photo => this.photosArray.push(this.fb.group(photo)));
   }
 
   // --- Photo Modal ---
@@ -127,32 +126,32 @@ export class CardsDesign implements OnInit {
     this.zoomedPhotoUrl = null;
   }
 
-  async deleteCardDesign(id?: string): Promise<void> {
+  async deleteLanyardDesign(id?: string): Promise<void> {
     if (!id) return;
 
-    if (confirm('Are you sure you want to delete this card design?')) {
+    if (confirm('Are you sure you want to delete this lanyard design?')) {
       try {
-        await deleteDoc(doc(this.firestore, 'card_design', id));
+        await deleteDoc(doc(this.firestore, 'lanyard_design', id));
       } catch (err) {
-        console.error('Failed to delete card design:', err);
+        console.error('Failed to delete lanyard design:', err);
       }
     }
   }
 
   resetForm(): void {
     this.editId = null;
-    this.cardDesignForm.reset({ cardName: '', cardCode: '', card_type: '' });
+    this.lanyardDesignForm.reset({ lanyardName: '', lanyardCode: '', lanyard_type: '' });
     this.photosArray.clear();
     this.addPhotoField();
   }
 
-  getCarouselId(cardId?: string): string {
-    return `carousel-${cardId || 'new'}`;
+  getCarouselId(lanyardId?: string): string {
+    return `carousel-${lanyardId || 'new'}`;
   }
 
-  private generateCardCode(): string {
+  private generateLanyardCode(): string {
     const randomNumber = Math.floor(10000 + Math.random() * 90000); // Generate a 5-digit number
-    return `CRC${randomNumber}`;
+    return `LYD${randomNumber}`;
   }
 
 }

@@ -1,17 +1,17 @@
 <div class="card-container">
-  <h2>{{ editId ? 'Edit' : 'Create' }} Card Design</h2>
+  <h2>{{ editId ? 'Edit' : 'Create' }} Lanyard Design</h2>
 
-  <!-- Form for Creating/Editing Card Designs -->
-  <form [formGroup]="cardDesignForm" (ngSubmit)="saveCardDesign()" class="card-form">
+  <!-- Form for Creating/Editing Lanyard Designs -->
+  <form [formGroup]="lanyardDesignForm" (ngSubmit)="saveLanyardDesign()" class="card-form">
     <div class="form-group">
-      <label for="cardName">Card Name</label>
-      <input id="cardName" formControlName="cardName" placeholder="e.g., Employee ID Card">
+      <label for="lanyardName">Lanyard Name</label>
+      <input id="lanyardName" formControlName="lanyardName" placeholder="e.g., Premium Lanyard">
     </div>
 
     <div class="form-group">
-      <label for="card_type">Card Type</label>
-      <select id="card_type" formControlName="card_type">
-        <option value="" disabled>Select a card type</option>
+      <label for="lanyard_type">Lanyard Type</label>
+      <select id="lanyard_type" formControlName="lanyard_type">
+        <option value="" disabled>Select a lanyard type</option>
         <option value="Student">Student</option>
         <option value="Employee">Employee</option>
         <option value="Visitor">Visitor</option>
@@ -29,7 +29,7 @@
         </div>
         <div class="form-group">
           <label for="caption-{{i}}">Photo Caption</label>
-          <input id="caption-{{i}}" formControlName="caption" placeholder="e.g., Official Photo">
+          <input id="caption-{{i}}" formControlName="caption" placeholder="e.g., Lanyard Front View">
         </div>
         <button type="button" (click)="removePhotoField(i)" class="btn-remove" title="Remove Photo"><i class="bi bi-trash"></i></button>
       </div>
@@ -37,58 +37,58 @@
     </div>
 
     <div class="form-actions">
-      <button type="submit" [disabled]="cardDesignForm.invalid">{{ editId ? 'Update' : 'Save' }} Design</button>
+      <button type="submit" [disabled]="lanyardDesignForm.invalid">{{ editId ? 'Update' : 'Save' }} Design</button>
       <button type="button" (click)="resetForm()" *ngIf="editId">Cancel</button>
     </div>
   </form>
 
   <hr>
 
-  <!-- List of Existing Card Designs -->
-  <h2>Existing Card Designs</h2>
+  <!-- List of Existing Lanyard Designs -->
+  <h2>Existing Lanyard Designs</h2>
   <div class="card-list">
-    <div *ngFor="let card of cardDesigns$ | async" class="id-card-wrapper">
-      <!-- ID Card Preview -->
+    <div *ngFor="let lanyard of lanyardDesigns$ | async" class="id-card-wrapper">
+      <!-- Lanyard Preview -->
       <div class="id-card">
         <div class="card-header">
-          <h3>{{ card.cardName }}</h3>
+          <h3>{{ lanyard.lanyardName }}</h3>
         </div>
         <div class="card-body">
-          <!-- Display first photo as primary -->
-          <div *ngIf="card.photos && card.photos.length > 0" class="photo-container">
+          <!-- Display photos -->
+          <div *ngIf="lanyard.photos && lanyard.photos.length > 0" class="photo-container">
             <!-- Single Image View -->
-            <div *ngIf="card.photos.length === 1">
-              <img [src]="card.photos[0].url" alt="Card Photo" (click)="openPhotoModal(card.photos, 0)">
-              <p class="photo-caption">{{ card.photos[0].caption }}</p>
+            <div *ngIf="lanyard.photos.length === 1">
+              <img [src]="lanyard.photos[0].url" alt="Lanyard Photo" (click)="openPhotoModal(lanyard.photos, 0)">
+              <p class="photo-caption">{{ lanyard.photos[0].caption }}</p>
             </div>
 
             <!-- Carousel for Multiple Images -->
-            <div *ngIf="card.photos.length > 1" [id]="getCarouselId(card.id)" class="carousel slide">
+            <div *ngIf="lanyard.photos.length > 1" [id]="getCarouselId(lanyard.id)" class="carousel slide">
               <div class="carousel-inner">
-                <div *ngFor="let photo of card.photos; let i = index" class="carousel-item" [class.active]="i === 0">
-                  <img [src]="photo.url" class="d-block w-100" [alt]="photo.caption || 'Card Photo ' + (i + 1)" (click)="openPhotoModal(card.photos, i)">
+                <div *ngFor="let photo of lanyard.photos; let i = index" class="carousel-item" [class.active]="i === 0">
+                  <img [src]="photo.url" class="d-block w-100" [alt]="photo.caption || 'Lanyard Photo ' + (i + 1)" (click)="openPhotoModal(lanyard.photos, i)">
                   <p class="photo-caption">{{ photo.caption }}</p>
                 </div>
               </div>
-              <button class="carousel-control-prev" type="button" [attr.data-bs-target]="'#' + getCarouselId(card.id)" data-bs-slide="prev">
+              <button class="carousel-control-prev" type="button" [attr.data-bs-target]="'#' + getCarouselId(lanyard.id)" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Previous</span>
               </button>
-              <button class="carousel-control-next" type="button" [attr.data-bs-target]="'#' + getCarouselId(card.id)" data-bs-slide="next">
+              <button class="carousel-control-next" type="button" [attr.data-bs-target]="'#' + getCarouselId(lanyard.id)" data-bs-slide="next">
                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Next</span>
               </button>
             </div>
           </div>
           <div class="card-details">
-            <p><strong>Card Code:</strong> {{ card.cardCode }}</p>
-            <p><strong>Type:</strong> {{ card.card_type }}</p>
+            <p><strong>Lanyard Code:</strong> {{ lanyard.lanyardCode }}</p>
+            <p><strong>Type:</strong> {{ lanyard.lanyard_type }}</p>
           </div>
         </div>
       </div>
       <div class="card-actions">
-        <button class="btn-action btn-edit" (click)="editCardDesign(card)"><i class="bi bi-pencil-square"></i> Edit</button>
-        <button class="btn-action btn-delete" (click)="deleteCardDesign(card.id)"><i class="bi bi-trash3-fill"></i> Delete</button>
+        <button class="btn-action btn-edit" (click)="editLanyardDesign(lanyard)"><i class="bi bi-pencil-square"></i> Edit</button>
+        <button class="btn-action btn-delete" (click)="deleteLanyardDesign(lanyard.id)"><i class="bi bi-trash3-fill"></i> Delete</button>
       </div>
     </div>
   </div>
