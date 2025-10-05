@@ -36,7 +36,7 @@ export class Prospectus implements OnInit {
     private firestore: Firestore,
     private cloudinary: CloudinaryService
   ) {
-    const prospectusCol = collection(this.firestore, 'prospectus');
+    const prospectusCol = collection(this.firestore, 'prospectus'); // Must match rules
 
     this.prospectusItems$ = collectionData(prospectusCol, { idField: 'id' }).pipe(
       map((items: any[]) => items.map(i => ({ ...i, photo: i.photo || [] })))
@@ -98,10 +98,10 @@ export class Prospectus implements OnInit {
 
     try {
       if (this.editId) {
-        const docRef = doc(this.firestore, 'prospectus', this.editId);
+        const docRef = doc(this.firestore, 'cards', this.editId);
         await updateDoc(docRef, formValue);
       } else {
-        await addDoc(collection(this.firestore, 'prospectus'), formValue);
+        await addDoc(collection(this.firestore, 'cards'), formValue);
       }
       this.resetForm();
     } catch (err) {
@@ -129,7 +129,7 @@ export class Prospectus implements OnInit {
   async deleteProspectus(id?: string) {
     if (!id || !confirm('Are you sure you want to delete this item?')) return;
     try {
-      await deleteDoc(doc(this.firestore, 'prospectus', id));
+      await deleteDoc(doc(this.firestore, 'cards', id));
     } catch (err) {
       console.error('Failed to delete prospectus:', err);
     }
