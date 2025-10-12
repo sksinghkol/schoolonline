@@ -1,0 +1,63 @@
+.login-history {
+    h2 {
+      font-weight: 900;
+      font-size: 2rem;
+      background: linear-gradient(90deg, #0d6efd, #6610f2);
+      -webkit-background-clip: text;
+      background-clip: text; // Standard property for compatibility
+      -webkit-text-fill-color: transparent;
+    }
+  
+    .login-card {
+      border-radius: 1rem;
+      padding: 1.5rem;
+      color: #fff;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+      transition: transform 0.3s, box-shadow 0.3s;
+  
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+      }
+  
+      // Alternating gradient backgrounds
+      &:nth-child(4n+1) { background: linear-gradient(135deg, #0556ee, #e4f500); }
+      &:nth-child(4n+2) { background: linear-gradient(135deg, #c1df15, #0a0dc0); }
+      &:nth-child(4n+3) { background: linear-gradient(135deg, #0dcaf0, #02631a6b); }
+      &:nth-child(4n+4) { background: linear-gradient(135deg, #198754, #20c997); }
+  
+      .avatar {
+        width: 50px;
+        height: 50px;
+        border: 3px solid #fff; // White border to stand out
+        object-fit: cover;
+        transition: transform 0.3s, box-shadow 0.3s;
+  
+        &:hover {
+          transform: scale(1.1);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+      }
+  
+      .badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.5em;
+        border-radius: 0.75rem;
+        color: #fff;
+  
+        &.bg-gradient-info {
+          background: rgba(255,255,255,0.25);
+          backdrop-filter: blur(4px);
+        }
+  
+        &.bg-gradient-secondary {
+          background: rgba(0,0,0,0.2);
+          backdrop-filter: blur(4px);
+        }
+      }
+  
+      .text-muted {
+        color: rgba(255,255,255,0.8) !important;
+      }
+    }
+  }

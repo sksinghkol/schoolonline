@@ -1,0 +1,234 @@
+@use 'sass:color';
+
+// Import Bebas Neue for a bold, condensed, and stylish look
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+$light-bg: #f8fafc; // Softer cream for a sleek look
+$deep-primary: #4e4a13; // Rich teal for primary elements
+$deep-accent: #1e3a8a; // Deep indigo for accents
+$hover-glow: #dbeafe; // Light glow for hover
+$shadow: 0 4px 10px rgba(127, 14, 138, 0.1);
+$border-radius: 6px;
+$transition: all 0.2s ease-in-out;
+
+.navbar {
+  background: linear-gradient(135deg, $light-bg 0%, color.adjust($deep-primary, $lightness: 45%) 100%);
+  box-shadow: $shadow;
+  padding: 0.5rem 1.2rem; // Compact padding
+  border-bottom: 1px solid rgba($deep-primary, 0.15);
+  transition: $transition;
+
+  .navbar-brand {
+    font-family: 'Bebas Neue', sans-serif; // Ultra-bold, stylish font
+    font-size: 1.2rem; // Larger for impact
+    font-weight: 400; // Bebas Neue is naturally bold
+    color: $deep-primary;
+    letter-spacing: 2px; // Wider spacing for uniqueness
+    text-transform: uppercase;
+    position: relative;
+    text-shadow: 2px 2px 4px rgba($deep-primary, 0.4); // Stronger shadow for depth
+    transition: $transition;
+
+    // Double underline effect
+    &:before, &:after {
+      content: '';
+      position: absolute;
+      left: 0;
+      width: 0;
+      background: linear-gradient(to right, $deep-accent, color.adjust($deep-accent, $lightness: 20%));
+      transition: width 0.4s ease, transform 0.3s ease;
+    }
+
+    &:before {
+      bottom: -2px;
+      height: 2px; // First line
+    }
+
+    &:after {
+      bottom: -6px;
+      height: 1.5px; // Second line, slightly thinner
+    }
+
+    &:hover:before, &:hover:after {
+      width: 100%;
+      transform: scaleX(1.1); // Slight stretch on hover
+    }
+
+    &:hover {
+      color: color.adjust($deep-accent, $lightness: 15%);
+      text-shadow: 0 0 10px rgba($deep-accent, 0.6); // Enhanced glow effect
+      transform: scale(1.05) translateY(-1px); // Subtle scale and lift
+    }
+  }
+
+  .navbar-toggler {
+    border: none;
+    padding: 0.4rem;
+    transition: $transition;
+
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23134e4a' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+      transition: transform 0.3s ease;
+    }
+
+    &:hover .navbar-toggler-icon {
+      transform: scale(1.15);
+      filter: drop-shadow(0 0 3px rgba($deep-accent, 0.5));
+    }
+  }
+
+  .navbar-nav {
+    .nav-link {
+      color: $deep-primary;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.4rem 0.8rem;
+      position: relative;
+      transition: $transition;
+
+      &.active {
+        color: $deep-accent;
+        font-weight: 700;
+        background: rgba($deep-accent, 0.15);
+        border-radius: $border-radius;
+      }
+
+      &:hover {
+        color: $deep-accent;
+        transform: translateY(-2px);
+        background: $hover-glow;
+        border-radius: $border-radius;
+        box-shadow: 0 2px 6px rgba($deep-accent, 0.2);
+      }
+    }
+  }
+
+  .dropdown {
+    .dropdown-toggle {
+      color: $deep-primary;
+
+      &::after {
+        border-top: 0.25em solid $deep-accent;
+        border-right: 0.25em solid transparent;
+        border-left: 0.25em solid transparent;
+        transition: transform 0.3s ease;
+      }
+
+      &:hover::after {
+        transform: rotate(180deg);
+      }
+    }
+
+    .dropdown-menu {
+      display: none;
+      background: $light-bg;
+      border: 1px solid rgba($deep-primary, 0.08);
+      border-radius: $border-radius;
+      box-shadow: $shadow;
+      padding: 0.5rem;
+      animation: slideIn 0.3s ease-in-out;
+
+      .dropdown-item {
+        color: $deep-primary;
+        font-weight: 500;
+        padding: 0.5rem 1.2rem;
+        border-radius: $border-radius;
+        transition: $transition;
+
+        &:hover {
+          background: $deep-accent;
+          color: $light-bg;
+          transform: translateX(4px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+      }
+
+      .dropdown-divider {
+        border-color: rgba($deep-primary, 0.12);
+      }
+    }
+
+    &:hover > .dropdown-menu {
+      display: block;
+      margin-top: 0.1em;
+    }
+  }
+
+  .dropend {
+    .dropdown-toggle {
+      color: $deep-primary;
+      margin-left: 0.4em;
+
+      &::after {
+        border-left: 0.25em solid $deep-accent;
+        border-top: 0.25em solid transparent;
+        border-bottom: 0.25em solid transparent;
+      }
+    }
+
+    &:hover > .dropdown-menu {
+      display: block;
+      margin-left: 0.1em;
+    }
+  }
+
+  .form-control {
+    border-radius: $border-radius;
+    border: 1px solid rgba($deep-primary, 0.25);
+    background: rgba($light-bg, 0.95);
+    color: $deep-primary;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    transition: $transition;
+
+    &::placeholder {
+      color: rgba($deep-primary, 0.5);
+    }
+
+    &:focus {
+      border-color: $deep-accent;
+      box-shadow: 0 0 8px rgba($deep-accent, 0.3);
+      background: $light-bg;
+    }
+  }
+
+  .btn-outline-light {
+    border: 1.5px solid $deep-primary;
+    color: $deep-primary;
+    border-radius: $border-radius;
+    font-weight: 600;
+    padding: 0.3rem 1rem;
+    transition: $transition;
+
+    &:hover {
+      background: $deep-accent;
+      border-color: $deep-accent;
+      color: $light-bg;
+      transform: translateY(-2px);
+      box-shadow: 0 3px 6px rgba($deep-accent, 0.4);
+    }
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .dropend:hover > .dropdown-menu {
+    position: absolute;
+    top: 0;
+    left: 100%;
+  }
+
+  .dropend .dropdown-toggle {
+    margin-left: 0.4em;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

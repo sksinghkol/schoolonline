@@ -5,20 +5,11 @@ import {
   signInWithPopup,
   signOut,
   User as FirebaseUser,
-  onAuthStateChanged
 } from '@angular/fire/auth';
-import {
-  Firestore,
-  doc,
-  getDoc,
-  setDoc,
-  collection,
-  addDoc,
-  serverTimestamp
-} from '@angular/fire/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { Firestore, doc, getDoc, setDoc, collection, addDoc, serverTimestamp } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 export interface Admin {
@@ -52,6 +43,7 @@ export class AuthService {
     onAuthStateChanged(this.auth, async (user) => {
       if (user) {
         await this.loadAdminData(user);
+        await this.saveLoginHistory(user);
       } else {
         this.currentUserSubject.next(null);
       }
@@ -103,35 +95,44 @@ export class AuthService {
     this.currentUserSubject.next(adminData);
   }
 
-  /** Save login history */
+  /** Save login history with geo, device, and readable date */
   private async saveLoginHistory(user: FirebaseUser) {
     try {
+      // Get IP
       const ipData: any = await firstValueFrom(this.http.get('https://api.ipify.org?format=json'));
       const ipAddress = ipData?.ip || 'Unknown';
 
+      // Get geo location
       const geoData: any = await firstValueFrom(this.http.get(`https://ipapi.co/${ipAddress}/json/`));
-      const geoInfo = {
-        country: geoData?.country_name || 'Unknown',
-        region: geoData?.region || 'Unknown',
-        city: geoData?.city || 'Unknown'
-      };
-
+      
+      // Device & Browser info
       const ua = navigator.userAgent;
       const isMobile = /Mobi|Android/i.test(ua);
       const browser = /Chrome/.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : 'Unknown';
       const os = /Windows NT/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac OS' : /Android/.test(ua) ? 'Android' : 'Unknown';
       const deviceInfo = { ua, browser, os, type: isMobile ? 'Mobile' : 'Desktop' };
 
-      const loginRecordsRef = collection(this.firestore, `admin/${user.uid}/login_records`);
-      await addDoc(loginRecordsRef, {
+      // Readable date
+      const now = new Date();
+      const formattedDate = `${now.getDate().toString().padStart(2,'0')}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getFullYear()}`;
+      const formattedTime = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+
+      const loginData = {
         loginAt: serverTimestamp(),
+        formattedDate,
+        formattedTime,
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
         ipAddress,
-        geoInfo,
-        deviceInfo
-      });
+        geoInfo: geoData,
+        deviceInfo,
+      };
+
+      // Save to global collection
+      const globalLoginHistoryRef = collection(this.firestore, 'login_history');
+      // Add the user's UID to the global record for identification
+      await addDoc(globalLoginHistoryRef, { ...loginData, uid: user.uid });
     } catch (err) {
       console.warn('Failed to log login history:', err);
     }

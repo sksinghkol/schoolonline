@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // 🔹 Common helper functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -19,50 +19,144 @@ service cloud.firestore {
       return isSignedIn() && adminData != null;
     }
 
-    function isAdminOfSchool(schoolId) {
-      let adminData = getAdminData();
-      return isApprovedAdmin() && adminData != null && adminData.schoolId == schoolId;
-    }
-
     function isSuperAdmin() {
       let adminData = getAdminData();
       return isApprovedAdmin() && adminData != null && adminData.role == 'super-admin';
     }
 
-    // Admins collection
+    // ===========================================================
+    // 🔹 Admins Collection
+    // ===========================================================
     match /admin/{adminId} {
-      allow read, write: if isSignedIn() && request.auth.uid == adminId;
+      allow read, write: if request.auth.uid == adminId;
 
-      // Per-admin login records
+      // 🔸 Subcollection: login_records
       match /login_records/{recordId} {
-        allow read, write: if isSignedIn() && request.auth.uid == adminId;
+        allow read, write: if request.auth.uid == adminId || isSuperAdmin();
       }
     }
 
-    // Schools collection
+    // ===========================================================
+    // 🔹 Schools & Directors
+    // ===========================================================
     match /schools/{schoolId} {
       allow read: if isSignedIn();
-      allow create: if isSuperAdmin(); // Only super-admins can create schools
-      allow update, delete: if isSuperAdmin() || isAdminOfSchool(schoolId);
+      allow create, update, delete: if isApprovedAdmin();
+
+      match /directors/{directorId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if isApprovedAdmin();
+      }
     }
 
-    // Directors collection (within a school)
-    match /schools/{schoolId}/directors/{directorId} {
-      allow read: if isSignedIn();
-      allow create: if isAdminOfSchool(schoolId);
-      allow update, delete: if isAdminOfSchool(schoolId);
-    }
-
-    // Subscriptions collection
+    // ===========================================================
+    // 🔹 Subscription Collection
+    // ===========================================================
     match /subscription/{subId} {
       allow read: if isSignedIn();
       allow create, update, delete: if isApprovedAdmin();
     }
 
-    // Global admin login history
-    match /admin_login_history/{docId} {
-      allow create: if isSignedIn();
-      allow read: if isApprovedAdmin();
+    // ===========================================================
+    // 🔹 Admin Login History (Global)
+    // ===========================================================
+    match /login_history/{docId} {
+  allow create: if isSignedIn();        // any signed-in admin can log
+  allow read, list: if isSuperAdmin();   // only super-admin can view/list all
+  allow update, delete: if isSuperAdmin(); // only super-admin can modify/delete
+}
+
+
+    // ===========================================================
+    // 🔹 Other Collections (Holders, Hooks, Clip, Lanyards, Cards, Visiting Cards, etc.)
+    // ===========================================================
+    match /holders/{holderId} {
+      allow read, write: if isSignedIn();
+      function validHolderData() {
+        return request.resource.data.keys().hasAll(['holder_name','price','photo','description'])
+          && request.resource.data.holder_name is string
+          && request.resource.data.price is number
+          && request.resource.data.description is string
+          && request.resource.data.photo is list;
+      }
+      allow create, update: if validHolderData();
+      allow delete: if isSignedIn();
+    }
+
+    match /hooks/{hookId} {
+      allow read, write: if isSignedIn();
+      function validHookData() {
+        return request.resource.data.keys().hasAll(['hook_name','price','photo','description'])
+          && request.resource.data.hook_name is string
+          && request.resource.data.price is number
+          && request.resource.data.description is string
+          && (request.resource.data.photo is list || request.resource.data.photo == null);
+      }
+      allow create, update: if validHookData();
+      allow delete: if isSignedIn();
+    }
+
+    match /clip/{clipId} {
+      allow read: if isSignedIn();
+      function validClipData() {
+        return request.resource.data.keys().hasAll(['clip_name','price','description','photo'])
+          && request.resource.data.clip_name is string
+          && request.resource.data.price is number
+          && request.resource.data.description is string
+          && (request.resource.data.photo is list || request.resource.data.photo == null);
+      }
+      allow create, update: if validClipData();
+      allow delete: if isSignedIn();
+    }
+
+    match /lanyards/{lanyardId} {
+      allow read, write: if isSignedIn();
+      function validLanyardData() {
+        return request.resource.data.keys().hasAll(['lanyards_name','price','photo','description'])
+          && request.resource.data.lanyards_name is string
+          && request.resource.data.price is number
+          && request.resource.data.description is string
+          && request.resource.data.photo is list;
+      }
+      allow create, update: if validLanyardData();
+      allow delete: if isSignedIn();
+    }
+
+    match /cards/{cardId} {
+      allow read, write: if isSignedIn();
+      function validCardData() {
+        return request.resource.data.keys().hasAll(['card_name','price','photo','description'])
+          && request.resource.data.card_name is string
+          && request.resource.data.price is number
+          && request.resource.data.description is string
+          && request.resource.data.photo is list;
+      }
+      allow create, update: if validCardData();
+      allow delete: if isSignedIn();
+    }
+
+    match /visiting_cards/{cardId} {
+      allow read, write: if isSignedIn();
+      allow create, update: if request.resource.data.card_name is string &&
+                             request.resource.data.price is number &&
+                             request.resource.data.price >= 0;
+    }
+
+    // ===========================================================
+    // 🔹 Other Product Collections
+    // ===========================================================
+    match /prospectus/{id} { allow read, write: if isSignedIn(); }
+    match /library_card/{id} { allow read, write: if isSignedIn(); }
+    match /medals/{id} { allow read, write: if isSignedIn(); }
+    match /gate_pass/{id} { allow read, write: if isSignedIn(); }
+    match /student_outpass/{id} { allow read, write: if isSignedIn(); }
+    match /vistors_pass/{id} { allow read, write: if isSignedIn(); }
+    match /brochure/{id} { allow read, write: if isSignedIn(); }
+    match /key_ring/{id} { allow read, write: if isSignedIn(); }
+    match /leaflet/{id} { allow read, write: if isSignedIn(); }
+    match /card_design/{id} { allow read, write: if isSignedIn(); }
+    match /lanyard_design/{id} { allow read, write: if isSignedIn(); }
+
     }
   }
 }

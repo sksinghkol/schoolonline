@@ -1,17 +1,33 @@
 <app-home-menu></app-home-menu>
 
-
-<div class="container mt-4">
-  <h2>Select Your School</h2>
-
-  <ul class="list-group mt-3">
-    <li 
-      *ngFor="let school of schools$ | async"
-      class="list-group-item list-group-item-action"
-      (click)="goToLogin(school.id)">
-      {{ school.name }}
-    </li>
-  </ul>
+<div class="home-container">
+  <div class="container pt-4">
+    <h2 class="school-list-header">Select Your School</h2>
+  
+    <div class="row school-list mt-4">
+      <!-- School Card -->
+      <div 
+        *ngFor="let school of schools$ | async"
+        class="col-lg-3 col-md-6 mb-4">
+        <div class="school-card" (click)="goToLogin(school.id)">
+          <div class="school-card-header">
+            <img [src]="school.logoUrl || 'https://dummyimage.com/80x80/dee2e6/6c757d.png'" alt="{{ school.name }} Logo" class="school-logo">
+            <div class="school-info">
+              <h5 class="mb-0">{{ school.name }}</h5>
+              <small class="school-city">{{ school.city }}</small>
+            </div>
+          </div>
+          <div class="school-card-body">
+            <p class="school-address mb-2">{{ school.address }}</p>
+          </div>
+          <div class="school-card-footer">
+            <span class="badge school-tag">{{ school.curriculum_type }}</span>
+            <span class="badge school-tag">{{ school.ownership_type }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <router-outlet></router-outlet>

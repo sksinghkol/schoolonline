@@ -8,13 +8,19 @@ import { HomeMenu } from '../../Navbar/home-menu/home-menu';
 interface School {
   id: string;
   name: string;
+  logoUrl: string;
+  city: string;
+  address: string;
+  curriculum_type: string;
+  ownership_type: string;
 }
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [CommonModule,RouterOutlet,HomeMenu],
-  templateUrl: './home.html'
+  templateUrl: './home.html',
+  styleUrls: ['./home.scss']
 })
 export class Home {
   schools$!: Observable<School[]>;

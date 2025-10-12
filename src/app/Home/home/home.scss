@@ -1,0 +1,205 @@
+.home-container {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: calc(100vh - 56px); // Adjust 56px to your navbar's height
+  padding-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.05"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+  }
+}
+
+.school-list-header {
+  text-align: center;
+  color: #ffffff;
+  font-weight: 700;
+  padding-top: 20px;
+  font-size: 2rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
+
+  &::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ffd700, #ffed4e);
+    margin: 10px auto;
+    border-radius: 2px;
+  }
+}
+
+.school-list {
+  border: none; // Remove default list-group border
+  position: relative;
+  z-index: 1;
+
+  .school-card {
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    height: 100%; // Make cards in a row equal height
+    overflow: hidden;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    &:hover {
+      transform: translateY(-8px) scale(1.01);
+      box-shadow: 0 16px 32px rgba(0, 123, 255, 0.15);
+      border-color: rgba(102, 126, 234, 0.4);
+
+      &::before {
+        transform: scaleX(1);
+      }
+
+      .school-logo {
+        transform: scale(1.05) rotate(3deg);
+      }
+
+      .school-tag {
+        transform: translateY(-1px);
+      }
+    }
+
+    .school-card-header {
+      display: flex;
+      align-items: center;
+      padding: 18px 18px 12px 18px;
+      position: relative;
+
+      .school-logo {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        z-index: 2;
+      }
+
+      .school-info {
+        margin-left: 12px;
+        flex: 1;
+
+        h5 {
+          font-weight: 700;
+          color: #2c3e50;
+          line-height: 1.1;
+          font-size: 1.1rem;
+          margin-bottom: 1px;
+        }
+
+        .school-city {
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: #667eea;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+      }
+    }
+
+    .school-card-body {
+      padding: 0 18px 12px 18px;
+      flex-grow: 1; // Allows body to grow and push footer down
+
+      .school-address {
+        font-size: 0.8rem;
+        color: #5a6c7d;
+        line-height: 1.4;
+        font-style: italic;
+      }
+    }
+
+    .school-card-footer {
+      padding: 12px 18px;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+      border-top: 1px solid rgba(102, 126, 234, 0.15);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+
+      .school-tag {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 4px 8px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #ffffff;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+        box-shadow: 0 1px 6px rgba(102, 126, 234, 0.25);
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 3px 8px rgba(102, 126, 234, 0.35);
+        }
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .school-list-header {
+    font-size: 1.75rem;
+    padding-top: 15px;
+  }
+
+  .school-card {
+    margin-bottom: 16px;
+
+    .school-card-header {
+      padding: 15px 15px 10px 15px;
+
+      .school-logo {
+        width: 42px;
+        height: 42px;
+      }
+
+      .school-info {
+        margin-left: 10px;
+
+        h5 {
+          font-size: 1rem;
+        }
+      }
+    }
+
+    .school-card-body {
+      padding: 0 15px 10px 15px;
+    }
+
+    .school-card-footer {
+      padding: 10px 15px;
+    }
+  }
+}
