@@ -6,10 +6,17 @@ import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore
 export class SchoolService {
   constructor(private firestore: Firestore) {}
 
+  private generateSlug(name: string): string {
+    const words = (name || '').replace(/[^A-Za-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    return words.join('').toLowerCase();
+  }
+
   async addSchool(data: any) {
     const schoolRef = doc(this.firestore, `schools/${data.code}`);
+    const slug = this.generateSlug(data.name);
     await setDoc(schoolRef, {
       ...data,
+      slug: slug,
       createdAt: serverTimestamp(),
       status: 'active'
     });

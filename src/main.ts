@@ -1,10 +1,6 @@
 import 'zone.js';
 import 'quill'; // 🔹 Important for Quill to work
 
-// 🔹 Add Bootstrap CSS and JS
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';

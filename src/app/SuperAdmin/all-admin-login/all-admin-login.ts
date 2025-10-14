@@ -4,8 +4,6 @@ import { Firestore, collection, getDocs, orderBy, query, doc, getDoc, writeBatch
 import { FormsModule } from '@angular/forms';
 import { Auth } from '@angular/fire/auth';
 import { onAuthStateChanged } from 'firebase/auth';
-import { BehaviorSubject, combineLatest } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, startWith } from 'rxjs/operators';
 
 export interface LoginRecord {
   id?: string;
@@ -22,18 +20,6 @@ export interface LoginRecord {
   showDetails?: boolean;
 }
 
-export interface GroupedUser {
-  key: string;
-  email?: string | null;
-  displayName?: string | null;
-  photoURL?: string | null;
-  records: LoginRecord[];
-  expanded?: boolean;
-  showDateRange?: boolean;
-  startDate?: string;
-  endDate?: string;
-}
-
 @Component({
   standalone: true,
   selector: 'app-all-admin-login',
@@ -47,16 +33,22 @@ export class AllAdminLogin implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   allRecords: LoginRecord[] = [];
-  groupedUsers: GroupedUser[] = [];
-
-  private allRecordsMaster: LoginRecord[] = [];
-  private groupedUsersMaster: GroupedUser[] = [];
+  groupedUsers: Array<{
+    key: string;
+    email?: string | null;
+    displayName?: string | null;
+    photoURL?: string | null;
+    records: LoginRecord[];
+    expanded?: boolean;
+    showDateRange?: boolean;
+    startDate?: string;
+    endDate?: string;
+  }> = [];
 
   loading = true;
   errorMessage: string | null = null;
   viewMode: 'group' | 'flat' = 'group';
-
-  private querySubject = new BehaviorSubject<string>('');
+  // client-side search query
   query: string = '';
 
   async ngOnInit(): Promise<void> {
@@ -125,7 +117,6 @@ export class AllAdminLogin implements OnInit {
       }
 
       this.allRecords = recordsSnap.docs.map((doc: any) => {
-        // ... (rest of the mapping logic is correct)
         const raw = doc.data();
         const adminId = raw?.uid || raw?.adminId || doc.ref?.parent?.parent?.id || null;
         const adminPath = raw?.adminPath || doc.ref?.parent?.parent?.path || null;
@@ -148,9 +139,7 @@ export class AllAdminLogin implements OnInit {
         } as LoginRecord;
       });
 
-      this.allRecordsMaster = [...this.allRecords];
       this.groupRecordsByUser();
-      this.setupFiltering();
       try { this.cdr.detectChanges(); } catch {}
     } catch (err: any) {
       console.error('Error loading login records:', err);
@@ -164,7 +153,7 @@ export class AllAdminLogin implements OnInit {
   }
 
   private groupRecordsByUser() {
-    const map = new Map<string, GroupedUser>();
+    const map = new Map<string, typeof this.groupedUsers[0]>();
     for (const rec of this.allRecords) {
       const key = rec.adminId || rec.adminPath || rec.email || rec.displayName || rec.id || 'unknown';
       if (!map.has(key)) {
@@ -183,50 +172,48 @@ export class AllAdminLogin implements OnInit {
     });
 
     users.sort((a, b) => b.records.length - a.records.length || (a.displayName || '').localeCompare(b.displayName || ''));
-    this.groupedUsersMaster = users;
-    this.groupedUsers = [...this.groupedUsersMaster];
+    this.groupedUsers = users;
   }
 
-  private setupFiltering(): void {
-    this.querySubject.pipe(
-      debounceTime(200),
-      distinctUntilChanged(),
-      startWith('')
-    ).subscribe(query => {
-      this.query = query;
-      this.filterData(query);
+  // Filtered users for client-side search (by displayName or email)
+  get filteredUsers() {
+    const q = (this.query || '').trim().toLowerCase();
+    if (!q) return this.groupedUsers;
+    return this.groupedUsers.filter(u => {
+      const name = (u.displayName || '').toLowerCase();
+      const email = (u.email || '').toLowerCase();
+      const key = (u.key || '').toLowerCase();
+      return name.includes(q) || email.includes(q) || key.includes(q);
     });
   }
 
-  onQueryChange(value: string): void {
-    this.querySubject.next(value);
-  }
-
-  private filterData(query: string): void {
-    const lowerCaseQuery = query.toLowerCase().trim();
-    if (!lowerCaseQuery) {
-      this.allRecords = [...this.allRecordsMaster];
-      this.groupedUsers = [...this.groupedUsersMaster];
-    } else {
-      this.allRecords = this.allRecordsMaster.filter(rec =>
-        rec.displayName?.toLowerCase().includes(lowerCaseQuery) ||
-        rec.email?.toLowerCase().includes(lowerCaseQuery)
-      );
-      this.groupedUsers = this.groupedUsersMaster.filter(user =>
-        user.displayName?.toLowerCase().includes(lowerCaseQuery) ||
-        user.email?.toLowerCase().includes(lowerCaseQuery)
-      );
-    }
-    this.cdr.detectChanges();
+  // Filtered flat records for client-side search
+  get filteredAllRecords() {
+    const q = (this.query || '').trim().toLowerCase();
+    if (!q) return this.allRecords;
+    return this.allRecords.filter(r => (r.displayName || '').toLowerCase().includes(q) || (r.email || '').toLowerCase().includes(q));
   }
 
   trackById(_i: number, item: LoginRecord) { return item.id; }
-  trackByUser(_i: number, item: GroupedUser) { return item.key; }
-  toggleView() {
-    this.viewMode = this.viewMode === 'group' ? 'flat' : 'group';
-  }
-  toggleUser(user: GroupedUser) { user.expanded = !user.expanded; try { this.cdr.detectChanges(); } catch {} }
+  trackByUser(_i: number, item: { key: string }) { return item.key; }
+  toggleView() { this.viewMode = this.viewMode === 'group' ? 'flat' : 'group'; }
+  toggleUser(user: { expanded?: boolean }) { user.expanded = !user.expanded; try { this.cdr.detectChanges(); } catch {} }
   toggleRecordDetails(rec: LoginRecord) { rec.showDetails = !rec.showDetails; try { this.cdr.detectChanges(); } catch {} }
+
+  onQueryChange(value: string) {
+    this.query = (value || '').toLowerCase().trim();
+    if (!this.query) {
+      // reset
+      try { this.groupRecordsByUser(); } catch {}
+      try { this.cdr.detectChanges(); } catch {}
+      return;
+    }
+
+    // Filter flat records and grouped users
+    this.allRecords = this.allRecords.filter(r => (r.displayName || '').toLowerCase().includes(this.query) || (r.email || '').toLowerCase().includes(this.query));
+    this.groupedUsers = this.groupedUsers.filter(u => (u.displayName || '').toLowerCase().includes(this.query) || (u.email || '').toLowerCase().includes(this.query));
+    try { this.cdr.detectChanges(); } catch {}
+  }
 
   onImgError(evt: Event) {
     const img = evt.target as HTMLImageElement;
@@ -254,7 +241,7 @@ export class AllAdminLogin implements OnInit {
   // ==========================
   // 🔹 Delete All History
   // ==========================
-  async deleteUserHistory(user: GroupedUser) {
+  async deleteUserHistory(user: { key: string; records: LoginRecord[] }) {
     const adminId = user.key;
     if (!adminId || adminId === 'unknown') { this.errorMessage = 'Cannot delete history for unknown user.'; return; }
     if (!confirm(`Delete all ${user.records.length} records for this user? This cannot be undone.`)) return;
@@ -291,7 +278,7 @@ export class AllAdminLogin implements OnInit {
   // ==========================
   // 🔹 Delete by Date Range
   // ==========================
-  async deleteUserHistoryByDateRange(user: GroupedUser) {
+  async deleteUserHistoryByDateRange(user: { key: string; startDate?: string; endDate?: string; showDateRange?: boolean }) {
     const adminId = user.key;
     if (!adminId || !user.startDate || !user.endDate) {
       this.errorMessage = 'Please select valid date range.';
@@ -313,22 +300,50 @@ export class AllAdminLogin implements OnInit {
       const adminData = adminSnapshot.exists() ? adminSnapshot.data() : null;
       if (!adminData || adminData['role'] !== 'super-admin') throw new Error('Permission denied. Only super-admin can delete login history.');
 
-      const batch = writeBatch(this.firestore);
+      const refsToDelete: any[] = [];
 
       const loginHistoryRef = collection(this.firestore, 'login_history');
-      const qGlobal = query(loginHistoryRef, where('uid','==',adminId), where('loginAt','>=',start), where('loginAt','<=',end));
-      const snapGlobal = await getDocs(qGlobal);
-      snapGlobal.forEach(d => batch.delete(d.ref));
+      try {
+        const qGlobal = query(loginHistoryRef, where('uid','==',adminId), where('loginAt','>=',start), where('loginAt','<=',end));
+        const snapGlobal = await getDocs(qGlobal);
+        snapGlobal.forEach(d => refsToDelete.push(d.ref));
+      } catch (e) { console.warn('Global uid query failed', e); }
 
-      const userSubRef = collection(this.firestore, `admin/${adminId}/login_records`);
-      const qUser = query(userSubRef, where('loginAt','>=',start), where('loginAt','<=',end));
-      const snapUser = await getDocs(qUser);
-      snapUser.forEach(d => batch.delete(d.ref));
+      try {
+        const userSubRef = collection(this.firestore, `admin/${adminId}/login_records`);
+        const qUser = query(userSubRef, where('loginAt','>=',start), where('loginAt','<=',end));
+        const snapUser = await getDocs(qUser);
+        snapUser.forEach(d => refsToDelete.push(d.ref));
+      } catch (e) { console.warn('User subcollection query failed', e); }
 
-      await batch.commit();
+      // If Firestore queries returned nothing, fall back to client-side matching of loaded records
+      if (refsToDelete.length === 0) {
+        const clientMatches = this.allRecords.filter(r => {
+          const rid = r.adminId || r.adminPath || r.email || r.displayName || r.id;
+          if (!rid) return false;
+          if ((rid + '') !== (adminId + '')) return false;
+          const t = r.loginAt?.toDate ? r.loginAt.toDate() : (r.loginAt ? new Date(r.loginAt) : null);
+          if (!t) return false;
+          return t >= start && t <= end;
+        });
+        for (const m of clientMatches) {
+          if (m.id) refsToDelete.push(doc(this.firestore, `login_history/${m.id}`));
+        }
+      }
 
-      const deletedIds = new Set(snapGlobal.docs.map(d => d.id));
-      this.allRecords = this.allRecords.filter(r => !deletedIds.has(r.id || ''));
+      if (refsToDelete.length === 0) {
+        this.errorMessage = 'No records found in the selected date range for this user.';
+        return;
+      }
+
+      // commit in chunks
+      await this.commitDeletesInChunks(refsToDelete);
+
+      // Update UI by removing deleted global ids
+      const deletedIds = new Set(refsToDelete.map((r:any)=>{
+        const parts = r.path.split('/'); return parts[0] === 'login_history' ? parts[1] : null;
+      }).filter(Boolean));
+      this.allRecords = this.allRecords.filter(rec => !deletedIds.has(rec.id || ''));
       this.groupRecordsByUser();
       user.showDateRange = false;
 
@@ -341,7 +356,20 @@ export class AllAdminLogin implements OnInit {
     }
   }
 
-  async deleteAdminUser(user: GroupedUser) {
+  // Helper: commit deletes in chunks to respect Firestore batch limits
+  private async commitDeletesInChunks(refs: any[]) {
+    const CHUNK = 400;
+    for (let i = 0; i < refs.length; i += CHUNK) {
+      const slice = refs.slice(i, i + CHUNK);
+      const b = writeBatch(this.firestore);
+      for (const r of slice) {
+        try { b.delete(r); } catch (e) { console.warn('failed add delete', e); }
+      }
+      await b.commit();
+    }
+  }
+
+  async deleteAdminUser(user: { key: string; displayName?: string | null; records: LoginRecord[] }) {
     const adminId = user.key;
     if (!adminId || adminId === 'unknown') {
       this.errorMessage = 'Cannot delete a user with an unknown ID.';

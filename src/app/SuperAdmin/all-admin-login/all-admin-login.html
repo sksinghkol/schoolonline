@@ -13,9 +13,9 @@
   <div class="row mb-3">
     <div class="col-md-6">
       <div class="input-group input-group-sm">
-        <span class="input-group-text"><i class="bi bi-search"></i></span>
-        <input class="form-control form-control-sm" placeholder="Search admins by name or email" [value]="query" (input)="onQueryChange($event.target.value)">
-        <button class="btn btn-outline-secondary" *ngIf="query" (click)="onQueryChange('')"><i class="bi bi-x-lg"></i></button>
+  <span class="input-group-text"><i class="bi bi-search"></i></span>
+  <input class="form-control form-control-sm" placeholder="Search admins by name or email" [(ngModel)]="query" (ngModelChange)="onQueryChange($event)">
+        <button class="btn btn-outline-secondary" *ngIf="query" (click)="query = ''"><i class="bi bi-x-lg"></i></button>
       </div>
     </div>
   </div>
@@ -35,7 +35,7 @@
   <div *ngIf="!loading && !errorMessage">
     <!-- ================= Flat View ================= -->
     <div *ngIf="viewMode === 'flat'" class="list-group">
-      <div *ngFor="let rec of allRecords; trackBy: trackById" class="list-group-item list-group-item-action flex-column align-items-start">
+      <div *ngFor="let rec of filteredAllRecords; trackBy: trackById" class="list-group-item list-group-item-action flex-column align-items-start">
         <div class="d-flex w-100 justify-content-between">
           <div class="d-flex align-items-center">
             <img [src]="rec.photoURL" (error)="onImgError($event)" class="avatar-sm me-3" />
@@ -56,7 +56,7 @@
 
     <!-- ================= Grouped View ================= -->
     <div *ngIf="viewMode === 'group'">
-      <div *ngFor="let user of groupedUsers; trackBy: trackByUser" class="card shadow-sm mb-3">
+  <div *ngFor="let user of filteredUsers; trackBy: trackByUser" class="card shadow-sm mb-3">
         <div class="card-header bg-light d-flex justify-content-between align-items-center p-3">
           <div class="d-flex align-items-center">
             <img [src]="user.photoURL" (error)="onImgError($event)" class="avatar me-3" />

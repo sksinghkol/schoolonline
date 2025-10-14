@@ -1,0 +1,75 @@
+<!-- School Details -->
+<div class="container py-4" *ngIf="!loading && schoolData; else loadingTpl">
+  <div class="card shadow-lg">
+    <div class="card-body p-4 p-md-5">
+      <div class="row g-4 align-items-center">
+        <div class="col-md-3 text-center">
+          <img 
+            *ngIf="schoolData.logoUrl" 
+            [src]="schoolData.logoUrl" 
+            alt="{{ schoolData.name }}" 
+            class="img-fluid rounded-circle border p-1" 
+            style="max-width: 150px;"
+          >
+        </div>
+        <div class="col-md-9">
+          <h2 class="fw-bold text-primary">{{ schoolData.name }}</h2>
+          <p class="text-muted fs-5 mb-2">{{ schoolData.address || 'Main address not available' }}</p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-info">{{ schoolData.school_type || 'N/A' }}</span>
+            <span class="badge bg-success">{{ schoolData.ownership_type || 'N/A' }}</span>
+            <span class="badge bg-secondary">{{ schoolData.curriculum_type || 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <div class="row g-4">
+        <div class="col-md-6">
+          <h5><i class="bi bi-geo-alt-fill text-primary me-2"></i>Address</h5>
+          <p class="mb-1">{{ schoolData.address_line1 || 'N/A' }}</p>
+          <p *ngIf="schoolData.address_line2" class="mb-1">{{ schoolData.address_line2 }}</p>
+          <p class="mb-1">{{ schoolData.city }}, {{ schoolData.state }} - {{ schoolData.zip_code }}</p>
+          <p>{{ schoolData.country }}</p>
+        </div>
+        <div class="col-md-6">
+          <h5><i class="bi bi-telephone-fill text-primary me-2"></i>Contact</h5>
+          <p class="mb-1"><strong>Primary:</strong> {{ schoolData.phone_primary || 'N/A' }}</p>
+          <p class="mb-1"><strong>Secondary:</strong> {{ schoolData.phone_secondary || 'N/A' }}</p>
+          <p class="mb-1"><strong>Email:</strong> <a [href]="'mailto:' + schoolData.email">{{ schoolData.email || 'N/A' }}</a></p>
+          <p><strong>Website:</strong> <a [href]="schoolData.website" target="_blank">{{ schoolData.website || 'N/A' }}</a></p>
+        </div>
+        <div class="col-md-6">
+          <h5><i class="bi bi-info-circle-fill text-primary me-2"></i>Details</h5>
+          <p class="mb-1"><strong>Established:</strong> {{ schoolData.establishment_year || 'N/A' }}</p>
+          <p class="mb-1"><strong>School Code:</strong> {{ schoolData.code || 'N/A' }}</p>
+          <p><strong>Enrollment Capacity:</strong> {{ schoolData.enrollment_capacity || 'N/A' }}</p>
+        </div>
+        <div class="col-md-6" *ngIf="schoolData.slug || matchedVariant">
+          <h5><i class="bi bi-link-45deg text-primary me-2"></i>Slug</h5>
+          <p>
+            <strong>{{ schoolData.slug || matchedVariant }}</strong>
+            <span *ngIf="matchedVariant && schoolData.slug !== matchedVariant" class="text-muted small"> (closest match)</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Spinner -->
+<ng-template #loadingTpl>
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-3">Loading school details...</p>
+  </div>
+</ng-template>
+
+<!-- School Not Found -->
+<div *ngIf="!loading && !schoolData" class="container py-5 text-center">
+  <h4 class="text-warning">School not found</h4>
+  <p *ngIf="incomingName">Searched for: <strong>{{ incomingName }}</strong></p>
+  <p *ngIf="matchedVariant">Closest matched slug: <strong>{{ matchedVariant }}</strong></p>
+  <a class="btn btn-sm btn-primary mt-3" routerLink="/">Back to home</a>
+</div>

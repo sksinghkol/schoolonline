@@ -1,67 +1,64 @@
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
-import { NgZone } from '@angular/core';
-// Use Firebase Web SDK directly and access instances lazily within methods
-import { getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, User } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { Firestore, collection, collectionData, addDoc, doc, updateDoc, deleteDoc, query, where } from '@angular/fire/firestore';
+import { Auth, createUserWithEmailAndPassword, deleteUser } from '@angular/fire/auth';
+import { User } from 'firebase/auth';
+
+export interface AppUser {
+  id?: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: 'student' | 'teacher' | 'principal' | 'director' | 'admin' | 'super-admin';
+  schoolId?: string;
+  class?: string;
+  section?: string;
+  roll?: string;
+  mobile?: string;
+  status?: 'active' | 'inactive';
+  uid?: string;
+}
 
 @Injectable({ providedIn: 'root' })
-export class AuthService {
-  constructor(private router: Router, private ngZone: NgZone) {}
+export class StudentAuthService {
+  constructor(private firestore: Firestore, private auth: Auth) {}
 
-  async loginWithGoogle(schoolCode: string) {
+  getUsers(role?: string) {
+    const usersRef = collection(this.firestore, 'appusers');
+    if (!role) return collectionData(usersRef, { idField: 'id' });
+
+    const q = query(usersRef, where('role', '==', role));
+    return collectionData(q, { idField: 'id' });
+  }
+
+  async addUser(user: AppUser) {
     try {
-      const { user } = await this.ngZone.runOutsideAngular(async () => {
-        // Lazily grab app, auth, and db to ensure initializeApp has completed
-        const app = getApp();
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+      if (!user.password) user.password = '123456';
+      const userCredential = await createUserWithEmailAndPassword(this.auth, user.email, user.password);
+      const uid = userCredential.user.uid;
 
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
-        const user: User = result.user;
-
-        // Path: schools/{schoolCode}/students/{uid}
-        const userRef = doc(db, `schools/${schoolCode}/students/${user.uid}`);
-        // Save student data
-        await setDoc(
-          userRef,
-          {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            schoolCode: schoolCode,
-            role: 'student',
-            createdAt: new Date()
-          },
-          { merge: true }
-        );
-
-        return { user };
-      });
-
-      this.ngZone.run(() => this.router.navigate(['/student-dashboard']));
-    } catch (error) {
-      console.error('Login error:', error);
-    }
+      const usersRef = collection(this.firestore, 'appusers');
+      await addDoc(usersRef, { ...user, uid, createdAt: new Date() });
+      return { success: true };
+    } catch (error) { return { success: false, error }; }
   }
 
-  async logout() {
-    await this.ngZone.runOutsideAngular(async () => {
-      const app = getApp();
-      const auth = getAuth(app);
-      await signOut(auth);
-    });
-    this.ngZone.run(() => this.router.navigate(['/student-login']));
+  async updateUser(userId: string, updatedData: Partial<AppUser>) {
+    try {
+      const userDoc = doc(this.firestore, `appusers/${userId}`);
+      await updateDoc(userDoc, { ...updatedData, updatedAt: new Date() });
+      return { success: true };
+    } catch (error) { return { success: false, error }; }
   }
 
-  getCurrentUser() {
-    // currentUser lookup can be outside Angular as well
-    return this.ngZone.runOutsideAngular(() => {
-      const app = getApp();
-      const auth = getAuth(app);
-      return auth.currentUser;
-    });
+  async deleteUser(userId: string, firebaseUid?: string) {
+    try {
+      const userDoc = doc(this.firestore, `appusers/${userId}`);
+      await deleteDoc(userDoc);
+      if (firebaseUid) {
+        const user = this.auth.currentUser;
+        if (user && user.uid === firebaseUid) await deleteUser(user);
+      }
+      return { success: true };
+    } catch (error) { return { success: false, error }; }
   }
 }

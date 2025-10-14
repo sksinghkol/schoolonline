@@ -1,0 +1,86 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand navbar-brand-stylish d-flex align-items-center" routerLink="/">
+      <img
+        *ngIf="schoolLogoUrl()"
+        [src]="schoolLogoUrl()"
+        alt="School Logo"
+        class="me-2 rounded-circle border border-light shadow"
+        style="height: 45px; width: 45px; object-fit: cover;"
+      />
+      <span class="text-uppercase">{{ schoolName() }}</span>
+    </a>
+
+    <button
+      class="navbar-toggler border-0"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <!-- About Us -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            About Us <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
+          </a>
+          <ul class="dropdown-menu shadow">
+            <li><a class="dropdown-item" [routerLink]="['/about-us']"><i class="bi bi-building me-2 nav-link-icon text-primary"></i> About Us</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/management-desk']"><i class="bi bi-person-workspace me-2 nav-link-icon text-success"></i> Management Desk</a></li>
+          </ul>
+        </li>
+
+        <!-- Academics -->
+        <li class="nav-item dropdown ms-lg-3">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Academics <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
+          </a>
+          <ul class="dropdown-menu shadow">
+            <li><a class="dropdown-item" [routerLink]="['/courses']"><i class="bi bi-journal-text me-2 nav-link-icon text-info"></i> Our Courses</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/curriculum']"><i class="bi bi-book me-2 nav-link-icon text-warning"></i> Our Curriculum</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/faculty']"><i class="bi bi-people me-2 nav-link-icon text-secondary"></i> Our Faculty</a></li>
+          </ul>
+        </li>
+
+        <!-- Students Corner -->
+        <li class="nav-item dropdown ms-lg-3">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Students Corner <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
+          </a>
+          <ul class="dropdown-menu shadow">
+            <li><a class="dropdown-item" [routerLink]="['/syllabus']"><i class="bi bi-cloud-download me-2 nav-link-icon text-danger"></i> Download Syllabus</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/question-bank']"><i class="bi bi-patch-question me-2 nav-link-icon text-primary"></i> Question Bank</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/video-lectures']"><i class="bi bi-collection-play me-2 nav-link-icon text-success"></i> Video Lectures</a></li>
+          </ul>
+        </li>
+      </ul>
+
+      <!-- Login Dropdown -->
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle btn btn-outline-light btn-sm d-flex align-items-center px-3 rounded-pill" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Login <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><a class="dropdown-item" [routerLink]="['/admin/login']"><i class="bi bi-shield-lock me-2 nav-link-icon text-primary"></i> Admin</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/director/login']"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i> Director</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/principal/login']"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> Principal</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/staff/login']"><i class="bi bi-briefcase me-2 nav-link-icon text-warning"></i> Staff</a></li>
+            <!-- ✅ Student login with current school slug -->
+            <li *ngIf="schoolState.currentSchool() as school">
+              <a class="dropdown-item" [routerLink]="['/student-login', school.slug]">
+                <i class="bi bi-mortarboard me-2 nav-link-icon text-secondary"></i> Students ({{school.name}})
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

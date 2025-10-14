@@ -63,7 +63,7 @@ export class SchoolDetails implements OnInit {
 
   states: string[] = ['Bihar', 'Uttar Pradesh', 'Maharashtra', 'West Bengal'];
   citiesByState: Record<string, string[]> = {
-    Bihar: ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur'],
+    Bihar: ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur','Darbhanga', 'Purnia', 'Bettiah', 'Ara', 'Begusarai', 'Chhapra', 'Madhubani', 'Saharsa', 'Katihar', 'Sitamarhi', 'Samastipur', 'Nawada', 'Jamalpur', 'Siwan', 'Araria', 'Buxar', 'Jehanabad', 'Aurangabad', 'Gopalganj', 'Kishanganj', 'Lakhisarai', 'Madhepura', 'Munger', 'Nalanda', 'Rohtas', 'Saran', 'Sheikhpura', 'Vaishali', 'West Champaran', 'East Champaran', 'Kaimur', 'Khagaria', 'Supaul', 'Jamui', 'Banka', 'Arwal', 'Aurangabad', 'Banka', 'Begusarai', 'Bhagalpur', 'Buxar', 'Darbhanga', 'East Champaran', 'Gaya', 'Gopalganj', 'Jamui', 'Jehanabad', 'Kaimur', 'Katihar', 'Khagaria', 'Kishanganj', 'Lakhisarai', 'Madhepura', 'Madhubani', 'Munger', 'Muzaffarpur', 'Nalanda', 'Nawada', 'Patna', 'Purnia', 'Rohtas', 'Saharsa', 'Samastipur', 'Saran', 'Sheikhpura', 'Sitamarhi', 'Siwan', 'Supaul', 'Vaishali', 'West Champaran', 'Araria', 'Arwal', 'Begusarai', 'Bhagalpur', 'Buxar', 'Darbhanga', 'East Champaran', 'Gaya', 'Gopalganj', 'Jamui', 'Jehanabad', 'Kaimur', 'Katihar', 'Khagaria', 'Kishanganj', 'Lakhisarai', 'Madhepura', 'Madhubani', 'Munger', 'Muzaffarpur', 'Nalanda', 'Nawada', 'Patna', 'Purnia', 'Rohtas', 'Saharsa', 'Samastipur', 'Saran', 'Sheikhpura', 'Sitamarhi', 'Siwan', 'Supaul', 'Vaishali', 'West Champaran'],
     'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Varanasi', 'Agra'],
     Maharashtra: ['Mumbai', 'Pune', 'Nagpur', 'Nashik'],
     'West Bengal': ['Kolkata', 'Darjeeling', 'Howrah', 'Siliguri']

@@ -30,6 +30,7 @@ interface School {
   id?: string;
   name: string;
   code: string;
+  slug?: string; // added slug
   logoUrl?: string;
   subscription?: SchoolSubscription;
   createdAt?: any;
@@ -50,11 +51,10 @@ interface SubscriptionItem {
   created_at?: any;
 }
 
-
 @Component({
   selector: 'app-add-school',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule,RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './add-school.html',
   styleUrls: ['./add-school.scss']
 })
@@ -63,6 +63,7 @@ export class AddSchool implements OnInit, AfterViewInit {
   subscriptions$: Observable<SubscriptionItem[]>;
   schoolForm: FormGroup;
   editingSchoolId: string | null = null;
+  editingSchool: School | null = null;
   subscriptionList: SubscriptionItem[] = [];
   selectedFile: File | null = null;
   uploadingLogo = false;
@@ -115,11 +116,17 @@ export class AddSchool implements OnInit, AfterViewInit {
     return `${prefix}${random}`;
   }
 
+  generateSlug(name: string | null | undefined): string {
+    if (!name) return '';
+    return name.replace(/\s+/g, '').toLowerCase(); // remove spaces & lowercase
+  }
+
   async addSchool() {
     if (this.schoolForm.invalid) return;
 
     const { name, logoUrl, plan, seats, status, address, contact, subscriptionStarts, subscriptionEnds } = this.schoolForm.value;
     const schoolCode = this.generateSchoolCode();
+    const schoolSlug = this.generateSlug(name);
     const selectedPlan = this.subscriptionList.find(p => p.id === plan);
 
     const subscription: SchoolSubscription = {
@@ -143,6 +150,7 @@ export class AddSchool implements OnInit, AfterViewInit {
 
       await addDoc(collection(this.firestore, 'schools'), {
         name,
+        slug: schoolSlug,
         code: schoolCode,
         logoUrl: finalLogoUrl || null,
         subscription,
@@ -164,6 +172,7 @@ export class AddSchool implements OnInit, AfterViewInit {
 
   editSchool(school: School) {
     this.editingSchoolId = school.id!;
+    this.editingSchool = school;
     this.schoolForm.setValue({
       name: school.name || '',
       logoUrl: school.logoUrl || '',
@@ -182,6 +191,7 @@ export class AddSchool implements OnInit, AfterViewInit {
 
     const { name, logoUrl, plan, seats, status, address, contact, subscriptionStarts, subscriptionEnds } = this.schoolForm.value;
     const schoolDoc = doc(this.firestore, `schools/${this.editingSchoolId}`);
+    const schoolSlug = this.generateSlug(name);
     const selectedPlan = this.subscriptionList.find(p => p.id === plan);
 
     const subscription: SchoolSubscription = {
@@ -205,6 +215,7 @@ export class AddSchool implements OnInit, AfterViewInit {
 
       await updateDoc(schoolDoc, {
         name,
+        slug: schoolSlug,
         logoUrl: finalLogoUrl || null,
         subscription,
         status,
@@ -213,6 +224,7 @@ export class AddSchool implements OnInit, AfterViewInit {
       });
 
       this.editingSchoolId = null;
+      this.editingSchool = null;
       this.selectedFile = null;
       this.schoolForm.reset({ plan: this.subscriptionList[0]?.id || '', seats: 500, status: 'active' });
     } catch (e) {
@@ -255,6 +267,7 @@ export class AddSchool implements OnInit, AfterViewInit {
 
   cancelEdit() {
     this.editingSchoolId = null;
+    this.editingSchool = null;
     this.selectedFile = null;
     this.schoolForm.reset({ plan: this.subscriptionList[0]?.id || '', seats: 500, status: 'active' });
   }

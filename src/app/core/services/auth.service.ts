@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, Injector, runInInjectionContext } from '@angular/core';
 import {
   Auth,
   GoogleAuthProvider,
@@ -31,6 +31,7 @@ export class AuthService {
 
   private auth = inject(Auth);
   private firestore = inject(Firestore);
+  private injector = inject(Injector);
   private router = inject(Router);
   private http = inject(HttpClient);
 
@@ -61,8 +62,11 @@ export class AuthService {
       const user = result.user;
 
       if (user) {
+        // load admin profile; do not call saveLoginHistory here because
+        // the onAuthStateChanged listener (initAuthListener) will fire
+        // and perform the single canonical save. Calling both results
+        // in duplicate records.
         await this.loadAdminData(user);
-        await this.saveLoginHistory(user);
       }
     } catch (error) {
       console.error('Google login failed:', error);
@@ -74,8 +78,8 @@ export class AuthService {
 
   /** Load admin data from Firestore */
   private async loadAdminData(user: FirebaseUser) {
-    const adminRef = doc(this.firestore, `admin/${user.uid}`);
-    const snapshot = await getDoc(adminRef);
+  const adminRef = doc(this.firestore, `admin/${user.uid}`);
+  const snapshot = await runInInjectionContext(this.injector, async () => getDoc(adminRef));
 
     const adminData: Admin = {
       uid: user.uid,
@@ -87,9 +91,9 @@ export class AuthService {
     };
 
     if (!snapshot.exists()) {
-      await setDoc(adminRef, adminData);
+      await runInInjectionContext(this.injector, async () => setDoc(adminRef, adminData));
     } else {
-      await setDoc(adminRef, { displayName: user.displayName, photoURL: user.photoURL }, { merge: true });
+      await runInInjectionContext(this.injector, async () => setDoc(adminRef, { displayName: user.displayName, photoURL: user.photoURL }, { merge: true }));
     }
 
     this.currentUserSubject.next(adminData);
@@ -129,10 +133,19 @@ export class AuthService {
         deviceInfo,
       };
 
+      // Path to the user-specific subcollection
+      const userLoginHistoryRef = collection(this.firestore, `admin/${user.uid}/login_records`);
+
       // Save to global collection
       const globalLoginHistoryRef = collection(this.firestore, 'login_history');
-      // Add the user's UID to the global record for identification
-      await addDoc(globalLoginHistoryRef, { ...loginData, uid: user.uid });
+
+      // Use a Promise.all to save to both locations concurrently inside Angular injection context
+      await runInInjectionContext(this.injector, async () => {
+        await Promise.all([
+          addDoc(globalLoginHistoryRef, { ...loginData, uid: user.uid }), // Keep uid for super-admin view
+          addDoc(userLoginHistoryRef, loginData)
+        ]);
+      });
     } catch (err) {
       console.warn('Failed to log login history:', err);
     }

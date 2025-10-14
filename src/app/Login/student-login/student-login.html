@@ -1,6 +1,41 @@
-<div class="login-container">
-  <h2>Student Login</h2>
-  <button (click)="login()" class="btn btn-primary">
-    Login with Google
-  </button>
+<div class="container mt-5">
+  <h3 class="mb-4 text-center">Student Login - {{ selectedSchool?.name || 'School' }}</h3>
+
+  <form [formGroup]="loginForm" (ngSubmit)="login()" class="w-50 mx-auto">
+    <div class="mb-3">
+      <label class="form-label">Class</label>
+      <select formControlName="class" class="form-select" (change)="onClassChange($event)">
+        <option value="">Select Class</option>
+        <option *ngFor="let cls of classes()" [value]="cls">{{ cls }}</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Section</label>
+      <select formControlName="section" class="form-select" (change)="onSectionChange($event)">
+        <option value="">Select Section</option>
+        <option *ngFor="let sec of sections()" [value]="sec">{{ sec }}</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Roll Number</label>
+      <select formControlName="roll" class="form-select">
+        <option value="">Select Roll</option>
+        <option *ngFor="let r of rolls()" [value]="r">{{ r }}</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Mobile Number</label>
+      <input type="text" class="form-control" formControlName="mobile" placeholder="Enter Mobile Number" />
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-control" formControlName="password" placeholder="Enter Password" />
+    </div>
+
+    <button type="submit" class="btn btn-danger w-100">Login</button>
+  </form>
 </div>

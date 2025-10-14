@@ -1,0 +1,157 @@
+/* ===== Navbar Glass Gradient ===== */
+.navbar.bg-danger {
+  background: linear-gradient(135deg, #d9534f, #ecd503, #3b9200);
+  z-index: 1030; // Ensures the navbar and its dropdowns are on top of other content
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  transition: background 0.4s ease;
+}
+
+/* ===== School Brand Styling ===== */
+.navbar-brand-stylish span {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.navbar-brand-stylish span:hover {
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.7);
+  transform: scale(1.05);
+}
+
+/* ===== Navbar Links ===== */
+.nav-link {
+  position: relative;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #fff !important;
+  transform: translateY(-2px);
+}
+
+/* ===== Neon Underline Animation ===== */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 15%;
+  width: 70%;
+  height: 2px;
+  background: linear-gradient(90deg, #fff, #ffd1d1);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.35s ease;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  transform: scaleX(1);
+}
+
+/* ===== Dropdown Enhancements ===== */
+.dropdown-menu {
+  background: rgba(33, 37, 41, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 0.6rem 0;
+  animation: dropdownFade 0.3s ease forwards;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+}
+
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 1.25rem;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid rgba(33, 37, 41, 0.9);
+}
+
+/* ===== Dropdown Item Styling ===== */
+.dropdown-item {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  transition: all 0.3s ease;
+  border-radius: 0.4rem;
+}
+
+.dropdown-item i {
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent);
+  color: #fff;
+  padding-left: 1.6rem;
+}
+
+.dropdown-item:hover i {
+  transform: scale(1.2);
+}
+
+/* ===== Custom Arrow Icons ===== */
+.dropdown-arrow-icon {
+  margin-left: 0.35rem;
+  font-size: 0.75em;
+  transition: transform 0.3s ease;
+}
+
+.dropdown-toggle.show .dropdown-arrow-icon {
+  transform: rotate(180deg);
+}
+
+// Hide Bootstrap's default dropdown arrow so our custom one can shine.
+.dropdown-toggle::after {
+  display: none;
+}
+
+/* ===== Login Button ===== */
+.navbar-nav .btn.dropdown-toggle {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.3s ease;
+}
+
+.navbar-nav .btn.dropdown-toggle:hover {
+  background: #fff;
+  color: #d9534f;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* ===== Navbar Toggler ===== */
+.navbar-toggler {
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.navbar-toggler:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== Animation Keyframes ===== */
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

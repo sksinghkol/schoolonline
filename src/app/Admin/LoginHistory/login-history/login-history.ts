@@ -51,10 +51,11 @@ export class LoginHistory implements OnInit {
 
     // Fallback: wait for auth state
     // NOTE: onAuthStateChanged is available on the Auth instance
-    (this.auth as any).onAuthStateChanged?.((user: any) => {
+    this.auth.onAuthStateChanged?.((user) => {
       if (user?.uid && !this.uid) {
         this.uid = user.uid;
-        this.currentPhotoURL = this.pickBestPhotoUrl(user.photoURL, user?.providerData);
+        // The user object from onAuthStateChanged might not have providerData directly.
+        this.currentPhotoURL = this.pickBestPhotoUrl(user.photoURL, (user as any)?.providerData);
         this.initQuery(user.uid);
       }
     });
