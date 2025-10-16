@@ -1,18 +1,31 @@
-import { Injectable, signal } from '@angular/core';
-import { Firestore, collection, collectionData } from '@angular/fire/firestore';
+import { Injectable, signal, inject, runInInjectionContext, Injector } from '@angular/core';
+import { collection, collectionData, doc, Firestore, getDoc, query, where } from '@angular/fire/firestore';
+import { Observable, of } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class SchoolStateService {
+  private firestore: Firestore = inject(Firestore);
+  private injector: Injector = inject(Injector);
+
   currentSchool = signal<any>(null);
 
-  constructor(private firestore: Firestore) {}
+  setSchoolBySlug(slug: string): void {
+    runInInjectionContext(this.injector, () => {
+      const schoolsCollection = collection(this.firestore, 'schools');
+      // Normalize incoming slug to match how we generate and store it (lowercase, no spaces)
+      const normalizedSlug = (slug || '').replace(/\s+/g, '').toLowerCase();
+      const q = query(schoolsCollection, where('slug', '==', normalizedSlug));
 
-  // ✅ Add this method
-  setSchoolBySlug(slug: string) {
-    const schoolsRef = collection(this.firestore, 'schools');
-    collectionData(schoolsRef, { idField: 'id' }).subscribe((schools: any) => {
-      const school = schools.find((s: any) => s.slug === slug);
-      this.currentSchool.set(school || null);
+      collectionData(q, { idField: 'id' }).pipe(take(1)).subscribe(schools => {
+        if (schools.length > 0) {
+          this.currentSchool.set(schools[0]);
+        } else {
+          this.currentSchool.set(null);
+        }
+      });
     });
   }
 }

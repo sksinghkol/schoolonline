@@ -1,1 +1,37 @@
-<p>student-homepage works!</p>
+<div class="container" style="padding:1.5rem; max-width: 900px; margin: 0 auto;">
+  <h2>Student Dashboard</h2>
+
+  <ng-container *ngIf="loading(); else loaded">
+    <p>Loading your profile...</p>
+  </ng-container>
+
+  <ng-template #loaded>
+    <ng-container *ngIf="!error(); else errorTpl">
+      <ng-container *ngIf="student as s; else noStudent">
+        <div class="card" style="padding:1rem; border: 1px solid #e5e7eb; border-radius: 8px;">
+          <h3 style="margin-top:0;">Profile</h3>
+          <div><strong>Name:</strong> {{ s.name }}</div>
+          <div><strong>Email:</strong> {{ s.email }}</div>
+          <div><strong>Status:</strong> {{ s.status }}</div>
+          <div><strong>Created At:</strong>
+            <ng-container *ngIf="s.createdAt?.toDate; else rawTs">
+              {{ s.createdAt.toDate() | date:'medium' }}
+            </ng-container>
+            <ng-template #rawTs>{{ s.createdAt }}</ng-template>
+          </div>
+        </div>
+
+        <div *ngIf="s.status === 'waiting-approval'" style="margin-top:1rem; padding:1rem; background:#fff6e5; border:1px solid #f59e0b; border-radius:8px;">
+          <strong>Awaiting Approval</strong>
+          <div>Your profile is created and pending approval. You will get access to all features once approved.</div>
+        </div>
+      </ng-container>
+      <ng-template #noStudent>
+        <p>No student profile found.</p>
+      </ng-template>
+    </ng-container>
+    <ng-template #errorTpl>
+      <p style="color:#b91c1c;">{{ error() }}</p>
+    </ng-template>
+  </ng-template>
+</div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, Injector, runInInjectionContext } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Firestore, collection, query, where, getDocs, limit } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
@@ -17,6 +17,7 @@ export class SchoolHome implements OnInit {
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
   private schoolState = inject(SchoolStateService);
+  private injector = inject(Injector);
 
   schoolData: any = null;
   loading = true;
@@ -38,13 +39,16 @@ export class SchoolHome implements OnInit {
       return;
     }
 
-    await this.loadSchoolBySlug(schoolSlug);
-    this.loading = false;
-    this.cdr.detectChanges();
+    try {
+      await this.loadSchoolBySlug(schoolSlug);
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
   }
 
   private async loadSchoolBySlug(slug: string) {
-    try {
+    return runInInjectionContext(this.injector, async () => {
       const schoolsCol = collection(this.firestore, 'schools');
       
       // First try exact slug match
@@ -58,6 +62,22 @@ export class SchoolHome implements OnInit {
         this.matchedVariant = slug;
         console.log('SchoolHome: Found school:', this.schoolData);
         return;
+      }
+
+      // If no slug match, try exact code match using the original incoming value (not lowercased)
+      const original = this.incomingName?.trim() || '';
+      if (original) {
+        q = query(schoolsCol, where('code', '==', original), limit(1));
+        snapshot = await getDocs(q);
+
+        if (!snapshot.empty) {
+          const doc = snapshot.docs[0];
+          this.schoolData = this.formatSchoolData(doc);
+          this.schoolState.currentSchool.set(this.schoolData);
+          this.matchedVariant = (this.schoolData as any).slug || original;
+          console.log('SchoolHome: Found school by code:', this.schoolData);
+          return;
+        }
       }
 
       // If no exact match, try case-insensitive / closest variant match
@@ -84,9 +104,7 @@ export class SchoolHome implements OnInit {
         console.warn('SchoolHome: No school found at all for slug:', slug);
         this.schoolState.currentSchool.set(null);
       }
-    } catch (err) {
-      console.error('SchoolHome: Error loading school data', err);
-    }
+    });
   }
 
   private formatSchoolData(doc: any) {

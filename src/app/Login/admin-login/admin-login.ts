@@ -24,17 +24,8 @@ export class AdminLogin {
     this.errorMessage = null;
     
     try {
+      // AuthService handles sign-in and navigation to /admin-dashboard
       await this.authService.googleLogin();
-      const user = this.auth.currentUser;
-      if (user) {
-        const idTokenResult = await user.getIdTokenResult();
-        // Check for superAdmin custom claim
-        if (idTokenResult.claims['superAdmin']) {
-          this.router.navigate(['/super-admin-dashboard']);
-        } else {
-          this.router.navigate(['/admin-dashboard']);
-        }
-      }
     } catch (error: any) {
       console.error(error);
       this.errorMessage = error?.message || 'Google login failed';

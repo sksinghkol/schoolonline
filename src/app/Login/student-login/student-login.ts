@@ -1,18 +1,10 @@
-import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, signal, Injector, runInInjectionContext, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Firestore, collection, collectionData, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Firestore, collection, doc, setDoc, serverTimestamp, getDocs, query, where, updateDoc, getDoc } from '@angular/fire/firestore';
+import { Auth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, User } from '@angular/fire/auth';
 import { CommonModule } from '@angular/common';
 import { SchoolStateService } from '../../core/services/school-state.service';
-
-interface Student {
-  id: string;
-  class: string;
-  section: string;
-  roll: number;
-  mobile: string;
-  password: string;
-}
 
 @Component({
   selector: 'app-student-login',
@@ -26,123 +18,217 @@ export class StudentLogin implements OnInit {
   router = inject(Router);
   route = inject(ActivatedRoute);
   firestore = inject(Firestore);
+  auth = inject(Auth);
   schoolState = inject(SchoolStateService);
+  injector = inject(Injector);
 
   loginForm: FormGroup;
+  isLoginView = signal(true);
+  errorMessage = signal<string | null>(null);
+  resolving = signal(true);
+  schoolLoadError = signal<string | null>(null);
 
-  classes = signal<string[]>([]);
-  sections = signal<string[]>([]);
-  rolls = signal<number[]>([]);
-  studentsList: Student[] = [];
-
+  private user = signal<User | null>(null);
   selectedSchoolSlug: string | null = null;
   selectedSchool: any = null;
 
-  
-  
   constructor() {
     this.loginForm = this.fb.group({
-      class: ['', Validators.required],
-      section: ['', Validators.required],
-      roll: ['', Validators.required],
-      mobile: ['', Validators.required],
-      password: ['', Validators.required]
+      name: [''],
+      email: ['', [Validators.required, Validators.email]], // Add validators here
+      password: ['', [Validators.required, Validators.minLength(6)]]
     });
+
+    // Monitor Firebase auth state
+    onAuthStateChanged(this.auth, (user) => this.user.set(user));
+
+    // When both user and school are available, check student status
+    this.resolving.set(false);
     effect(() => {
+      const user = this.user();
       const school = this.schoolState.currentSchool();
-      if (school) {
+      if (user && school?.id) {
+        runInInjectionContext(this.injector, () => {
+          this.selectedSchool = school;
+          this.checkStudentStatus(user);
+        });
+      } else if (school?.id) {
         this.selectedSchool = school;
-        this.loadStudents();
+        // this.resolving.set(false);
       }
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.selectedSchoolSlug = this.route.snapshot.paramMap.get('schoolName');
     if (this.selectedSchoolSlug) {
-      this.schoolState.setSchoolBySlug(this.selectedSchoolSlug);
+      // Load school data
+      await this.schoolState.setSchoolBySlug(this.selectedSchoolSlug);
+      // After a short delay, if no school resolved, show a helpful message
+      setTimeout(() => {
+        if (!this.schoolState.currentSchool()) {
+          const normalized = (this.selectedSchoolSlug || '').replace(/\s+/g, '').toLowerCase();
+          this.schoolLoadError.set(
+            `School not found for “${this.selectedSchoolSlug}”. Try: /student-login/${normalized} or check the school slug.`
+          );
+        }
+      }, 1500);
+      if (this.auth.currentUser) {
+        this.resolving.set(true);
+        // Check student status immediately for logged-in users
+        this.user.set(this.auth.currentUser);
+      }
+    } else {
+      // When no school param is provided, guide the user instead of indefinite loading
+      this.schoolLoadError.set('No school provided in the URL. Use /student-login/{schoolSlug}');
     }
   }
 
-  async loadStudents() {
-    if (!this.selectedSchool) return;
+  toggleView() {
+    this.isLoginView.update(v => !v);
+    this.errorMessage.set(null);
+    this.loginForm.reset();
 
-    const studentsRef = collection(this.firestore, `schools/${this.selectedSchool.id}/students`);
-    collectionData(studentsRef, { idField: 'id' }).subscribe((students: any[]) => {
-      // ✅ Type cast and filter unknown values
-      this.studentsList = students
-        .map((s: any) => ({
-          id: s.id,
-          class: s.class as string,
-          section: s.section as string,
-          roll: Number(s.roll),
-          mobile: s.mobile as string,
-          password: s.password as string
-        }))
-        .filter(s => s.class && s.section && s.roll != null && s.mobile && s.password);
-
-      const classList = this.studentsList.map(s => s.class);
-      this.classes.set([...new Set(classList)]);
-    });
+    const nameControl = this.loginForm.get('name');
+    if (this.isLoginView()) {
+      nameControl?.clearValidators();
+    } else {
+      nameControl?.setValidators([Validators.required]);
+    }
+    nameControl?.updateValueAndValidity();
   }
 
-  onClassChange(event: any) {
-    const selectedClass = event.target.value;
-    const filteredSections = this.studentsList
-      .filter(s => s.class === selectedClass)
-      .map(s => s.section);
-    this.sections.set([...new Set(filteredSections)]);
-    this.rolls.set([]);
+  async handleEmailPassword() {
+    this.errorMessage.set(null);
+    if (this.loginForm.invalid) return;
+
+    const { email, password, name } = this.loginForm.value;
+
+    try {
+      let userCredential: User;
+      if (this.isLoginView()) {
+        const res = await signInWithEmailAndPassword(this.auth, email, password);
+        userCredential = res.user;
+      } else {
+        const res = await createUserWithEmailAndPassword(this.auth, email, password);
+        userCredential = res.user;
+
+        if (this.selectedSchool) {
+          // Create student profile at a stable path: students/{uid}
+          try {
+            const newStudentRef = doc(this.firestore, `schools/${this.selectedSchool.id}/students/${userCredential.uid}`);
+            await setDoc(newStudentRef, {
+              uid: userCredential.uid,
+              email: userCredential.email,
+              name: name || 'New Student',
+              photoURL: userCredential.photoURL || null,
+              createdAt: serverTimestamp(),
+              status: 'waiting-approval'
+            }, { merge: true });
+          } catch (e) {
+            // Non-blocking: rules may restrict student create; handle later in update-profile
+            console.warn('Student doc create failed (non-blocking)', e);
+          }
+        }
+      }
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-in-use') {
+        this.errorMessage.set('This email is already registered. Try logging in.');
+      } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+        this.errorMessage.set('Incorrect email or password.');
+      } else {
+        this.errorMessage.set(error.message);
+      }
+    }
   }
 
-  onSectionChange(event: any) {
-    const selectedClass = this.loginForm.value.class;
-    const selectedSection = event.target.value;
-    const filteredRolls = this.studentsList
-      .filter(s => s.class === selectedClass && s.section === selectedSection)
-      .map(s => s.roll);
-    this.rolls.set([...new Set(filteredRolls)]);
+  async loginWithGoogle() {
+    this.errorMessage.set(null);
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(this.auth, provider);
+    } catch (error: any) {
+      this.errorMessage.set(error.message);
+    }
   }
 
-  async login() {
-    const { class: cls, section, roll, mobile, password } = this.loginForm.value;
+  private async checkStudentStatus(user: User) {
+    this.resolving.set(true);
+    if (!this.selectedSchool?.id) return;
 
-    const student = this.studentsList.find(
-      s => s.class === cls && s.section === section && s.roll === Number(roll) && s.mobile === mobile
-    );
+    // Direct read by UID-based doc ID (Option A)
+    const ref = doc(this.firestore, `schools/${this.selectedSchool.id}/students/${user.uid}`);
+    const snap = await getDoc(ref);
 
-    if (!student) {
-      alert('Student not found or mobile mismatch');
+    if (!snap.exists()) {
+      // No profile yet → auto-create pending approval and route to awaiting-approval
+      try {
+        await setDoc(ref, {
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName || this.loginForm.value.name || 'New Student',
+          photoURL: user.photoURL || null,
+          createdAt: serverTimestamp(),
+          status: 'waiting-approval'
+        }, { merge: true });
+      } catch (e) {
+        console.warn('Failed to create initial student doc', e);
+      }
+      this.resolving.set(false);
+      this.router.navigate(['/awaiting-approval'], {
+        queryParams: { studentId: user.uid, schoolId: this.selectedSchool.id }
+      });
       return;
     }
 
-    if (student.password !== password) {
-      alert('Incorrect password');
-      return;
+    const studentData = snap.data() as any;
+    // Backfill uid if missing (non-blocking)
+    if (!studentData?.uid) {
+      try { await updateDoc(ref, { uid: user.uid }); } catch {}
     }
 
-    // ✅ Save login history
-    const historyRef = doc(collection(this.firestore, `loginHistory`));
-    await setDoc(historyRef, {
-      studentId: student.id,
-      schoolCode: this.selectedSchool.code,
-      loginAt: serverTimestamp(),
-      device: this.getDeviceInfo()
-    });
-
-    // ✅ Redirect to student dashboard
-    this.router.navigate(['/student-dashboard'], { queryParams: { studentId: student.id } });
+    switch (studentData?.status) {
+      case 'approved':
+        await this.saveLoginHistory(user.uid);
+        this.router.navigate(['/student-dashboard'], {
+          queryParams: { studentId: user.uid, schoolId: this.selectedSchool.id }
+        });
+        break;
+      case 'waiting-approval':
+        this.router.navigate(['/awaiting-approval'], {
+          queryParams: { studentId: user.uid, schoolId: this.selectedSchool.id }
+        });
+        break;
+      default:
+        // If status field missing or other value, treat as pending approval by default
+        try { await updateDoc(ref, { status: 'waiting-approval' }); } catch {}
+        this.router.navigate(['/awaiting-approval'], {
+          queryParams: { studentId: user.uid, schoolId: this.selectedSchool.id }
+        });
+    }
   }
 
-  getDeviceInfo() {
+  private async saveLoginHistory(studentId: string) {
+    try {
+      const historyRef = doc(collection(this.firestore, `login_history`));
+      await setDoc(historyRef, {
+        studentId,
+        schoolCode: this.selectedSchool.code,
+        loginAt: serverTimestamp(),
+        device: this.getDeviceInfo()
+      });
+    } catch (e) {
+      // Do not block login flow if history write fails
+      console.warn('Failed to write login history', e);
+    }
+  }
+
+  private getDeviceInfo() {
     return {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
       language: navigator.language,
-      screen: {
-        width: window.screen.width,
-        height: window.screen.height
-      }
+      screen: { width: window.screen.width, height: window.screen.height }
     };
   }
 }

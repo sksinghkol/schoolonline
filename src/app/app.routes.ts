@@ -36,6 +36,9 @@ import { AdminGuard } from './core/gaurds/admin.guard';
 import { AllAdminLogin } from './SuperAdmin/all-admin-login/all-admin-login';
 import { SchoolDashboard } from './School/school-dashboard/school-dashboard';
 import { SchoolHome } from './School/school-home/school-home';
+import { StudentAuthGuard } from './core/gaurds/student.auth.guard';
+import { AwaitingApproval } from './Student/awaiting-approval/awaiting-approval';
+import { UpdateProfile } from './Student/update-profile/update-profile';
 
 export const routes: Routes = [
   /* Home & General Login */
@@ -81,7 +84,15 @@ export const routes: Routes = [
   },
 
   /* Student Dashboard */
-  { path: 'student-dashboard', component: StudentDashboard },
+  { 
+    path: 'student-dashboard', 
+    component: StudentDashboard, 
+    canActivate: [StudentAuthGuard] 
+  },
+
+  /* Student flows */
+  { path: 'awaiting-approval', component: AwaitingApproval },
+  { path: 'update-profile', component: UpdateProfile },
 
   /* Dynamic School URL */
   {

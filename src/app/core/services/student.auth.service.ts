@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, collectionData, addDoc, doc, updateDoc, deleteDoc, query, where } from '@angular/fire/firestore';
-import { Auth, createUserWithEmailAndPassword, deleteUser } from '@angular/fire/auth';
-import { User } from 'firebase/auth';
+import { Firestore, collection, collectionData, addDoc, doc, updateDoc, deleteDoc, query, where, getDocs } from '@angular/fire/firestore';
+import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser, User } from '@angular/fire/auth';
+import { BehaviorSubject, from } from 'rxjs';
 
 export interface AppUser {
   id?: string;
@@ -20,12 +20,34 @@ export interface AppUser {
 
 @Injectable({ providedIn: 'root' })
 export class StudentAuthService {
-  constructor(private firestore: Firestore, private auth: Auth) {}
+  private currentUserSubject = new BehaviorSubject<AppUser | null>(null);
+  currentUser$ = this.currentUserSubject.asObservable();
+
+  constructor(private firestore: Firestore, private auth: Auth) {
+    // Persist user login across refresh
+    onAuthStateChanged(this.auth, async (user) => {
+      if (user) {
+        const appUser = await this.fetchAppUserByUid(user.uid);
+        this.currentUserSubject.next(appUser);
+      } else {
+        this.currentUserSubject.next(null);
+      }
+    });
+  }
+
+  async fetchAppUserByUid(uid: string): Promise<AppUser | null> {
+    const q = query(collection(this.firestore, 'appusers'), where('uid', '==', uid));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const docData = querySnapshot.docs[0].data() as AppUser;
+      return { id: querySnapshot.docs[0].id, ...docData };
+    }
+    return null;
+  }
 
   getUsers(role?: string) {
     const usersRef = collection(this.firestore, 'appusers');
     if (!role) return collectionData(usersRef, { idField: 'id' });
-
     const q = query(usersRef, where('role', '==', role));
     return collectionData(q, { idField: 'id' });
   }
@@ -40,6 +62,24 @@ export class StudentAuthService {
       await addDoc(usersRef, { ...user, uid, createdAt: new Date() });
       return { success: true };
     } catch (error) { return { success: false, error }; }
+  }
+
+  async login(email: string, password: string) {
+    try {
+      const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+      const firebaseUser = userCredential.user;
+      const appUser = await this.fetchAppUserByUid(firebaseUser.uid);
+      if (!appUser) throw new Error('No user record found in Firestore.');
+      this.currentUserSubject.next(appUser);
+      return { success: true, user: appUser };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  async logout() {
+    await signOut(this.auth);
+    this.currentUserSubject.next(null);
   }
 
   async updateUser(userId: string, updatedData: Partial<AppUser>) {

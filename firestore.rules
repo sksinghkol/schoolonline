@@ -40,12 +40,26 @@ service cloud.firestore {
     // 🔹 Schools & Directors
     // ===========================================================
     match /schools/{schoolId} {
-      allow read: if isSignedIn();
+      // Allow public read for school info so login pages can resolve the slug
+      // Optionally restrict to active schools only
+      allow read: if true; // or: resource.data.status == 'active';
       allow create, update, delete: if isApprovedAdmin();
 
       match /directors/{directorId} {
         allow read: if isSignedIn();
         allow create, update, delete: if isApprovedAdmin();
+      }
+
+      // 🔸 Subcollection: students
+      match /students/{studentId} {
+        // Admins can manage all students (read includes get+list)
+        allow read, create, update, delete: if isApprovedAdmin();
+
+        // A signed-in student can only get/update their own doc by UID matching the doc ID
+        allow get, update, create: if isSignedIn() && studentId == request.auth.uid;
+
+        // No listing for non-admins
+        allow list: if false;
       }
     }
 
@@ -156,7 +170,5 @@ service cloud.firestore {
     match /leaflet/{id} { allow read, write: if isSignedIn(); }
     match /card_design/{id} { allow read, write: if isSignedIn(); }
     match /lanyard_design/{id} { allow read, write: if isSignedIn(); }
-
-    }
   }
 }
