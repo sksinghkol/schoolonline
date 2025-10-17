@@ -1,15 +1,15 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { DirectorNavbar } from './director-navbar';
-import { DirectorHomepage } from './director-homepage';
+import { StudentNavbar } from '../../Navbar/student-navbar/student-navbar';
+import { DirectorMenu } from '../../Navbar/director-menu/director-menu';
 
 @Component({
-
   selector: 'app-director-dashboard',
   standalone: true,
-  imports: [RouterOutlet, DirectorNavbar, DirectorHomepage],
+  imports: [RouterOutlet, DirectorMenu],
   templateUrl: './director-dashboard.html',
-  styleUrl: './director-dashboard.scss'
+  styleUrls: ['./director-dashboard.scss']
+ 
 })
 export class DirectorDashboard {
 }

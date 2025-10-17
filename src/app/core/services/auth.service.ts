@@ -175,10 +175,14 @@ export class AuthService {
     }
   }
 
-  async logout(): Promise<void> {
+  async logout(redirectUrl?: string): Promise<void> {
     await signOut(this.auth);
     this.currentUserSubject.next(null);
-    this.router.navigate(['/admin-login']);
+    if (redirectUrl) {
+      this.router.navigateByUrl(redirectUrl);
+    } else {
+      this.router.navigate(['/admin-login']);
+    }
   }
 
   get currentUser() {

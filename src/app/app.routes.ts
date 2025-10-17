@@ -40,6 +40,10 @@ import { SchoolHome } from './School/school-home/school-home';
 import { StudentAuthGuard } from './core/gaurds/student.auth.guard';
 import { AwaitingApproval } from './Student/awaiting-approval/awaiting-approval';
 import { UpdateProfile } from './Student/update-profile/update-profile';
+import { DirectorLogin } from './Login/director-login/director-login';
+import { DirectorDashboard } from './Director/director-dashboard/director-dashboard';
+import { DirectorAuthGuard } from './core/gaurds/director.auth.guard';
+import { Directorawaiting } from './Director/directorawaiting/directorawaiting';
 
 export const routes: Routes = [
   /* Home & General Login */
@@ -49,7 +53,7 @@ export const routes: Routes = [
   { path: 'student-login', component: StudentLogin },
   { path: 'student-login/:schoolName', component: StudentLogin },
   { path: 'super-admin-login', component: SuperLogin },
-  { path: 'director-login/:schoolName', component: StudentLogin },
+  { path: 'director-login/:schoolName', component: DirectorLogin },
   /* Admin Dashboard */
   {
     path: 'admin-dashboard',
@@ -84,7 +88,12 @@ export const routes: Routes = [
       { path: 'allLoginAdmin', component: AllAdminLogin }
     ]
   },
-
+ /* Director Dashboard */
+  { 
+    path: 'director-dashboard', 
+    component: DirectorDashboard, 
+    canActivate: [DirectorAuthGuard] 
+  },
   /* Student Dashboard */
   { 
     path: 'student-dashboard', 
@@ -94,6 +103,7 @@ export const routes: Routes = [
 
   /* Student flows */
   { path: 'awaiting-approval', component: AwaitingApproval },
+  { path: 'director-awaiting-approval', component: Directorawaiting },
   { path: 'update-profile', component: UpdateProfile },
 
   /* Dynamic School URL */

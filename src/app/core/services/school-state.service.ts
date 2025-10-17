@@ -28,4 +28,20 @@ export class SchoolStateService {
       });
     });
   }
+
+  async setSchoolById(id: string): Promise<void> {
+    if (!id) return;
+    const schoolRef = doc(this.firestore, 'schools', id);
+    const snap = await getDoc(schoolRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      this.currentSchool.set({ id, ...data });
+    } else {
+      this.currentSchool.set(null);
+    }
+  }
+
+  setCurrentSchool(school: any): void {
+    this.currentSchool.set(school || null);
+  }
 }
