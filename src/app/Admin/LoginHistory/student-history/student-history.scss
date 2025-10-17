@@ -1,0 +1,156 @@
+// Define some theme colors for consistency
+$primary-glow: #0d6efd;
+$primary-text: #212529;
+$secondary-text: #6c757d;
+$background-color: #f8f9fa;
+$card-background: #ffffff;
+
+.login-history-container {
+  background-color: $background-color;
+  // Subtle geometric background pattern
+  background-image:
+    linear-gradient(135deg, #e9ecef 25%, transparent 25%),
+    linear-gradient(225deg, #e9ecef 25%, transparent 25%);
+  background-position: 0 0, 10px 10px;
+  background-size: 20px 20px;
+  min-height: 100vh; // Ensure it covers the full viewport height
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.login-history {
+  h2 {
+    font-weight: 900;
+    font-size: 2.5rem;
+    background: linear-gradient(90deg, #0d6efd, #6f42c1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 2.5rem !important;
+    position: relative;
+    cursor: default;
+
+    // Fun text hover effect
+    &::before {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      color: #6f42c1;
+      -webkit-text-stroke: 1px $primary-glow;
+      border-right: 2px solid $primary-glow;
+      overflow: hidden;
+      transition: width 0.5s;
+    }
+    &:hover::before {
+      width: 100%;
+      filter: drop-shadow(0 0 25px $primary-glow);
+    }
+  }
+
+  .input-group {
+    .form-control {
+      background-color: $card-background;
+      border: 1px solid #dee2e6;
+      color: $primary-text;
+      border-radius: 0.75rem !important;
+      transition: background-color 0.3s, box-shadow 0.3s;
+
+      &::placeholder {
+        color: #adb5bd;
+      }
+
+      &:focus {
+        background-color: $card-background;
+        box-shadow: 0 0 0 0.25rem rgba($primary-glow, 0.25);
+        border-color: $primary-glow;
+        color: $primary-text;
+      }
+    }
+    .input-group-text {
+      background-color: #e9ecef;
+      border: 1px solid #dee2e6;
+      color: $secondary-text;
+      border-radius: 0.75rem 0 0 0.75rem !important;
+    }
+  }
+
+  .login-card {
+    background: $card-background;
+    border: 1px solid #e9ecef;
+    border-radius: 1rem;
+    color: $primary-text;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+
+    &:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.1);
+      border-color: $primary-glow;
+    }
+
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border: 2px solid #dee2e6;
+      object-fit: cover;
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+
+      &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 25px rgba($primary-glow, 0.6);
+        border-color: $primary-glow;
+      }
+    }
+    
+    h5 {
+      color: $primary-text;
+      font-weight: 700;
+    }
+
+    .school-name {
+      font-weight: 600;
+      color: #495057 !important;
+    }
+
+    .text-muted {
+      color: $secondary-text !important;
+
+      i {
+        opacity: 0.8;
+      }
+    }
+
+    .timestamp-info {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    .login-card {
+      flex-direction: column;
+      text-align: center;
+
+      .avatar {
+        margin-right: 0 !important;
+        margin-bottom: 1rem;
+      }
+
+      .timestamp-info {
+        margin-top: 0.5rem;
+        margin-left: 0 !important;
+        justify-content: center;
+
+        // Hide the full date on very small screens
+        @media (max-width: 576px) {
+          span {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+}

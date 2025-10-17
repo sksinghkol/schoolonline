@@ -14,6 +14,7 @@ import { AddSubscription } from './Admin/add-subscription/add-subscription';
 import { SchoolDetails } from './Admin/school-details/school-details';
 import { AddDirector } from './Admin/add-director/add-director';
 import { LoginHistory } from './Admin/LoginHistory/login-history/login-history';
+import { StudentHistory } from './Admin/LoginHistory/student-history/student-history';
 import { IdCards } from './Admin/id-cards/id-cards';
 import { Holder } from './Admin/IdCards/holder/holder';
 import { CardsComponent } from './Admin/IdCards/cards/cards';
@@ -48,7 +49,7 @@ export const routes: Routes = [
   { path: 'student-login', component: StudentLogin },
   { path: 'student-login/:schoolName', component: StudentLogin },
   { path: 'super-admin-login', component: SuperLogin },
-
+  { path: 'director-login/:schoolName', component: StudentLogin },
   /* Admin Dashboard */
   {
     path: 'admin-dashboard',
@@ -79,6 +80,7 @@ export const routes: Routes = [
       { path: 'leaflet', component: Leaflet },
       { path: 'brochure', component: Brochure },
       { path: 'loginHistory', component: LoginHistory },
+      { path: 'loginHistory/students', component: StudentHistory },
       { path: 'allLoginAdmin', component: AllAdminLogin }
     ]
   },

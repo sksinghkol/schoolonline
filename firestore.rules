@@ -24,6 +24,13 @@ service cloud.firestore {
       return isApprovedAdmin() && adminData != null && adminData.role == 'super-admin';
     }
 
+    // A director is represented by a document at schools/{schoolId}/directors/{uid}
+    function isDirectorForSchoolId(sid) {
+      return isSignedIn() &&
+        sid != null &&
+        exists(/databases/$(database)/documents/schools/$(sid)/directors/$(request.auth.uid));
+    }
+
     // ===========================================================
     // 🔹 Admins Collection
     // ===========================================================
@@ -75,10 +82,17 @@ service cloud.firestore {
     // 🔹 Admin Login History (Global)
     // ===========================================================
     match /login_history/{docId} {
-  allow create: if isSignedIn();        // any signed-in admin can log
-  allow read, list: if isSuperAdmin();   // only super-admin can view/list all
-  allow update, delete: if isSuperAdmin(); // only super-admin can modify/delete
-}
+      // Any signed-in user can create their own login history entries (student/admin/director, etc.)
+      allow create: if isSignedIn();
+
+      // Read/list permissions:
+      // - Approved admins can read all
+      // - Directors can read only entries that match their school (checked via resource.data.schoolId)
+      allow read, list: if isApprovedAdmin() || isDirectorForSchoolId(resource.data.schoolId);
+
+      // Only super-admin can modify/delete
+      allow update, delete: if isSuperAdmin();
+    }
 
 
     // ===========================================================

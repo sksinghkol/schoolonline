@@ -68,7 +68,7 @@ describe('StudentLogin Component', () => {
   })); 
 
   it('should have getDeviceInfo return an object with width and height', () => {
-    const device = component.getDeviceInfo();
+    const device = (component as any).getDeviceInfo();
     expect(device.screen.width).toBeDefined();
     expect(device.screen.height).toBeDefined();
     expect(device.userAgent).toBeDefined();
@@ -77,6 +77,6 @@ describe('StudentLogin Component', () => {
   });
 
   it('should initialize resolving as true', () => {
-    expect(component.resolving()).toBeTrue();
+    expect(component.resolving()).toBe(true);
   });
 });

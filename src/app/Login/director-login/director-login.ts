@@ -6,14 +6,14 @@ import { Auth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPasswo
 import { CommonModule } from '@angular/common';
 import { SchoolStateService } from '../../core/services/school-state.service';
 
+
 @Component({
-  selector: 'app-student-login',
-  standalone: true,
+  selector: 'app-director-login',
   imports: [ReactiveFormsModule, CommonModule],
-  templateUrl: './student-login.html',
-  styleUrls: ['./student-login.scss']
+  templateUrl: './director-login.html',
+  styleUrl: './director-login.scss'
 })
-export class StudentLogin implements OnInit {
+export class DirectorLogin implements OnInit {
   fb = inject(FormBuilder);
   router = inject(Router);
   route = inject(ActivatedRoute);
@@ -31,8 +31,6 @@ export class StudentLogin implements OnInit {
   private user = signal<User | null>(null);
   selectedSchoolSlug: string | null = null;
   selectedSchool: any = null;
-  private checkingStatus = false;
-  private wroteHistoryThisSession = false;
 
   constructor() {
     this.loginForm = this.fb.group({
@@ -155,8 +153,6 @@ export class StudentLogin implements OnInit {
   }
 
   private async checkStudentStatus(user: User) {
-    if (this.checkingStatus) return; // prevent concurrent/repeat checks
-    this.checkingStatus = true;
     this.resolving.set(true);
     if (!this.selectedSchool?.id) return;
 
@@ -179,7 +175,6 @@ export class StudentLogin implements OnInit {
         console.warn('Failed to create initial student doc', e);
       }
       this.resolving.set(false);
-      this.checkingStatus = false;
       this.router.navigate(['/awaiting-approval'], {
         queryParams: { studentId: user.uid, schoolId: this.selectedSchool.id }
       });
@@ -211,24 +206,17 @@ export class StudentLogin implements OnInit {
           queryParams: { studentId: user.uid, schoolId: this.selectedSchool.id }
         });
     }
-    this.checkingStatus = false;
   }
 
   private async saveLoginHistory(studentId: string) {
-    if (this.wroteHistoryThisSession) return; // write only once per session
     try {
       const historyRef = doc(collection(this.firestore, `login_history`));
-      const location = await this.getLocation();
       await setDoc(historyRef, {
         studentId,
-        schoolId: this.selectedSchool.id,
         schoolCode: this.selectedSchool.code,
-        role: 'student',
         loginAt: serverTimestamp(),
-        device: this.getDeviceInfo(),
-        location
+        device: this.getDeviceInfo()
       });
-      this.wroteHistoryThisSession = true;
     } catch (e) {
       // Do not block login flow if history write fails
       console.warn('Failed to write login history', e);
@@ -242,21 +230,5 @@ export class StudentLogin implements OnInit {
       language: navigator.language,
       screen: { width: window.screen.width, height: window.screen.height }
     };
-  }
-
-  private getLocation(): Promise<{ lat: number; lng: number; accuracy?: number } | null> {
-    if (!('geolocation' in navigator) || !navigator.geolocation) return Promise.resolve(null);
-    return new Promise((resolve) => {
-      const done = (val: { lat: number; lng: number; accuracy?: number } | null) => resolve(val);
-      try {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => done({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-          () => done(null),
-          { enableHighAccuracy: true, maximumAge: 300000, timeout: 5000 }
-        );
-      } catch {
-        done(null);
-      }
-    });
   }
 }

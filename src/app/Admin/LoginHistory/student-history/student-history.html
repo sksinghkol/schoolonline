@@ -1,0 +1,66 @@
+<div class="login-history-container"><div class="login-history container">
+  <h2 class="mb-4 text-center" data-text="Student Login History">Student Login History</h2>
+
+  <!-- Filter Section -->
+  <div class="row mb-4 g-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-person"></i></span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Filter by student name..."
+          [ngModel]="studentNameFilter$ | async"
+          (ngModelChange)="studentNameFilter$.next($event)"
+        />
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-building"></i></span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Filter by school name..."
+          [ngModel]="schoolNameFilter$ | async"
+          (ngModelChange)="schoolNameFilter$.next($event)"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center p-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading login records...</p>
+  </div>
+
+  <div *ngIf="!loading && (filteredRecords$ | async)?.length === 0" class="text-center p-5 text-muted">
+    <i class="bi bi-cloud-slash fs-1"></i>
+    <p class="mt-2">No login records found that match your filters.</p>
+  </div>
+
+  <div class="row g-4" *ngIf="!loading && (filteredRecords$ | async) as records">
+    <div class="col-12 col-md-6" *ngFor="let record of records">
+      <div class="login-card d-flex align-items-center p-3">
+        <img [src]="record.photoURL" alt="avatar" class="rounded-circle avatar me-3" />
+        <div class="flex-grow-1">
+          <h5 class="fw-bold fs-6 mb-1">{{ record.studentName }}</h5>
+          <p class="text-muted small mb-0 d-flex align-items-center school-name">
+            <i class="bi bi-building me-2"></i>
+            {{ record.schoolName }}
+          </p>
+          <p class="text-muted small mb-0 d-flex align-items-center mt-1">
+            <i class="bi bi-person-badge me-2"></i>
+            Class: {{ record.studentClass }} | Roll: {{ record.rollNo }}
+          </p>
+        </div>
+        <div class="text-muted small mb-0 ms-auto text-end timestamp-info">
+          <i class="bi bi-clock me-2"></i>
+          <span>{{ record.loginAt?.toDate() | date:'medium' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
