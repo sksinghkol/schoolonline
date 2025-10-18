@@ -1,0 +1,26 @@
+<div class="container" style="padding:2rem; max-width: 720px; margin: 0 auto; text-align:center;">
+      <ng-container *ngIf="loading(); else loaded">
+        <h2>Loading...</h2>
+      </ng-container>
+      <ng-template #loaded>
+        <div *ngIf="schoolName() as sn" style="margin-bottom:1rem;">
+          <div *ngIf="schoolLogoUrl()" style="margin-bottom:0.5rem;">
+            <img [src]="schoolLogoUrl()!" [alt]="sn" style="max-height:70px; object-fit:contain;" />
+          </div>
+          <h3 style="margin: 0 0 0.25rem 0;">{{ sn }}</h3>
+          <div *ngIf="schoolAddress()" style="color:#6b7280;">{{ schoolAddress() }}</div>
+          <div *ngIf="schoolContact()" style="color:#6b7280;">{{ schoolContact() }}</div>
+        </div>
+        <h2>Dear {{ name() || 'Teacher' }}</h2>
+        <p>Your account is awaiting approval.</p>
+        <p>Please contact your school administrator. You will be able to access the dashboard once approved.</p>
+
+        <div *ngIf="email()" style="margin-top:1rem; color:#6b7280;">Email: {{ email() }}</div>
+
+        <div style="margin-top:2rem;">
+          <button (click)="goToSchoolDashboard()" style="padding:0.6rem 1.2rem; background:#2563eb; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+            OK
+          </button>
+        </div>
+      </ng-template>
+    </div>

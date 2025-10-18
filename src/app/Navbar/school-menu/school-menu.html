@@ -69,23 +69,29 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end shadow">
             <li><a class="dropdown-item" [routerLink]="['/admin/login']"><i class="bi bi-shield-lock me-2 nav-link-icon text-primary"></i> Admin</a></li>
-            <!-- ✅ Director login without school slug (fallback) -->
-            <li *ngIf="!schoolState.currentSchool()">
-              <a class="dropdown-item" [routerLink]="['/director/login']"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i> Director</a>
-            </li>
-            <!-- ✅ Director login with current school slug -->
-            <li *ngIf="schoolState.currentSchool() as school">
-              <a class="dropdown-item" [routerLink]="['/director-login', school.slug]"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i> Director ({{school.name}})</a>
-            </li>
+
+            <!-- Director, Account, Teacher, and Student logins -->
+            <ng-container *ngIf="school() as school; else noSchoolLogin">
+              <li>
+                <a class="dropdown-item" [routerLink]="['/director-login', school.slug]"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i> Director ({{school.name}})</a>
+              </li>
+              <li>
+                <a class="dropdown-item" [routerLink]="['/account-login', school.slug]"><i class="bi bi-cash-coin me-2 nav-link-icon text-info"></i> Account ({{school.name}})</a>
+              </li>
+              <li>
+                <a class="dropdown-item" [routerLink]="['/teacher-login', school.slug]"><i class="bi bi-person-workspace me-2 nav-link-icon text-warning"></i> Teacher ({{school.name}})</a>
+              </li>
+              <li>
+                <a class="dropdown-item" [routerLink]="['/student-login', school.slug]"><i class="bi bi-mortarboard me-2 nav-link-icon text-secondary"></i> Students ({{school.name}})</a>
+              </li>
+            </ng-container>
+            <ng-template #noSchoolLogin>
+              <li><a class="dropdown-item" [routerLink]="['/director-login']"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i> Director</a></li>
+              <li><a class="dropdown-item" [routerLink]="['/student-login']"><i class="bi bi-mortarboard me-2 nav-link-icon text-secondary"></i> Students</a></li>
+            </ng-template>
+
             <li><a class="dropdown-item" [routerLink]="['/principal/login' ]"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> Principal</a></li>
             <li><a class="dropdown-item" [routerLink]="['/staff/login']"><i class="bi bi-briefcase me-2 nav-link-icon text-warning"></i> Staff</a></li>
-            
-            <!-- ✅ Student login with current school slug -->
-            <li *ngIf="schoolState.currentSchool() as school">
-              <a class="dropdown-item" [routerLink]="['/student-login', school.slug]">
-                <i class="bi bi-mortarboard me-2 nav-link-icon text-secondary"></i> Students ({{school.name}})
-              </a>
-            </li>
           </ul>
         </li>
       </ul>

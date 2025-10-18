@@ -22,6 +22,9 @@ export class SchoolMenu implements OnInit {
   schoolName = computed(() => this.schoolState.currentSchool()?.name || 'School');
   schoolLogoUrl = computed(() => this.schoolState.currentSchool()?.logoUrl);
 
+  // Expose the school signal directly to the template
+  school = this.schoolState.currentSchool;
+
   ngOnInit() {
     // Auto set current school from URL slug if present
     const slug = this.route.snapshot.paramMap.get('schoolName');

@@ -45,13 +45,9 @@ import { DirectorDashboard } from './Director/director-dashboard/director-dashbo
 import { DirectorAuthGuard } from './core/gaurds/director.auth.guard';
 import { Directorawaiting } from './Director/directorawaiting/directorawaiting';
 import { TeacherDashboard } from './Teacher/teacher-dashboard/teacher-dashboard';
+import { TeacherAwaiting } from './Teacher/teacher-awaiting/teacher-awaiting.component';
 import { TeacherAuthGuard } from './core/gaurds/teacher.auth.guard';
 import { TeacherLogin } from './Login/teacher-login/teacher-login';
-import { TeacherAwating } from './Teacher/teacher-awating/teacher-awating';
-import { AccountLogin } from './Login/account-login/account-login';
-import { AccountAwaiting } from './Account/account-awaiting/account-awaiting'; // Assuming this component exists or will be created
-import { AccountDashboard } from './Account/account-dashboard/account-dashboard';
-import { AccountAuthGuard } from './core/gaurds/account.auth.guard';
 
 export const routes: Routes = [
   /* Home & General Login */
@@ -61,12 +57,8 @@ export const routes: Routes = [
   { path: 'student-login', component: StudentLogin },
   { path: 'student-login/:schoolName', component: StudentLogin },
   { path: 'super-admin-login', component: SuperLogin },
-  { path: 'director-login', component: DirectorLogin },
   { path: 'director-login/:schoolName', component: DirectorLogin },
-  { path: 'teacher-login', component: TeacherLogin },
-  { path: 'teacher-login/:schoolName', component: TeacherLogin },
-  { path: 'account-login', component: AccountLogin },
-  { path: 'account-login/:schoolName', component: AccountLogin },
+   { path: 'teacher-login/:schoolName', component: TeacherLogin },
   /* Admin Dashboard */
   {
     path: 'admin-dashboard',
@@ -107,12 +99,6 @@ export const routes: Routes = [
     component: DirectorDashboard, 
     canActivate: [DirectorAuthGuard] 
   },
-  /* Account Dashboard */
-  { 
-    path: 'account-dashboard', 
-    component: AccountDashboard, 
-    canActivate: [AccountAuthGuard] 
-  },
   /* Teacher Dashboard */
   { 
     path: 'teacher-dashboard', 
@@ -129,8 +115,7 @@ export const routes: Routes = [
   /* Student flows */
   { path: 'awaiting-approval', component: AwaitingApproval },
   { path: 'director-awaiting-approval', component: Directorawaiting },
-  { path: 'account-awaiting-approval', component: AccountAwaiting }, // Add this route
-  { path: 'teacher-awaiting-approval', component: TeacherAwating },
+  { path: 'teacher-awaiting-approval', component: TeacherAwaiting },
   { path: 'update-profile', component: UpdateProfile },
 
   /* Dynamic School URL */
