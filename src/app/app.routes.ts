@@ -52,6 +52,14 @@ import { AccountLogin } from './Login/account-login/account-login';
 import { AccountAwaiting } from './Account/account-awaiting/account-awaiting'; // Assuming this component exists or will be created
 import { AccountDashboard } from './Account/account-dashboard/account-dashboard';
 import { AccountAuthGuard } from './core/gaurds/account.auth.guard';
+import { PrincipalLogin } from './Login/principal-login/principal-login';
+import { PrincipalDashboard } from './Principal/principal-dashboard/principal-dashboard';
+import { PrincipalAuthGuard } from './core/gaurds/principal.auth.guard';
+import { PrincipalAwating } from './Principal/principal-awating/principal-awating';
+import { StaffLogin } from './Login/staff-login/staff-login';
+import { StaffAuthGuard } from './core/gaurds/staff.auth.guard';
+import { StaffDashboard } from './Staff/staff-dashboard/staff-dashboard';
+import { StaffAwaiting } from './Staff/staff-awaiting/staff-awaiting';
 
 export const routes: Routes = [
   /* Home & General Login */
@@ -67,6 +75,10 @@ export const routes: Routes = [
   { path: 'teacher-login/:schoolName', component: TeacherLogin },
   { path: 'account-login', component: AccountLogin },
   { path: 'account-login/:schoolName', component: AccountLogin },
+  { path: 'principal-login', component: PrincipalLogin },
+  { path: 'principal-login/:schoolName', component: PrincipalLogin },
+   { path: 'staff-login', component: StaffLogin },
+  { path: 'staff-login/:schoolName', component: StaffLogin },
   /* Admin Dashboard */
   {
     path: 'admin-dashboard',
@@ -113,6 +125,18 @@ export const routes: Routes = [
     component: AccountDashboard, 
     canActivate: [AccountAuthGuard] 
   },
+   /* Principal Dashboard */
+  { 
+    path: 'principal-dashboard', 
+    component: PrincipalDashboard, 
+    canActivate: [PrincipalAuthGuard] 
+  },
+   /* staff Dashboard */
+  { 
+    path: 'staff-dashboard', 
+    component: StaffDashboard, 
+    canActivate: [StaffAuthGuard] 
+  },
   /* Teacher Dashboard */
   { 
     path: 'teacher-dashboard', 
@@ -131,6 +155,8 @@ export const routes: Routes = [
   { path: 'director-awaiting-approval', component: Directorawaiting },
   { path: 'account-awaiting-approval', component: AccountAwaiting }, // Add this route
   { path: 'teacher-awaiting-approval', component: TeacherAwating },
+  { path: 'principal-awating', component: PrincipalAwating },
+  { path: 'staff-awaiting', component: StaffAwaiting },
   { path: 'update-profile', component: UpdateProfile },
 
   /* Dynamic School URL */

@@ -7,12 +7,12 @@ import { CommonModule } from '@angular/common';
 import { SchoolStateService } from '../../core/services/school-state.service';
 
 @Component({
-  selector: 'app-teacher-login',
+  selector: 'app-principal-login',
   imports: [ReactiveFormsModule, CommonModule],
-  templateUrl: './teacher-login.html',
-  styleUrl: './teacher-login.scss'
+  templateUrl: './principal-login.html',
+  styleUrl: './principal-login.scss'
 })
-export class TeacherLogin implements OnInit { // Renamed from TeacherLogin to TeacherLoginComponent for clarity
+export class PrincipalLogin implements OnInit { // Renamed from TeacherLogin to TeacherLoginComponent for clarity
   fb = inject(FormBuilder);
   router = inject(Router);
   route = inject(ActivatedRoute);
@@ -47,10 +47,8 @@ export class TeacherLogin implements OnInit { // Renamed from TeacherLogin to Te
       const user = this.user();
       const school = this.schoolState.currentSchool();
       if (user && school?.id) {
-        runInInjectionContext(this.injector, () => {
-          this.selectedSchool = school;
-          this.checkTeacherStatus(user);
-        });
+        this.selectedSchool = school;
+        this.checkPrincipalStatus(user);
       } else if (school?.id) {
         this.selectedSchool = school;
       }
@@ -69,7 +67,7 @@ export class TeacherLogin implements OnInit { // Renamed from TeacherLogin to Te
       setTimeout(() => {
         if (!this.schoolState.currentSchool()) {
           const normalized = (this.selectedSchoolSlug || '').replace(/\s+/g, '').toLowerCase();
-          this.schoolLoadError.set(`School not found for “${this.selectedSchoolSlug}”. Try: /teacher-login/${normalized} or check the school slug.`);
+          this.schoolLoadError.set(`School not found for “${this.selectedSchoolSlug}”. Try: /principal-login/${normalized} or check the school slug.`);
         }
       }, 2500); // Increased timeout for slower connections
 
@@ -78,7 +76,7 @@ export class TeacherLogin implements OnInit { // Renamed from TeacherLogin to Te
         this.user.set(this.auth.currentUser);
       }
     } else {
-      this.schoolLoadError.set('No school provided in the URL. Use /teacher-login/{schoolSlug}');
+      this.schoolLoadError.set('No school provided in the URL. Use /principal-login/{schoolSlug}');
       this.resolving.set(false);
     }
   }
@@ -138,7 +136,7 @@ export class TeacherLogin implements OnInit { // Renamed from TeacherLogin to Te
     }
   }
 
-  private async checkTeacherStatus(user: User) {
+  private async checkPrincipalStatus(user: User) {
     if (this.checkingStatus) return;
 
     this.checkingStatus = true;
@@ -147,7 +145,7 @@ export class TeacherLogin implements OnInit { // Renamed from TeacherLogin to Te
     try {
       if (!this.selectedSchool?.id) return;
 
-      const ref = doc(this.firestore, `schools/${this.selectedSchool.id}/teachers/${user.uid}`);
+      const ref = doc(this.firestore, `schools/${this.selectedSchool.id}/principals/${user.uid}`);
       const snap = await getDoc(ref);
 
       if (!snap.exists()) {
@@ -155,41 +153,41 @@ export class TeacherLogin implements OnInit { // Renamed from TeacherLogin to Te
           await setDoc(ref, {
             uid: user.uid,
             email: user.email,
-            name: user.displayName || this.loginForm.value.name || 'New Teacher',
+            name: user.displayName || this.loginForm.value.name || 'New Principal',
             photoURL: user.photoURL || null,
             createdAt: serverTimestamp(),
             status: 'waiting-approval'
           }, { merge: true });
         } catch (e) {
-          console.warn('Failed to create initial teacher doc', e);
+          console.warn('Failed to create initial principal doc', e);
         }
-        this.router.navigate(['/teacher-awaiting-approval'], {
-          queryParams: { teacherId: user.uid, schoolId: this.selectedSchool.id }
+        this.router.navigate(['/principal-awating'], {
+          queryParams: { principalId: user.uid, schoolId: this.selectedSchool.id }
         });
         return;
       }
 
-      const teacherData = snap.data() as any;
-      if (!teacherData?.uid) {
+      const principalData = snap.data() as any;
+      if (!principalData?.uid) {
         try { await updateDoc(ref, { uid: user.uid }); } catch {}
       }
 
-      switch (teacherData?.status) {
+      switch (principalData?.status) {
         case 'approved':
           await this.saveLoginHistory(user.uid);
-          this.router.navigate(['/teacher-dashboard'], {
-            queryParams: { teacherId: user.uid, schoolId: this.selectedSchool.id }
+          this.router.navigate(['/principal-dashboard'], {
+            queryParams: { principalId: user.uid, schoolId: this.selectedSchool.id }
           });
           break;
         case 'waiting-approval':
-          this.router.navigate(['/teacher-awaiting-approval'], {
-            queryParams: { teacherId: user.uid, schoolId: this.selectedSchool.id }
+          this.router.navigate(['/principal-awating'], {
+            queryParams: { principalId: user.uid, schoolId: this.selectedSchool.id }
           });
           break;
         default:
           try { await updateDoc(ref, { status: 'waiting-approval' }); } catch {}
-          this.router.navigate(['/teacher-awaiting-approval'], {
-            queryParams: { teacherId: user.uid, schoolId: this.selectedSchool.id }
+          this.router.navigate(['/principal-awating'], {
+            queryParams: { principalId: user.uid, schoolId: this.selectedSchool.id }
           });
       }
     } finally {
@@ -198,16 +196,16 @@ export class TeacherLogin implements OnInit { // Renamed from TeacherLogin to Te
     }
   }
 
-  private async saveLoginHistory(teacherId: string) {
+  private async saveLoginHistory(principalId: string) {
     if (this.wroteHistoryThisSession) return;
     try {
       const historyRef = doc(collection(this.firestore, `login_history`));
       const location = await this.getLocation();
       await setDoc(historyRef, {
-        teacherId,
+        principalId: principalId,
         schoolId: this.selectedSchool.id,
         schoolCode: this.selectedSchool.code,
-        role: 'teacher',
+        role: 'Principal',
         loginAt: serverTimestamp(),
         device: this.getDeviceInfo(),
         location

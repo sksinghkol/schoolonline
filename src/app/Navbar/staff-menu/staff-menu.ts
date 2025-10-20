@@ -8,14 +8,13 @@ import { Auth, onAuthStateChanged, User } from '@angular/fire/auth';
 import { computed } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-
 @Component({
-  selector: 'app-account-menu',
-  imports: [CommonModule, RouterLink],
-  templateUrl: './account-menu.html',
-  styleUrl: './account-menu.scss'
+  selector: 'app-staff-menu',
+  imports: [RouterLink, CommonModule],
+  templateUrl: './staff-menu.html',
+  styleUrl: './staff-menu.scss'
 })
-export class AccountMenu implements OnInit {
+export class StaffMenu implements OnInit {
   authService = inject(AuthService);
   schoolState = inject(SchoolStateService);
   firestore = inject(Firestore);

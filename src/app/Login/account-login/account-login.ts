@@ -59,23 +59,27 @@ export class AccountLogin implements OnInit {
 
   async ngOnInit() {
     this.selectedSchoolSlug = this.route.snapshot.paramMap.get('schoolName');
-    const schoolSlug = this.selectedSchoolSlug?.trim().toLowerCase();
-    if (schoolSlug) {
-      await this.schoolState.setSchoolBySlug(schoolSlug);
+    const schoolSlugFromUrl = this.selectedSchoolSlug?.trim().toLowerCase();
+
+    if (schoolSlugFromUrl) {
+      // Set the school in the state service. The component's effect will react to this change.
+      this.schoolState.setSchoolBySlug(schoolSlugFromUrl);
+
+      // If no school is found after a delay, show an error. This is a fallback for bad URLs.
       setTimeout(() => {
         if (!this.schoolState.currentSchool()) {
-          const normalized = (this.selectedSchoolSlug || '').replace(/\s+/g, '').toLowerCase(); // This part is now consistent
-          this.schoolLoadError.set(
-            `School not found for “${this.selectedSchoolSlug}”. Try: /account-login/${normalized} or check the school slug.`
-          );
+          const normalized = (this.selectedSchoolSlug || '').replace(/\s+/g, '').toLowerCase();
+          this.schoolLoadError.set(`School not found for “${this.selectedSchoolSlug}”. Try: /account-login/${normalized} or check the school slug.`);
         }
-      }, 1500);
+      }, 2500); // Increased timeout for slower connections
+
       if (this.auth.currentUser) {
         this.resolving.set(true);
         this.user.set(this.auth.currentUser);
       }
     } else {
       this.schoolLoadError.set('No school provided in the URL. Use /account-login/{schoolSlug}');
+      this.resolving.set(false);
     }
   }
 
@@ -178,8 +182,13 @@ export class AccountLogin implements OnInit {
           });
           break;
         case 'waiting-approval':
-        case 'default':
+          this.router.navigate(['/account-awaiting-approval'], {
+            queryParams: { accountId: user.uid, schoolId: this.selectedSchool.id }
+          });
+          break;
         default:
+          // If status is undefined or something unexpected, default to waiting-approval
+          try { await updateDoc(ref, { status: 'waiting-approval' }); } catch {}
           this.router.navigate(['/account-awaiting-approval'], {
             queryParams: { accountId: user.uid, schoolId: this.selectedSchool.id }
           });

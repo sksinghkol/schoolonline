@@ -37,7 +37,7 @@ export class TeacherAwating implements OnInit {
         return;
       }
       try {
-        const ref = doc(this.firestore, `schools/${schoolId}/teacher/${teacherId}`);
+        const ref = doc(this.firestore, `schools/${schoolId}/teachers/${teacherId}`);
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const data = snap.data() as any;

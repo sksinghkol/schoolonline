@@ -6,12 +6,12 @@ import { Router } from '@angular/router';
 import { SchoolStateService } from '../../core/services/school-state.service';
 
 @Component({
-  selector: 'app-directorawaiting',
+  selector: 'app-principal-awating',
   imports: [CommonModule],
-  templateUrl: './directorawaiting.html',
-  styleUrls: ['./directorawaiting.scss']
+  templateUrl: './principal-awating.html',
+  styleUrl: './principal-awating.scss'
 })
-export class Directorawaiting implements OnInit {
+export class PrincipalAwating implements OnInit {
   private route = inject(ActivatedRoute);
   private firestore = inject(Firestore);
   private router = inject(Router);
@@ -29,15 +29,15 @@ export class Directorawaiting implements OnInit {
 
   async ngOnInit() {
     this.route.queryParamMap.subscribe(async (params) => {
-      const directorId = params.get('directorId');
+      const principalId = params.get('principalId');
       this.schoolId = params.get('schoolId');
       const schoolId = this.schoolId;
-      if (!directorId || !schoolId) {
+      if (!principalId || !schoolId) {
         this.loading.set(false);
         return;
       }
       try {
-        const ref = doc(this.firestore, `schools/${schoolId}/directors/${directorId}`);
+        const ref = doc(this.firestore, `schools/${schoolId}/principals/${principalId}`);
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const data = snap.data() as any;
@@ -82,7 +82,6 @@ export class Directorawaiting implements OnInit {
       // Fallback: if no code/slug, try using schoolId
       this.router.navigate([`/SchoolDashboard/${this.schoolId}`]);
     } else {
-      // Fallback to home if no slug/code is found.
       this.router.navigate(['/']);
     }
   }
