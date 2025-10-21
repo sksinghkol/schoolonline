@@ -90,8 +90,22 @@
                <li>
                 <a class="dropdown-item" [routerLink]="['/staff-login', school.slug]"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> Staff ({{school.name}})</a>
               </li>
-              
-            </ng-container>
+               <li>
+                <a class="dropdown-item" [routerLink]="['/transport-login', school.slug]"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> Transport ({{school.name}})</a>
+              </li>
+              <li>
+                <a class="dropdown-item" [routerLink]="['/frontdesk-login', school.slug]"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> Frontdesk ({{school.name}})</a>
+              </li>
+               <li>
+                <a class="dropdown-item" [routerLink]="['/security-login', school.slug]"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> Security Desk ({{school.name}})</a>
+              </li>
+                <li>
+                <a class="dropdown-item" [routerLink]="['/examcontroller-login', school.slug]"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> Exam Controller Desk ({{school.name}})</a>
+              </li>
+               <li>
+                <a class="dropdown-item" [routerLink]="['/itdepartment-login', school.slug]"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> It Department ({{school.name}})</a>
+              </li>
+            </ng-container> 
             <ng-template #noSchoolLogin>
               <li><a class="dropdown-item" [routerLink]="['/director-login']"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i> Director</a></li>
               <li><a class="dropdown-item" [routerLink]="['/student-login']"><i class="bi bi-mortarboard me-2 nav-link-icon text-secondary"></i> Students</a></li>
