@@ -1,6 +1,6 @@
 <!-- School Details -->
-<div class="container py-4" *ngIf="!loading && schoolData; else loadingTpl">
-  <div class="card shadow-lg">
+<div class="container py-5" *ngIf="!loading && schoolData; else loadingTpl">
+  <div class="card school-card glass-effect shadow-lg border-0 rounded-4 overflow-hidden">
     <div class="card-body p-4 p-md-5">
       <div class="row g-4 align-items-center">
         <div class="col-md-3 text-center">
@@ -8,17 +8,24 @@
             *ngIf="schoolData.logoUrl" 
             [src]="schoolData.logoUrl" 
             alt="{{ schoolData.name }}" 
-            class="img-fluid rounded-circle border p-1" 
-            style="max-width: 150px;"
+            class="school-logo img-fluid rounded-circle shadow-sm hover-glow border border-3 border-primary-subtle p-1"
           >
         </div>
+
         <div class="col-md-9">
-          <h2 class="fw-bold text-primary">{{ schoolData.name }}</h2>
-          <p class="text-muted fs-5 mb-2">{{ schoolData.address || 'Main address not available' }}</p>
+          <h2 class="fw-bold text-gradient mb-2">{{ schoolData.name }}</h2>
+          <p class="text-muted fs-5 mb-3">{{ schoolData.address || 'Main address not available' }}</p>
+
           <div class="d-flex flex-wrap gap-2">
-            <span class="badge bg-info">{{ schoolData.school_type || 'N/A' }}</span>
-            <span class="badge bg-success">{{ schoolData.ownership_type || 'N/A' }}</span>
-            <span class="badge bg-secondary">{{ schoolData.curriculum_type || 'N/A' }}</span>
+            <span class="badge bg-info bg-gradient px-3 py-2 rounded-pill shadow-sm">{{ schoolData.school_type || 'N/A' }}</span>
+            <span class="badge bg-success bg-gradient px-3 py-2 rounded-pill shadow-sm">{{ schoolData.ownership_type || 'N/A' }}</span>
+            <span class="badge bg-secondary bg-gradient px-3 py-2 rounded-pill shadow-sm">{{ schoolData.curriculum_type || 'N/A' }}</span>
+            
+            <!-- Share Button -->
+            <button class="btn btn-outline-primary btn-sm rounded-pill ms-auto" data-bs-toggle="modal" data-bs-target="#shareModal">
+              <i class="bi bi-share-fill me-1"></i> Share
+            </button>
+
           </div>
         </div>
       </div>
@@ -26,33 +33,161 @@
       <hr class="my-4">
 
       <div class="row g-4">
-        <div class="col-md-6">
-          <h5><i class="bi bi-geo-alt-fill text-primary me-2"></i>Address</h5>
+        <!-- Address -->
+        <div class="col-md-6 info-box">
+          <h5 class="text-primary mb-3"><i class="bi bi-geo-alt-fill me-2"></i>Address</h5>
           <p class="mb-1">{{ schoolData.address_line1 || 'N/A' }}</p>
           <p *ngIf="schoolData.address_line2" class="mb-1">{{ schoolData.address_line2 }}</p>
           <p class="mb-1">{{ schoolData.city }}, {{ schoolData.state }} - {{ schoolData.zip_code }}</p>
           <p>{{ schoolData.country }}</p>
         </div>
-        <div class="col-md-6">
-          <h5><i class="bi bi-telephone-fill text-primary me-2"></i>Contact</h5>
+
+        <!-- Contact -->
+        <div class="col-md-6 info-box">
+          <h5 class="text-primary mb-3"><i class="bi bi-telephone-fill me-2"></i>Contact</h5>
           <p class="mb-1"><strong>Primary:</strong> {{ schoolData.phone_primary || 'N/A' }}</p>
           <p class="mb-1"><strong>Secondary:</strong> {{ schoolData.phone_secondary || 'N/A' }}</p>
-          <p class="mb-1"><strong>Email:</strong> <a [href]="'mailto:' + schoolData.email">{{ schoolData.email || 'N/A' }}</a></p>
-          <p><strong>Website:</strong> <a [href]="schoolData.website" target="_blank">{{ schoolData.website || 'N/A' }}</a></p>
+          <p class="mb-1"><strong>Email:</strong> 
+            <a [href]="'mailto:' + schoolData.email" class="link-primary text-decoration-none">{{ schoolData.email || 'N/A' }}</a>
+          </p>
+          <p><strong>Website:</strong> 
+            <a [href]="schoolData.website" target="_blank" class="link-primary text-decoration-none">{{ schoolData.website || 'N/A' }}</a>
+          </p>
         </div>
-        <div class="col-md-6">
-          <h5><i class="bi bi-info-circle-fill text-primary me-2"></i>Details</h5>
+
+        <!-- Details -->
+        <div class="col-md-6 info-box">
+          <h5 class="text-primary mb-3"><i class="bi bi-info-circle-fill me-2"></i>Details</h5>
           <p class="mb-1"><strong>Established:</strong> {{ schoolData.establishment_year || 'N/A' }}</p>
           <p class="mb-1"><strong>School Code:</strong> {{ schoolData.code || 'N/A' }}</p>
           <p><strong>Enrollment Capacity:</strong> {{ schoolData.enrollment_capacity || 'N/A' }}</p>
         </div>
-        <div class="col-md-6" *ngIf="schoolData.slug || matchedVariant">
-          <h5><i class="bi bi-link-45deg text-primary me-2"></i>Slug</h5>
+
+        <!-- Slug -->
+        <div class="col-md-6 info-box" *ngIf="schoolData.slug || matchedVariant">
+          <h5 class="text-primary mb-3"><i class="bi bi-link-45deg me-2"></i>Slug</h5>
           <p>
-            <strong>{{ schoolData.slug || matchedVariant }}</strong>
+            <strong class="text-dark">{{ schoolData.slug || matchedVariant }}</strong>
             <span *ngIf="matchedVariant && schoolData.slug !== matchedVariant" class="text-muted small"> (closest match)</span>
           </p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ratings & Reviews -->
+  <div class="card shadow-lg mt-5 border-0 rounded-4">
+    <div class="card-body p-4 p-md-5">
+      <h3 class="fw-bold mb-4 text-gradient"><i class="bi bi-star-half text-warning me-2"></i>Ratings & Reviews</h3>
+
+      <!-- Overall Rating -->
+      <div class="rating-summary d-flex align-items-center mb-4 p-3 bg-light rounded-3 shadow-sm">
+        <div class="display-4 fw-bold text-primary me-3">{{ schoolData.averageRating | number:'1.1-1' }}</div>
+        <div>
+          <div class="star-rating-display mb-1">
+            <i *ngFor="let i of [1,2,3,4,5]" class="bi fs-5" [ngClass]="i <= schoolData.averageRating ? 'bi-star-fill text-warning' : 'bi-star text-muted'"></i>
+          </div>
+          <p class="text-muted mb-0 small">Based on {{ schoolData.reviewCount }} reviews</p>
+        </div>
+      </div>
+
+      <!-- Login Prompt -->
+      <div *ngIf="!currentUser" class="card mb-4 text-center bg-light border-0 shadow-sm p-4 rounded-3">
+        <h5 class="fw-bold mb-2">Join the Conversation</h5>
+        <p class="text-muted mb-3">Login to share your experience.</p>
+        <button class="btn btn-danger rounded-pill px-4" (click)="loginWithGoogle()">
+          <i class="bi bi-google me-2"></i>Login with Google
+        </button>
+      </div>
+
+      <!-- Review Form -->
+      <div *ngIf="currentUser" class="card mb-4 border-0 shadow-sm rounded-3">
+        <div class="card-header bg-primary bg-gradient text-white fw-semibold">Leave a Review</div>
+        <div class="card-body">
+          <form [formGroup]="reviewForm" (ngSubmit)="submitReview()">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Your Rating</label>
+              <div class="star-rating-input fs-4">
+                <i *ngFor="let i of [1,2,3,4,5]" class="bi" 
+                   [ngClass]="i <= (reviewForm.get('rating')?.value || 0) ? 'bi-star-fill text-warning' : 'bi-star text-muted'"
+                   (click)="reviewForm.get('rating')?.setValue(i)"
+                   style="cursor:pointer;"></i>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="reviewComment" class="form-label fw-semibold">Your Review</label>
+              <textarea id="reviewComment" class="form-control rounded-3" formControlName="comment" rows="3" placeholder="Share your experience..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary rounded-pill px-4" [disabled]="reviewForm.invalid || submittingReview">
+              <span *ngIf="!submittingReview">Submit</span>
+              <span *ngIf="submittingReview" class="spinner-border spinner-border-sm ms-2"></span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Reviews List -->
+      <div *ngIf="reviews$ | async as reviews">
+        <div *ngIf="reviews.length > 0; else noReviews">
+          <div *ngFor="let review of reviews" class="review-item bg-light p-3 rounded-3 shadow-sm mb-3">
+            <div class="d-flex align-items-start">
+              <img [src]="review['userPhotoURL'] || 'https://dummyimage.com/40x40/ced4da/6c757d.png'" alt="User" class="rounded-circle me-3" width="40" height="40">
+              <div class="w-100">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <h6 class="mb-0 fw-semibold">{{ review['userName'] }} <small class="text-muted">({{ review['userRole'] }})</small></h6>
+                  <small class="text-muted">{{ review['createdAt'].toDate() | date:'mediumDate' }}</small>
+                </div>
+                <div class="star-rating-display mb-2">
+                  <i *ngFor="let i of [1,2,3,4,5]" class="bi fs-6" [ngClass]="i <= review['rating'] ? 'bi-star-fill text-warning' : 'bi-star text-muted'"></i>
+                </div>
+                <p class="mb-2">{{ review['comment'] }}</p>
+
+                <!-- Reply actions -->
+                <div class="text-end small">
+                  <a *ngIf="currentUser" (click)="toggleReplyForm(review['id'])" class="me-3 text-decoration-none text-primary">
+                    <i class="bi bi-reply me-1"></i>Reply
+                  </a>
+                  <a *ngIf="review['replyCount'] > 0" (click)="toggleReplies(review)" class="text-muted text-decoration-none">
+                    {{ review['showReplies'] ? 'Hide' : 'View' }} {{ review['replyCount'] }} {{ review['replyCount'] === 1 ? 'Reply' : 'Replies' }}
+                    <i class="bi" [ngClass]="review['showReplies'] ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                  </a>
+                </div>
+
+                <!-- Reply Form -->
+                <div *ngIf="replyingTo === review['id']" class="mt-3">
+                  <form [formGroup]="replyForm" (ngSubmit)="submitReply(review['id'])">
+                    <textarea formControlName="replyComment" class="form-control form-control-sm rounded-3" rows="2" placeholder="Write a reply..."></textarea>
+                    <div class="text-end mt-2">
+                      <button type="button" class="btn btn-sm btn-light me-2" (click)="toggleReplyForm(null)">Cancel</button>
+                      <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3" [disabled]="replyForm.invalid || submittingReply">
+                        <span *ngIf="!submittingReply">Post</span>
+                        <span *ngIf="submittingReply" class="spinner-border spinner-border-sm"></span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- Replies -->
+                <div *ngIf="review['showReplies'] && review['replies']" class="mt-3 ps-4 border-start border-2 border-primary-subtle">
+                  <div *ngFor="let reply of review['replies']" class="d-flex align-items-start mb-3">
+                    <img [src]="reply['userPhotoURL'] || 'https://dummyimage.com/32x32/ced4da/6c757d.png'" alt="User" class="rounded-circle me-3" width="32" height="32">
+                    <div class="w-100 bg-white border rounded-3 p-2 shadow-sm">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0 small fw-semibold">{{ reply['userName'] }}</h6>
+                        <small class="text-muted">{{ reply['createdAt'].toDate() | date:'short' }}</small>
+                      </div>
+                      <p class="mb-0 small">{{ reply['comment'] }}</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noReviews>
+          <p class="text-muted text-center">Be the first to leave a review!</p>
+        </ng-template>
       </div>
     </div>
   </div>
@@ -62,7 +197,7 @@
 <ng-template #loadingTpl>
   <div class="text-center py-5">
     <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-3">Loading school details...</p>
+    <p class="mt-3 text-muted">Loading school details...</p>
   </div>
 </ng-template>
 
@@ -70,6 +205,49 @@
 <div *ngIf="!loading && !schoolData" class="container py-5 text-center">
   <h4 class="text-warning">School not found</h4>
   <p *ngIf="incomingName">Searched for: <strong>{{ incomingName }}</strong></p>
-  <p *ngIf="matchedVariant">Closest matched slug: <strong>{{ matchedVariant }}</strong></p>
-  <a class="btn btn-sm btn-primary mt-3" routerLink="/">Back to home</a>
+  <p *ngIf="matchedVariant">Closest match: <strong>{{ matchedVariant }}</strong></p>
+  <a class="btn btn-outline-primary mt-3 rounded-pill px-4" routerLink="/">Back to Home</a>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareModalLabel">Share School Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div id="share-modal-content-for-pdf" class="p-3">
+          <!-- School Info for PDF -->
+          <div class="d-flex align-items-center mb-3">
+            <img *ngIf="schoolData.logoUrl" [src]="schoolData.logoUrl" alt="{{ schoolData.name }}" class="rounded-circle me-3" width="60" height="60">
+            <div class="text-start">
+              <h4 class="fw-bold mb-0">{{ schoolData.name }}</h4>
+              <p class="text-muted mb-0">{{ schoolData.address }}</p>
+            </div>
+          </div>
+
+          <p class="text-muted">Scan the QR code or use the links below to share.</p>
+          
+          <!-- QR Code -->
+          <div class="my-3">
+            <qrcode [qrdata]="currentUrl" [width]="256" [errorCorrectionLevel]="'M'"></qrcode>
+          </div>
+        </div>
+
+        <!-- Share Links -->
+        <div class="d-grid gap-2 mt-3">
+          <a [href]="whatsAppShareUrl" target="_blank" class="btn btn-success btn-lg">
+            <i class="bi bi-whatsapp me-2"></i> Share on WhatsApp
+          </a>
+          <button class="btn btn-danger btn-lg" (click)="shareAsPdf()" [disabled]="generatingPdf">
+            <i class="bi bi-file-earmark-pdf-fill me-2"></i>
+            <span *ngIf="!generatingPdf">Download as PDF</span>
+            <span *ngIf="generatingPdf" class="spinner-border spinner-border-sm"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

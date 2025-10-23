@@ -1,0 +1,75 @@
+<div class="container-fluid d-flex align-items-center justify-content-center min-vh-100 bg-light">
+  <div class="card shadow-lg p-4 p-md-5" style="max-width: 500px; width: 100%;">
+    <div class="card-body">
+      <h2 class="card-title text-center mb-4">
+        <i class="bi bi-person-badge me-2 text-primary"></i>
+        IT Department {{ isLoginView() ? 'Login' : 'Register' }}
+      </h2>
+
+      <div *ngIf="schoolLoadError()" class="alert alert-danger text-center" role="alert">
+        {{ schoolLoadError() }}
+      </div>
+
+      <div *ngIf="errorMessage()" class="alert alert-danger text-center" role="alert">
+        {{ errorMessage() }}
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="handleEmailPassword()">
+        <div class="mb-3" *ngIf="!isLoginView()">
+          <label for="name" class="form-label">Full Name</label>
+          <input type="text" id="name" formControlName="name" class="form-control" placeholder="Enter your full name">
+          <div *ngIf="loginForm.get('name')?.invalid && loginForm.get('name')?.touched" class="text-danger mt-1">
+            Name is required.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="email" class="form-label">Email address</label>
+          <input type="email" id="email" formControlName="email" class="form-control" placeholder="name@example.com">
+          <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="text-danger mt-1">
+            <span *ngIf="loginForm.get('email')?.errors?.['required']">Email is required.</span>
+            <span *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email.</span>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" id="password" formControlName="password" class="form-control" placeholder="Password">
+          <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="text-danger mt-1">
+            <span *ngIf="loginForm.get('password')?.errors?.['required']">Password is required.</span>
+            <span *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters.</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mb-3" [disabled]="loginForm.invalid || resolving()">
+          <span *ngIf="resolving()" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          {{ isLoginView() ? 'Login' : 'Register' }}
+        </button>
+      </form>
+
+      <div class="text-center mb-3">
+        <span class="text-muted">Or continue with</span>
+      </div>
+
+      <button class="btn btn-outline-danger w-100 mb-3 d-flex align-items-center justify-content-center"
+        (click)="loginWithGoogle()" [disabled]="resolving()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" class="me-2"
+          style="height: 20px;">
+        <span *ngIf="resolving()" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        Google
+      </button>
+
+      <div class="text-center mt-3">
+        <a href="javascript:void(0)" (click)="toggleView()" class="text-decoration-none">
+          {{ isLoginView() ? 'Need an account? Register here.' : 'Already have an account? Login here.' }}
+        </a>
+      </div>
+
+      <div class="text-center mt-2" *ngIf="selectedSchoolSlug">
+        <a [routerLink]="['/all-login']" class="text-decoration-none text-secondary">
+          <i class="bi bi-arrow-left-circle me-1"></i> Back to All Logins
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

@@ -60,7 +60,33 @@ import { StaffLogin } from './Login/staff-login/staff-login';
 import { StaffAuthGuard } from './core/gaurds/staff.auth.guard';
 import { StaffDashboard } from './Staff/staff-dashboard/staff-dashboard';
 import { StaffAwaiting } from './Staff/staff-awaiting/staff-awaiting';
+import { TransportLogin } from './Login/transport-login/transport-login';
+import { TransportDashboard } from './Transport/transport-dashboard/transport-dashboard';
+import { TransportAuthGuard } from './core/gaurds/transport.auth.guard';
+import { TransportAwaiting } from './Transport/transport-awaiting/transport-awaiting';
+import { FrontdeskLogin } from './Login/frontdesk-login/frontdesk-login';
+import { FrontdeskDashboard } from './Frontdesk/frontdesk-dashboard/frontdesk-dashboard';
+import { FrontdeskAuthGuard } from './core/gaurds/frontdesk.auth.guard';
+import { FrontdeskAwaiting } from './Frontdesk/frontdesk-awaiting/frontdesk-awaiting';
+import { SecurityLogin } from './Login/security-login/security-login';
+import { SecurityDashboard } from './Security/security-dashboard/security-dashboard';
+import { SecurityAuthGuard } from './core/gaurds/security.auth.guard';
+import { SecurityAwaiting } from './Security/security-awaiting/security-awaiting';
+import { ExamcontrollerLogin } from './Login/examcontroller-login/examcontroller-login';
+import { ExamcontrollerAwaiting } from './ExamCordinator/examcontroller-awaiting/examcontroller-awaiting';
+import { ExamcontrollerDashboard } from './ExamCordinator/examcontroller-dashboard/examcontroller-dashboard';
+import { ExamcontrollerAuthGuard } from './core/gaurds/examcontroller.auth.guard';
+import { ItdepartmentLogin } from './Login/itdepartment-login/itdepartment-login';
+import { ItdepartmentAwaiting } from './ItDepartment/itdepartment-awaiting/itdepartment-awaiting';
+import { ItdepartmentDashboard } from './ItDepartment/itdepartment-dashboard/itdepartment-dashboard';
 
+import { ParrentLogin } from './Login/parrent-login/parrent-login';
+import { ParrentAwaiting } from './Parrent/parrent-awaiting/parrent-awaiting';
+import { ParrentDashboard } from './Parrent/parrent-dashboard/parrent-dashboard';
+import { ParrentAuthGuard } from './core/gaurds/parrent.auth.guard';
+import { DirectorProfile } from './Director/director-profile/director-profile';
+import { DirectorUserlist } from './Director/director-userlist/director-userlist';
+import { ManagemantDesk } from './School/managemant-desk/managemant-desk';
 export const routes: Routes = [
   /* Home & General Login */
   { path: '', component: Home, pathMatch: 'full' },
@@ -77,8 +103,20 @@ export const routes: Routes = [
   { path: 'account-login/:schoolName', component: AccountLogin },
   { path: 'principal-login', component: PrincipalLogin },
   { path: 'principal-login/:schoolName', component: PrincipalLogin },
-   { path: 'staff-login', component: StaffLogin },
+  { path: 'staff-login', component: StaffLogin },
   { path: 'staff-login/:schoolName', component: StaffLogin },
+  { path: 'transport-login', component: TransportLogin },
+  { path: 'transport-login/:schoolName', component: TransportLogin },
+  { path: 'frontdesk-login', component: FrontdeskLogin },
+  { path: 'frontdesk-login/:schoolName', component: FrontdeskLogin },
+  { path: 'security-login', component: SecurityLogin },
+  { path: 'security-login/:schoolName', component: SecurityLogin },
+  { path: 'examcontroller-login', component: ExamcontrollerLogin },
+  { path: 'examcontroller-login/:schoolName', component: ExamcontrollerLogin },
+  { path: 'itdepartment-login', component: ItdepartmentLogin },
+  { path: 'itdepartment-login/:schoolName', component: ItdepartmentLogin },
+  { path: 'parrent-login', component: ParrentLogin },
+  { path: 'parrent-login/:schoolName', component: ParrentLogin },
   /* Admin Dashboard */
   {
     path: 'admin-dashboard',
@@ -110,44 +148,82 @@ export const routes: Routes = [
       { path: 'brochure', component: Brochure },
       { path: 'loginHistory', component: LoginHistory },
       { path: 'loginHistory/students', component: StudentHistory },
-      { path: 'allLoginAdmin', component: AllAdminLogin }
-    ]
+      { path: 'allLoginAdmin', component: AllAdminLogin },
+    ],
   },
- /* Director Dashboard */
-  { 
-    path: 'director-dashboard', 
-    component: DirectorDashboard, 
-    canActivate: [DirectorAuthGuard] 
+  /* Director Dashboard */
+  {
+    path: 'director-dashboard',
+    component: DirectorDashboard,
+    canActivate: [DirectorAuthGuard],
+     children: [
+      { path: 'director-profile', component: DirectorProfile },
+       { path: 'director-userlist', component: DirectorUserlist },
+     ]
   },
   /* Account Dashboard */
-  { 
-    path: 'account-dashboard', 
-    component: AccountDashboard, 
-    canActivate: [AccountAuthGuard] 
+  {
+    path: 'account-dashboard',
+    component: AccountDashboard,
+    canActivate: [AccountAuthGuard],
   },
-   /* Principal Dashboard */
-  { 
-    path: 'principal-dashboard', 
-    component: PrincipalDashboard, 
-    canActivate: [PrincipalAuthGuard] 
+  /* Principal Dashboard */
+  {
+    path: 'principal-dashboard',
+    component: PrincipalDashboard,
+    canActivate: [PrincipalAuthGuard],
   },
-   /* staff Dashboard */
-  { 
-    path: 'staff-dashboard', 
-    component: StaffDashboard, 
-    canActivate: [StaffAuthGuard] 
+  /* staff Dashboard */
+  {
+    path: 'staff-dashboard',
+    component: StaffDashboard,
+    canActivate: [StaffAuthGuard],
+  },
+  {
+    path: 'frontdesk-dashboard',
+    component: FrontdeskDashboard,
+    canActivate: [FrontdeskAuthGuard],
+  },
+  /* Transport Dashboard */
+   {
+    path: 'security-dashboard',
+    component: SecurityDashboard,
+    canActivate: [SecurityAuthGuard],
+  },
+  {
+    path: 'transport-dashboard',
+    component: TransportDashboard,
+    canActivate: [TransportAuthGuard],
   },
   /* Teacher Dashboard */
-  { 
-    path: 'teacher-dashboard', 
-    component: TeacherDashboard, 
-    canActivate: [TeacherAuthGuard] 
+  {
+    path: 'teacher-dashboard',
+    component: TeacherDashboard,
+    canActivate: [TeacherAuthGuard],
+  },
+  /* Exam Controller Dashboard */
+  {
+    path: 'examcontroller-dashboard',
+    component: ExamcontrollerDashboard,
+    canActivate: [ExamcontrollerAuthGuard],
+  },
+  /* IT Department Dashboard */
+  {
+    path: 'itdepartment-dashboard',
+    component: ItdepartmentDashboard,
+    canActivate: [ExamcontrollerAuthGuard], // Assuming you'll create ItdepartmentAuthGuard
+  },
+  /* Parent Dashboard */
+  {
+    path: 'parrent-dashboard',
+    component: ParrentDashboard,
+    canActivate: [ParrentAuthGuard],
   },
   /* Student Dashboard */
-  { 
-    path: 'student-dashboard', 
-    component: StudentDashboard, 
-    canActivate: [StudentAuthGuard] 
+  {
+    path: 'student-dashboard',
+    component: StudentDashboard,
+    canActivate: [StudentAuthGuard],
   },
 
   /* Student flows */
@@ -155,9 +231,16 @@ export const routes: Routes = [
   { path: 'director-awaiting-approval', component: Directorawaiting },
   { path: 'account-awaiting-approval', component: AccountAwaiting }, // Add this route
   { path: 'teacher-awaiting-approval', component: TeacherAwating },
+  { path: 'transport-awaiting', component: TransportAwaiting },
+   { path: 'transport-awaiting', component: TransportAwaiting },
+     { path: 'frontdesk-awaiting', component: FrontdeskAwaiting },
   { path: 'principal-awating', component: PrincipalAwating },
   { path: 'staff-awaiting', component: StaffAwaiting },
   { path: 'update-profile', component: UpdateProfile },
+  { path: 'examcontroller-awaiting', component: ExamcontrollerAwaiting },
+  { path: 'itdepartment-awaiting', component: ItdepartmentAwaiting },
+  { path: 'security-awaiting', component: SecurityAwaiting },
+  { path: 'parrent-awaiting', component: ParrentAwaiting },
 
   /* Dynamic School URL */
   {
@@ -165,10 +248,11 @@ export const routes: Routes = [
     component: SchoolDashboard,
     children: [
       { path: '', component: SchoolHome, pathMatch: 'full' },
-      { path: 'SchoolDetails', component: SchoolDetails }
-    ]
+      { path: 'SchoolDetails', component: SchoolDetails },
+      { path: 'ManagemantDesk', component: ManagemantDesk },
+    ],
   },
 
   /* Fallback */
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: '' },
 ];

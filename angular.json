@@ -27,7 +27,14 @@
               }
             ],
             "allowedCommonJsDependencies": [
-              "quill-delta"
+              "quill-delta",
+              "jspdf",
+              "html2canvas",
+              "canvg",
+              "raf",
+              "rgbcolor",
+              "qrcode",
+              "core-js"
             ],
 "styles": [
   "src/styles.scss",

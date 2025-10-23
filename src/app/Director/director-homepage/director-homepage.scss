@@ -1,0 +1,166 @@
+// 🌟 Director Dashboard Styling
+
+.container-fluid {
+  background: linear-gradient(180deg, #f8f9fc, #ffffff);
+  min-height: 100vh;
+  padding: 2rem;
+  border-radius: 1rem;
+}
+
+// 🏷️ Title Section
+h2 {
+  font-weight: 700;
+  color: #0d6efd;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  i {
+    color: #0d6efd;
+  }
+}
+
+// 🧭 Nav Tabs
+.nav-tabs {
+  border-bottom: 2px solid #dee2e6;
+
+  .nav-link {
+    font-weight: 600;
+    color: #6c757d;
+    border: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    transition: all 0.3s ease-in-out;
+
+    &:hover {
+      color: #0d6efd;
+      background-color: #e9f2ff;
+    }
+
+    &.active {
+      color: #fff;
+      background: linear-gradient(90deg, #0d6efd, #4b8bff);
+      box-shadow: 0 3px 10px rgba(13, 110, 253, 0.3);
+    }
+  }
+}
+
+// 🔄 Loading Spinner
+.text-center {
+  .spinner-border {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  p {
+    font-size: 1rem;
+    color: #6c757d;
+  }
+}
+
+// 👥 Role Group Headings
+h4 {
+  font-size: 1.2rem;
+  color: #495057;
+  font-weight: 600;
+  border-left: 4px solid #0d6efd;
+  padding-left: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+// 📋 User List
+.list-group {
+  border-radius: 0.75rem;
+  overflow: hidden;
+
+  .list-group-item {
+    transition: all 0.25s ease-in-out;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-left: 4px solid transparent;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid #0d6efd;
+    }
+
+    h6 {
+      font-weight: 600;
+      color: #212529;
+    }
+
+    small {
+      color: #6c757d;
+    }
+
+    img {
+      border: 2px solid #dee2e6;
+    }
+  }
+}
+
+// 🧩 Buttons
+.btn {
+  border-radius: 0.4rem;
+  font-weight: 600;
+  transition: all 0.3s ease-in-out;
+
+  i {
+    margin-right: 4px;
+  }
+
+  &.btn-success {
+    background: linear-gradient(90deg, #198754, #28a745);
+    border: none;
+
+    &:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #28a745, #198754);
+    }
+  }
+
+  &.btn-danger {
+    background: linear-gradient(90deg, #dc3545, #c82333);
+    border: none;
+
+    &:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #c82333, #dc3545);
+    }
+  }
+
+  &.btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+
+    &:hover {
+      background: #0d6efd;
+      color: #fff;
+    }
+  }
+
+  &.btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+
+    &:hover {
+      background: #dc3545;
+      color: #fff;
+    }
+  }
+}
+
+// ⚠️ Alerts
+.alert {
+  border-radius: 0.6rem;
+  font-weight: 500;
+  text-align: center;
+  background: #eaf2ff;
+  color: #0d6efd;
+  border: none;
+}
+
+// ✨ Smooth transitions
+* {
+  transition: all 0.2s ease-in-out;
+}

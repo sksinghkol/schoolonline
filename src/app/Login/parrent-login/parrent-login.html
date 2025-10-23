@@ -1,0 +1,84 @@
+<div class="container-fluid login-container d-flex justify-content-center align-items-center">
+  <div class="card shadow-lg login-card">
+    <div class="card-body p-4 p-md-5">
+
+      <!-- Loading/Resolving Overlay -->
+      <div *ngIf="resolving()" class="resolving-overlay">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 mb-0 text-muted">Checking your credentials...</p>
+      </div>
+
+      <!-- School Info Header -->
+      <div class="text-center mb-4">
+        <img [src]="schoolState.currentSchool()?.logoUrl || 'https://dummyimage.com/100x100/6c757d/dee2e6.png&text=Logo'" alt="School Logo" class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
+        <h4 class="card-title fw-bold">{{ schoolState.currentSchool()?.name || 'School' }}</h4>
+        <p class="text-muted">Parent Portal</p>
+      </div>
+
+      <!-- Error Messages -->
+      <div *ngIf="errorMessage()" class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ errorMessage() }}
+        <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+      </div>
+      <div *ngIf="schoolLoadError()" class="alert alert-warning" role="alert">
+        {{ schoolLoadError() }}
+      </div>
+
+      <!-- Login/Signup Form -->
+      <form [formGroup]="loginForm" (ngSubmit)="handleEmailPassword()">
+        <!-- Name (only for signup) -->
+        <div class="form-floating mb-3" *ngIf="!isLoginView()">
+          <input type="text" class="form-control" id="name" placeholder="Your Name" formControlName="name">
+          <label for="name">Full Name</label>
+        </div>
+
+        <!-- Email -->
+        <div class="form-floating mb-3">
+          <input type="email" class="form-control" id="email" placeholder="name@example.com" formControlName="email" [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          <label for="email">Email address</label>
+          <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="invalid-feedback">
+            Please enter a valid email.
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-floating mb-3">
+          <input type="password" class="form-control" id="password" placeholder="Password" formControlName="password" [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          <label for="password">Password</label>
+          <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="invalid-feedback">
+            Password must be at least 6 characters.
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="d-grid mb-3">
+          <button type="submit" class="btn btn-primary btn-lg" [disabled]="loginForm.invalid || resolving()">
+            {{ isLoginView() ? 'Login' : 'Sign Up' }}
+          </button>
+        </div>
+      </form>
+
+      <!-- OR Separator -->
+      <div class="text-center my-3">
+        <span class="text-muted">OR</span>
+      </div>
+
+      <!-- Google Login -->
+      <div class="d-grid mb-4">
+        <button class="btn btn-danger btn-lg" (click)="loginWithGoogle()" [disabled]="resolving()">
+          <i class="bi bi-google me-2"></i> {{ isLoginView() ? 'Login' : 'Sign Up' }} with Google
+        </button>
+      </div>
+
+      <!-- Toggle View Link -->
+      <div class="text-center">
+        <a href="javascript:void(0)" (click)="toggleView()" class="text-decoration-none">
+          {{ isLoginView() ? 'Need an account? Sign Up' : 'Already have an account? Login' }}
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>

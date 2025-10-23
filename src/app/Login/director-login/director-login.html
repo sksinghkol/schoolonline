@@ -1,85 +1,40 @@
-<div class="login-container">
-  <div *ngIf="resolving()" class="loading-overlay">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2">Checking your login status...</p>
-  </div>
-  <div class="login-box">
-
-    <!-- School Info -->
-    <div class="school-info" *ngIf="selectedSchool">
-      <img [src]="selectedSchool.logoUrl" alt="School Logo" class="school-logo">
-      <h2>{{ selectedSchool.name }}</h2>
-      <h3>Student Portal</h3>
+<div class="login-container d-flex justify-content-center align-items-center vh-100">
+  <div class="login-card p-4 shadow-lg rounded-4">
+    
+    <div class="text-center mb-4">
+      <img *ngIf="schoolState.currentSchool()?.logoUrl" 
+           [src]="schoolState.currentSchool()?.logoUrl" 
+           alt="School Logo" class="school-logo rounded-circle shadow-sm">
+      <h3 class="mt-3">{{ schoolState.currentSchool()?.name || 'School Login' }}</h3>
     </div>
 
-    <!-- Loading School / Error -->
-    <div *ngIf="!selectedSchool" class="loading">
-      <p *ngIf="!schoolLoadError()">Loading school information...</p>
-      <div *ngIf="schoolLoadError()" class="error-message">
-        {{ schoolLoadError() }}
+    <form [formGroup]="loginForm" (ngSubmit)="handleEmailPassword()">
+      <div *ngIf="errorMessage" class="alert alert-danger text-center">{{ errorMessage() }}</div>
+
+      <div class="mb-3" *ngIf="!isLoginView()">
+        <input type="text" formControlName="name" placeholder="Full Name" class="form-control">
       </div>
-    </div>
 
-    <div *ngIf="selectedSchool">
-      <!-- Google Login -->
-      <button type="button" (click)="loginWithGoogle()" class="google-btn">
-       
-        Sign in with Google
+      <div class="mb-3">
+        <input type="email" formControlName="email" placeholder="Email" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <input type="password" formControlName="password" placeholder="Password" class="form-control">
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 mb-2" [disabled]="resolving()">
+        <span *ngIf="resolving()" class="spinner-border spinner-border-sm me-2"></span>
+        {{ isLoginView() ? 'Login' : 'Register' }}
       </button>
+    </form>
 
-      <div class="divider">OR</div>
+    <button class="btn btn-outline-danger w-100 mt-2" (click)="loginWithGoogle()">
+      <i class="bi bi-google me-2"></i> Continue with Google
+    </button>
 
-      <!-- Email Login/Signup Form -->
-      <form [formGroup]="loginForm" (ngSubmit)="handleEmailPassword()">
-        <h4 *ngIf="isLoginView()">Log in with Email</h4>
-        <h4 *ngIf="!isLoginView()">Sign up with Email</h4>
-
-        <!-- Name (Signup Only) -->
-        <div class="form-group" *ngIf="!isLoginView()">
-          <label for="name">Full Name</label>
-          <input id="name" type="text" formControlName="name" placeholder="Your Full Name">
-        </div>
-
-        <!-- Email -->
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input id="email" type="email" formControlName="email" placeholder="you@example.com">
-          <div *ngIf="loginForm.controls['email'].touched && loginForm.controls['email'].invalid" class="error-message">
-            <small *ngIf="loginForm.controls['email'].errors?.['required']">Email is required.</small>
-            <small *ngIf="loginForm.controls['email'].errors?.['email']">Enter a valid email.</small>
-          </div>
-        </div>
-
-        <!-- Password -->
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input id="password" type="password" formControlName="password" placeholder="••••••••">
-          <div *ngIf="loginForm.controls['password'].touched && loginForm.controls['password'].invalid" class="error-message">
-            <small *ngIf="loginForm.controls['password'].errors?.['required']">Password is required.</small>
-            <small *ngIf="loginForm.controls['password'].errors?.['minlength']">Minimum 6 characters required.</small>
-          </div>
-        </div>
-
-        <!-- Error Message -->
-        <div *ngIf="errorMessage()" class="error-message">
-          {{ errorMessage() }}
-        </div>
-
-        <!-- Submit Button -->
-        <button type="submit" class="login-btn" [disabled]="loginForm.invalid">
-          {{ isLoginView() ? 'Log In' : 'Sign Up' }}
-        </button>
-      </form>
-
-      <!-- Toggle Login/Signup -->
-      <div class="toggle-view">
-        <span *ngIf="isLoginView()">
-          Don't have an account? <a (click)="toggleView()">Sign Up</a>
-        </span>
-        <span *ngIf="!isLoginView()">
-          Already have an account? <a (click)="toggleView()">Log In</a>
-        </span>
-      </div>
+    <div class="text-center mt-3">
+      <a href="#" (click)="toggleView()">{{ isLoginView() ? 'New Director? Register' : 'Already Registered? Login' }}</a>
     </div>
   </div>
 </div>

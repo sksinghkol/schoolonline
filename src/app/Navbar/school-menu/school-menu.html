@@ -32,7 +32,10 @@
           </a>
           <ul class="dropdown-menu shadow">
             <li><a class="dropdown-item" [routerLink]="['/about-us']"><i class="bi bi-building me-2 nav-link-icon text-primary"></i> About Us</a></li>
-            <li><a class="dropdown-item" [routerLink]="['/management-desk']"><i class="bi bi-person-workspace me-2 nav-link-icon text-success"></i> Management Desk</a></li>
+            <li>
+              <a *ngIf="school()" class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'ManagemantDesk']"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i> Management Desk ({{school()?.name}})</a>
+          
+            </li>
           </ul>
         </li>
 
@@ -104,6 +107,9 @@
               </li>
                <li>
                 <a class="dropdown-item" [routerLink]="['/itdepartment-login', school.slug]"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> It Department ({{school.name}})</a>
+              </li>
+               <li>
+                <a class="dropdown-item" [routerLink]="['/parrent-login', school.slug]"><i class="bi bi-person-badge me-2 nav-link-icon text-info"></i> Parrent ({{school.name}})</a>
               </li>
             </ng-container> 
             <ng-template #noSchoolLogin>

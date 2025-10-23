@@ -22,15 +22,19 @@ export class DirectorLogin implements OnInit {
   schoolState = inject(SchoolStateService);
   injector = inject(Injector);
 
+  // ------------------ PUBLIC SIGNALS ------------------
   loginForm: FormGroup;
   isLoginView = signal(true);
   errorMessage = signal<string | null>(null);
   resolving = signal(true);
   schoolLoadError = signal<string | null>(null);
+  user = signal<User | null>(null); // public now
 
-  private user = signal<User | null>(null);
+  // ------------------ OTHER PUBLIC PROPERTIES ------------------
   selectedSchoolSlug: string | null = null;
   selectedSchool: any = null;
+
+  // ------------------ PRIVATE INTERNAL STATE ------------------
   private checkingStatus = false;
   private wroteHistoryThisSession = false;
 
@@ -41,9 +45,12 @@ export class DirectorLogin implements OnInit {
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
 
+    // Track auth state
     onAuthStateChanged(this.auth, (user) => this.user.set(user));
 
     this.resolving.set(false);
+
+    // Effect to check login and school
     effect(() => {
       const user = this.user();
       const school = this.schoolState.currentSchool();
@@ -79,6 +86,7 @@ export class DirectorLogin implements OnInit {
     }
   }
 
+  // ------------------ LOGIN TOGGLE ------------------
   toggleView() {
     this.isLoginView.update(v => !v);
     this.errorMessage.set(null);
@@ -93,6 +101,7 @@ export class DirectorLogin implements OnInit {
     nameControl?.updateValueAndValidity();
   }
 
+  // ------------------ EMAIL/PASSWORD LOGIN ------------------
   async handleEmailPassword() {
     this.errorMessage.set(null);
     if (this.loginForm.invalid) return;
@@ -136,6 +145,7 @@ export class DirectorLogin implements OnInit {
     }
   }
 
+  // ------------------ GOOGLE LOGIN ------------------
   async loginWithGoogle() {
     this.errorMessage.set(null);
     const provider = new GoogleAuthProvider();
@@ -146,6 +156,7 @@ export class DirectorLogin implements OnInit {
     }
   }
 
+  // ------------------ DIRECTOR STATUS CHECK ------------------
   private async checkDirectorStatus(user: User) {
     if (this.checkingStatus) return;
     this.checkingStatus = true;
@@ -202,6 +213,7 @@ export class DirectorLogin implements OnInit {
     this.checkingStatus = false;
   }
 
+  // ------------------ LOGIN HISTORY ------------------
   private async saveLoginHistory(directorId: string) {
     if (this.wroteHistoryThisSession) return;
     try {
@@ -222,6 +234,7 @@ export class DirectorLogin implements OnInit {
     }
   }
 
+  // ------------------ DEVICE INFO ------------------
   private getDeviceInfo() {
     return {
       userAgent: navigator.userAgent,
@@ -231,6 +244,7 @@ export class DirectorLogin implements OnInit {
     };
   }
 
+  // ------------------ LOCATION ------------------
   private getLocation(): Promise<{ lat: number; lng: number; accuracy?: number } | null> {
     if (!('geolocation' in navigator) || !navigator.geolocation) return Promise.resolve(null);
     return new Promise((resolve) => {
