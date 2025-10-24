@@ -1,0 +1,66 @@
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <h4 class="mb-0">{{ isEditing ? 'Edit Class' : 'Add New Class' }}</h4>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="classForm" (ngSubmit)="onSubmit()">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label for="className" class="form-label">Class Name</label>
+            <input type="text" id="className" formControlName="className" class="form-control" placeholder="e.g., 10th">
+          </div>
+          <div class="col-md-5">
+            <label for="section" class="form-label">Section</label>
+            <input type="text" id="section" formControlName="section" class="form-control" placeholder="e.g., A">
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100" [disabled]="classForm.invalid">
+              {{ isEditing ? 'Update' : 'Add' }}
+            </button>
+            <button *ngIf="isEditing" type="button" class="btn btn-secondary ms-2" (click)="resetForm()">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert alert-success mt-3">{{ successMessage }}</div>
+
+  <div class="card shadow-sm mt-4">
+    <div class="card-header">
+      <h4 class="mb-0">Existing Classes</h4>
+    </div>
+    <div class="card-body">
+      <div *ngIf="isLoading" class="text-center">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div *ngIf="!isLoading && classes.length === 0" class="text-center text-muted">
+        No classes found. Add one using the form above.
+      </div>
+      <table *ngIf="!isLoading && classes.length > 0" class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th>Class Name</th>
+            <th>Section</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let class of classes">
+            <td>{{ class.className }}</td>
+            <td>{{ class.section }}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="editClass(class)">Edit</button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteClass(class.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+    

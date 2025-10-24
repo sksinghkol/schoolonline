@@ -1,0 +1,150 @@
+<div class="container-fluid p-4">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Create Exam Question Paper</h3>
+    </div>
+    <div class="card-body">
+
+      <!-- Error/Success Messages -->
+      <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+      <!-- Section to select an existing exam -->
+      <div *ngIf="!examCreated" class="border p-3 mb-4 rounded bg-light">
+        <h5>Or, Continue with an Existing Exam</h5>
+        <div *ngIf="isLoadingExams" class="text-center">
+          <div class="spinner-border spinner-border-sm" role="status"></div>
+          <span class="ms-2">Loading pending exams...</span>
+        </div>
+        <div *ngIf="!isLoadingExams && existingExams.length === 0" class="text-muted">
+          You have no exams pending question selection.
+        </div>
+        <div *ngIf="!isLoadingExams && existingExams.length > 0" class="list-group">
+          <button *ngFor="let exam of existingExams" type="button" (click)="selectExistingExam(exam)" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <h6 class="mb-1">Class: {{exam.class}} - {{exam.subject}}</h6>
+              <small>Created: {{exam.createdAt?.toDate() | date:'shortDate'}}</small>
+            </div>
+            <p class="mb-1"><strong>{{exam.examType}}</strong> | Marks: {{exam.totalMarks}} | Duration: {{exam.duration}}</p>
+          </button>
+        </div>
+      </div>
+
+
+      <!-- Step 1: Create New Exam -->
+      <form [formGroup]="examDetailsForm" (ngSubmit)="createExamAndFetchQuestions()" *ngIf="!examCreated">
+        <div class="border p-3 mb-4 rounded">
+          <h5>Step 1: Define Exam Details</h5>
+          <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label for="classFilter" class="form-label">Class</label>
+              <select id="classFilter" formControlName="class" class="form-select" [class.is-invalid]="examDetailsForm.get('class')?.invalid && examDetailsForm.get('class')?.touched">
+                <option value="" disabled>Select Class</option>
+                <option *ngFor="let c of (classes$ | async)" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="subjectFilter" class="form-label">Subject</label>
+              <select id="subjectFilter" formControlName="subject" class="form-select" [class.is-invalid]="examDetailsForm.get('subject')?.invalid && examDetailsForm.get('subject')?.touched">
+                <option value="" disabled>Select Subject</option>
+                <option *ngFor="let s of subjects" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="examType" class="form-label">Exam Type</label>
+              <select id="examType" formControlName="examType" class="form-select" [class.is-invalid]="examDetailsForm.get('examType')?.invalid && examDetailsForm.get('examType')?.touched">
+                <option value="" disabled>Select Exam Type</option>
+                <option *ngFor="let et of examTypes" [value]="et">{{ et }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="examDate" class="form-label">Date of Exam</label>
+              <input type="date" id="examDate" formControlName="examDate" class="form-control" [class.is-invalid]="examDetailsForm.get('examDate')?.invalid && examDetailsForm.get('examDate')?.touched">
+            </div>
+            <div class="col-md-4">
+              <label for="totalMarks" class="form-label">Total Marks</label>
+              <input type="number" id="totalMarks" formControlName="totalMarks" class="form-control" [class.is-invalid]="examDetailsForm.get('totalMarks')?.invalid && examDetailsForm.get('totalMarks')?.touched">
+            </div>
+            <div class="col-md-4">
+              <label for="duration" class="form-label">Duration</label>
+              <input type="text" id="duration" formControlName="duration" class="form-control" [class.is-invalid]="examDetailsForm.get('duration')?.invalid && examDetailsForm.get('duration')?.touched" placeholder="e.g., 2 Hours">
+            </div>
+          </div>
+          <div class="mt-3 text-center">
+            <button type="submit" class="btn btn-primary" [disabled]="examDetailsForm.invalid || isCreatingExam || examCreated">
+              <span *ngIf="isCreatingExam" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              {{ isCreatingExam ? 'Creating...' : 'Create Exam & Select Questions' }}
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Step 2: Question Selection (shown only after exam is created) -->
+      <form [formGroup]="questionPaperForm" *ngIf="examCreated">
+        <div class="border p-3 mb-4 rounded">
+          <h5>Step 2: Select Questions</h5>
+          <div *ngIf="isLoadingQuestions" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+
+          <div *ngIf="!isLoadingQuestions && questions.length > 0" class="question-list">
+            <div *ngFor="let question of questions; let i = index" class="form-check mb-3 p-3 border rounded">
+              <input class="form-check-input" type="checkbox" [value]="'{}' | jsonParse:question" (change)="onQuestionChange($event)" [id]="'q_'+i">
+              <label class="form-check-label w-100" [for]="'q_'+i">
+                <strong>{{ question.question }}</strong>
+                <div *ngIf="question.options && question.options.length > 0" class="text-muted small mt-1">
+                  <span *ngFor="let option of question.options; let j = index" class="me-3">
+                    ({{ 'a' | character:j }}) {{ option }}
+                  </span>
+                </div>
+                <div class="text-muted small mt-1">
+                  Type: {{ question.questionType }} | Marks: {{ question.marks }}
+                </div>
+              </label>
+            </div>
+          </div>
+          <div *ngIf="questionPaperForm.get('selectedQuestions')?.hasError('required') && questionPaperForm.touched" class="text-danger mt-2">
+            Please select at least one question.
+          </div>
+        </div>
+
+        <!-- Step 3: Actions -->
+        <div class="text-center">
+          <button type="button" class="btn btn-success me-3" (click)="saveQuestionPaper()" [disabled]="isSaving || questionPaperForm.invalid">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            {{ isSaving ? 'Saving...' : 'Finalize & Save Question Paper' }}
+          </button>
+          <button type="button" class="btn btn-info" (click)="generatePdf()" [disabled]="questionPaperForm.invalid || !questionPaperForm.disabled">
+            <i class="bi bi-file-earmark-pdf"></i> Generate PDF
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!--
+  This template uses two custom pipes that you need to create.
+  1. jsonParse: To pass a complex object through the checkbox value.
+  2. character: To display (a), (b), (c) for options.
+
+  Create these pipes or modify the template to handle this differently.
+  Example for jsonParse.pipe.ts:
+  import { Pipe, PipeTransform } from '@angular/core';
+  @Pipe({ name: 'jsonParse', standalone: true })
+  export class JsonParsePipe implements PipeTransform {
+    transform(value: string, obj: any): string { return JSON.stringify(obj); }
+  }
+
+  Example for character.pipe.ts:
+  import { Pipe, PipeTransform } from '@angular/core';
+  @Pipe({ name: 'character', standalone: true })
+  export class CharacterPipe implements PipeTransform {
+    transform(value: string, index: number): string { return String.fromCharCode(value.charCodeAt(0) + index); }
+  }
+
+  And then import them into your component.
+-->

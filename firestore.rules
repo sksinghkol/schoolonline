@@ -4,7 +4,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ===========================================================
-    // 🔹 Helper Functions
+    // Helper functions
     // ===========================================================
     function isSignedIn() {
       return request.auth != null;
@@ -28,6 +28,12 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/schools/$(schoolId)/directors/$(request.auth.uid));
     }
 
+    function isTeacherForSchoolId(schoolId) {
+      return isSignedIn() &&
+        schoolId != null &&
+        exists(/databases/$(database)/documents/schools/$(schoolId)/teachers/$(request.auth.uid));
+    }
+
     // ===========================================================
     // 🔹 Admins Collection
     // ===========================================================
@@ -41,10 +47,10 @@ service cloud.firestore {
     }
 
     // ===========================================================
-    // 🔹 Schools & Directors
+    // 🔹 Schools & Subcollections
     // ===========================================================
     match /schools/{schoolId} {
-      // ✅ Public can read and list schools (for "Select Your School")
+      // Public can read and list schools (for "Select Your School")
       allow get, list: if true;
 
       // Only admins can create, update, or delete schools
@@ -62,81 +68,92 @@ service cloud.firestore {
         allow create, update, delete: if isApprovedAdmin();
       }
 
+      // Teachers
       match /teachers/{teacherId} {
         allow get, list: if true;
         allow create, update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
 
-        // ---- YouTube subcollection ----
-        match /youtube/{videoId} {
-          // ✅ Public: can read approved videos.
-          // ✅ Teacher/Director/Admin: can read all their videos.
-          allow read: if resource.data.status == "approved" ||
-            (request.auth != null &&
-             (request.auth.uid == teacherId ||
-              isDirectorForSchoolId(schoolId) ||
-              isApprovedAdmin()));
-          allow write: if request.auth != null && request.auth.uid == teacherId;
-
-          // ---- Reviews subcollection ----
-          match /reviews/{reviewId} {
-            // ✅ Public: can read all reviews for a video.
-            allow get, list: if true;
-            // ✅ Authenticated users: can create a review.
-            allow create: if isSignedIn();
-            // ✅ User: can only update/delete their own review.
-            allow update, delete: if isSignedIn() && request.auth.uid == resource.data.authorId;
-          }
+        // Question Bank
+        match /question_bank/{questionId} {
+          allow read, write, update, delete: if request.auth.uid == teacherId ||
+                                              isDirectorForSchoolId(schoolId) ||
+                                              isApprovedAdmin();
+          // Students or others can only read approved questions
+          allow read: if resource.data.status == "approved";
         }
 
-        // ---- Question Bank subcollection ----
-        match /question_bank/{questionId} {
-          // 👩‍🏫 Teacher: can create, update, or delete their own questions
-          allow create, update, delete: if request.auth != null && request.auth.uid == teacherId;
-
-          // 👩‍🏫 Teacher / Director / Admin: can read all questions for their school
-          allow get, list: if request.auth != null &&
-            (request.auth.uid == teacherId ||
-             isDirectorForSchoolId(schoolId) ||
-             isApprovedAdmin());
+        // YouTube Videos
+        match /youtube/{videoId} {
+          allow read, write, update, delete: if request.auth.uid == teacherId ||
+                                              isDirectorForSchoolId(schoolId) ||
+                                              isApprovedAdmin();
+          // Students can only read approved videos
+          allow read: if resource.data.status == "approved";
         }
 
         // ---- Visiting Card Applications subcollection ----
         match /visiting_applications/{applicationId} {
-          // ✅ Teacher: can create an application for themselves.
+          // Teacher: can create an application for themselves.
           allow create: if request.auth.uid == teacherId;
-          // ✅ Teacher/Director/Admin: can read/list applications.
+          // Teacher/Director/Admin: can read/list applications.
           allow get, list: if request.auth.uid == teacherId || isDirectorForSchoolId(schoolId) || isApprovedAdmin();
-          // ✅ Director/Admin: can update (e.g., approve/reject) or delete applications.
+          // Director/Admin: can update (e.g., approve/reject) or delete applications.
           allow update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
         }
 
         // ---- ID Card Applications subcollection ----
         match /id_card_applications/{applicationId} {
-          // ✅ Teacher: can create an application for themselves.
+          // Teacher: can create an application for themselves.
           allow create: if request.auth.uid == teacherId;
-          // ✅ Teacher/Director/Admin: can read/list applications.
+          // Teacher/Director/Admin: can read/list applications.
           allow get, list: if request.auth.uid == teacherId || isDirectorForSchoolId(schoolId) || isApprovedAdmin();
-          // ✅ Director/Admin: can update (e.g., approve/reject) or delete applications.
+          // Director/Admin: can update (e.g., approve/reject) or delete applications.
           allow update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
         }
       }
-                
-         // 🔹 Generic staff-like roles (non-teaching)
-      match /{userCollection}/{userId} {
-        allow get, list: if userCollection in [
-          'staffs', 'frontdesks', 'securitys', 'transports',
-          'itdepartments', 'accounts', 'examcontrollers', 'parents'
-        ];
-        allow list: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
-        allow create, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
-        allow update: if request.auth.uid == userId || isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+
+      // ---- Exams & Question Papers ----
+      match /exams/{examId} {
+        // 👩‍🏫 Teacher: can create an exam for their school
+        allow create: if isSignedIn() && request.resource.data.schoolId == schoolId && request.auth.uid == request.resource.data.teacherId;
+
+        // 👩‍🏫 Teacher / Director / Admin: can read exams for their school
+        allow get, list: if isSignedIn() && (isDirectorForSchoolId(schoolId) || isApprovedAdmin() || get(/databases/$(database)/documents/schools/$(schoolId)/teachers/$(request.auth.uid)).data != null);
+
+        // 👩‍🏫 Teacher: can update the status of an exam they created
+        // 🎬 Director / Admin: can update any exam in the school
+        allow update: if (request.auth.uid == resource.data.teacherId) || isDirectorForSchoolId(schoolId) || isApprovedAdmin();
       }
 
-      // 🔹 Students subcollection
+      match /teachers/{teacherId}/question_papers/{paperId} {
+        // 👩‍🏫 Teacher: can create a question paper for themselves
+        allow create: if request.auth.uid == teacherId;
+
+        // 👩‍🏫 Teacher / Director / Admin: can read question papers
+        allow get, list: if request.auth.uid == teacherId || isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+      }
+
+      // Staff-like roles
+      match /{userCollection}/{userId} {
+        allow get, list: if userCollection in [
+          'staffs','frontdesks','securitys','transports',
+          'itdepartments','accounts','examcontrollers','parents'
+        ];
+        allow create, update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+      }
+
+      // Students
       match /students/{studentId} {
         allow get, list: if true;
         allow create, update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
         allow update: if request.auth != null && request.auth.uid == studentId;
+      }
+
+      // Allow Directors, Admins, or IT staff to manage classes
+      // 🔹 Classes subcollection
+      match /classes/{classId} {
+        // Allow Directors, Admins, or IT staff to manage classes
+        allow read, write: if isDirectorForSchoolId(schoolId) || isApprovedAdmin() || get(/databases/$(database)/documents/schools/$(schoolId)/itdepartments/$(request.auth.uid)).data != null;
       }
     }
 
@@ -207,28 +224,65 @@ service cloud.firestore {
   }
 
     // ===========================================================
-    // 🔹 Collection Group Rules
+    // Collection Group Queries
     // ===========================================================
-    // This rule is required for the public-facing "School Question Bank"
-    // It allows anyone to query the 'question_bank' collection group.
+    // This rule allows teachers to fetch questions for an exam, and allows
+    // the public-facing "School Question Bank" to show approved questions.
     match /{path=**}/question_bank/{questionId} {
-      // Allow listing/reading questions ONLY if their status is 'approved'.
-      // The query from the client MUST include both:
-      // 1. a `where('status', '==', 'approved')` clause
-      // 2. a `where('schoolId', '==', schoolId)` clause that matches the document's schoolId
-      // It also explicitly allows ordering by 'createdAt'.
-      allow get: if resource.data.status == 'approved';
-      allow list: if request.query.filters.status == 'approved'
-                   && resource.data.schoolId == request.query.filters.schoolId;
+      // Allow reading a single document if it's approved, or if the user is the teacher/director/admin.
+      allow get: if resource.data.status == "approved" || (isSignedIn() &&
+        (request.auth.uid == resource.data.teacherId ||
+         isDirectorForSchoolId(resource.data.schoolId) ||
+         isApprovedAdmin()));
+
+      // Allow queries if they filter by schoolId.
+      // The query MUST contain a `where('schoolId', '==', '...')` clause.
+      // This rule ensures the user is only querying for questions within a school they have access to.
+      allow list: if isSignedIn()
+        && request.query.keys().hasAll(['schoolId', 'questionClass', 'subject'])
+        && (
+          isDirectorForSchoolId(request.query.filters.schoolId) ||
+          request.auth.token.teacher_for_school_id == request.query.filters.schoolId ||
+          isApprovedAdmin()
+        );
+
+      allow write, update, delete: if request.auth != null &&
+                                   (request.auth.uid == resource.data.teacherId ||
+                                    isDirectorForSchoolId(resource.data.schoolId) ||
+                                    isApprovedAdmin());
     }
 
-    // This rule is required for the public-facing "Student Video" page.
-    // It allows anyone to query the 'youtube' collection group for approved videos.
     match /{path=**}/youtube/{videoId} {
-      // Allow reading a single video if its status is 'approved'.
-      allow get: if resource.data.status == 'approved';
-      // Allow listing/querying videos if the query filters by 'status' and 'schoolId'.
-      allow list: if request.query.filters.status == 'approved'
-                   && resource.data.schoolId == request.query.filters.schoolId;
+      allow read: if resource.data.status == "approved" ||
+                  (request.auth != null &&
+                   (request.auth.uid == resource.data.teacherId ||
+                    isDirectorForSchoolId(resource.data.schoolId) ||
+                    isApprovedAdmin()));
+      allow write, update, delete: if request.auth != null &&
+                                   (request.auth.uid == resource.data.teacherId ||
+                                    isDirectorForSchoolId(resource.data.schoolId) ||
+                                    isApprovedAdmin());
+    }
+
+    // This rule is required for the IT Department to view all question papers.
+    // It allows querying the 'question_papers' collection group.
+    match /{path=**}/question_papers/{paperId} {
+      // Allow reading if the user is an IT department member for that school,
+      // a director, or an admin, AND the query is filtering by a specific schoolId.
+      allow get: if isSignedIn() && (isDirectorForSchoolId(resource.data.schoolId) || isApprovedAdmin() ||
+        exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)/itdepartments/$(request.auth.uid)));
+
+      // Allow listing if the user is an IT department member for that school, a director, or an admin.
+      allow list: if isSignedIn() &&
+        (isDirectorForSchoolId(request.query.filters.schoolId) || isApprovedAdmin() ||
+        exists(/databases/$(database)/documents/schools/$(request.query.filters.schoolId)/itdepartments/$(request.auth.uid)) ||
+        request.auth.token.it_for_school_id == request.query.filters.schoolId); // Keep custom claim for flexibility
+    }
+
+    // This rule allows anyone to query the 'reviews' collection group,
+    // as long as they are filtering by a specific schoolId.
+    match /{path=**}/reviews/{reviewId} {
+        allow list: if request.query.filters.schoolId == resource.data.schoolId;
+        allow get: if true;
     }
 }

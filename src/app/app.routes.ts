@@ -79,7 +79,6 @@ import { ExamcontrollerAuthGuard } from './core/gaurds/examcontroller.auth.guard
 import { ItdepartmentLogin } from './Login/itdepartment-login/itdepartment-login';
 import { ItdepartmentAwaiting } from './ItDepartment/itdepartment-awaiting/itdepartment-awaiting';
 import { ItdepartmentDashboard } from './ItDepartment/itdepartment-dashboard/itdepartment-dashboard';
-
 import { ParrentLogin } from './Login/parrent-login/parrent-login';
 import { ParrentAwaiting } from './Parrent/parrent-awaiting/parrent-awaiting';
 import { ParrentDashboard } from './Parrent/parrent-dashboard/parrent-dashboard';
@@ -93,8 +92,10 @@ import { StaffList } from './School/staff-list/staff-list';
 import { TeacherProfile } from './Teacher/teacher-profile/teacher-profile';
 import { TeacherQuestionbank } from './Teacher/teacher-questionbank/teacher-questionbank';
 import { TeacherYoutubeComponent } from './Teacher/teacher-youtube/teacher-youtube.component';
+import { TexamQuestion } from './Teacher/texam-question/texam-question';
 import { StudentQuestionBankComponent } from './School/student-question-bank/student-question-bank';
 import { StudentsVideo } from './School/students-video/students-video';
+import { ViewQuestionPapers } from './ItDepartment/view-question-papers/view-question-papers';
 export const routes: Routes = [
   /* Home & General Login */
   { path: '', component: Home, pathMatch: 'full' },
@@ -216,7 +217,8 @@ export const routes: Routes = [
     children: [
       { path: 'teacher-profile', component: TeacherProfile },
       { path: 'teacher-questionbank', component: TeacherQuestionbank },
-      { path: 'teacher-youtube-videos', component: TeacherYoutubeComponent }
+      { path: 'teacher-youtube-videos', component: TeacherYoutubeComponent },
+      { path: 'create-exam', component: TexamQuestion }
     ]
   },
   /* Exam Controller Dashboard */
@@ -229,7 +231,10 @@ export const routes: Routes = [
   {
     path: 'itdepartment-dashboard',
     component: ItdepartmentDashboard,
-    canActivate: [ExamcontrollerAuthGuard], // Assuming you'll create ItdepartmentAuthGuard
+    canActivate: [ExamcontrollerAuthGuard], // TODO: Create and use an ItdepartmentAuthGuard
+    children: [
+      { path: 'question-papers', component: ViewQuestionPapers }
+    ]
   },
   /* Parent Dashboard */
   {

@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { Observable, from } from 'rxjs';
 import { Firestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from '@angular/fire/firestore';
 import { SchoolStateService } from '../../core/services/school-state.service';
 
@@ -26,6 +27,7 @@ export class TeacherQuestionbank implements OnInit {
 
   schoolId: string | null = null;
   teacherId: string | null = null;
+  classes$!: Observable<any[]>;
 
   approvedQuestions: any[] = [];
   pendingQuestions: any[] = [];
@@ -58,8 +60,18 @@ export class TeacherQuestionbank implements OnInit {
   ngOnInit(): void {
     this.schoolId = this.route.snapshot.queryParamMap.get('schoolId');
     this.teacherId = this.route.snapshot.queryParamMap.get('teacherId');
-    this.loadApprovedQuestions();
-    this.loadPendingQuestions();
+    if (this.schoolId && this.teacherId) {
+      this.loadClasses();
+      this.loadApprovedQuestions();
+      this.loadPendingQuestions();
+    } else {
+      this.errorMessage = "School or Teacher ID not found in URL.";
+    }
+  }
+
+  loadClasses(): void {
+    const classesCollection = collection(this.firestore, `schools/${this.schoolId}/classes`);
+    this.classes$ = from(getDocs(query(classesCollection, orderBy('className'))).then(snapshot => snapshot.docs.map(doc => doc.data())));
   }
 
   onQuestionTypeChange(): void {

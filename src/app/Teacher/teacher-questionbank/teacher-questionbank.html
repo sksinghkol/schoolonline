@@ -15,7 +15,10 @@
             <div class="row g-3 mb-3">
               <div class="col-md-4">
                 <label for="questionClass" class="form-label fw-bold">Class</label>
-                <input type="text" id="questionClass" formControlName="questionClass" class="form-control" placeholder="e.g., 10th">
+                <select id="questionClass" formControlName="questionClass" class="form-select">
+                  <option value="" disabled>Select Class</option>
+                  <option *ngFor="let class of (classes$ | async)" [value]="class.className">{{ class.className }}</option>
+                </select>
               </div>
               <div class="col-md-4">
                 <label for="subject" class="form-label fw-bold">Subject</label>

@@ -1,0 +1,5 @@
+.list-group-item-action:hover {
+  background-color: #f8f9fa;
+  transform: translateX(4px);
+  transition: transform 0.2s ease-in-out;
+}
