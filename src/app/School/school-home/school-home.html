@@ -218,7 +218,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <div id="share-modal-content-for-pdf" class="p-3">
+        <div *ngIf="schoolData" id="share-modal-content-for-pdf" class="p-3">
           <!-- School Info for PDF -->
           <div class="d-flex align-items-center mb-3">
             <img *ngIf="schoolData.logoUrl" [src]="schoolData.logoUrl" alt="{{ schoolData.name }}" class="rounded-circle me-3" width="60" height="60">

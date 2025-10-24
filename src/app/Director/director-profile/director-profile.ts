@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { doc, Firestore, getDoc, updateDoc } from '@angular/fire/firestore';
+import { doc, Firestore, getDoc, updateDoc, onSnapshot } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
 import { QuillModule } from 'ngx-quill';
 import { SchoolStateService } from '../../core/services/school-state.service';

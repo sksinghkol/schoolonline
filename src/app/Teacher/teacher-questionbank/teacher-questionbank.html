@@ -1,0 +1,191 @@
+<div class="container py-5">
+  <div class="row">
+    <!-- Add Question Form -->
+    <div class="col-lg-6">
+      <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0"><i class="bi bi-patch-question-fill me-2"></i> Add New Question</h4>
+        </div>
+        <div class="card-body p-4">
+          <form [formGroup]="questionForm" (ngSubmit)="onSubmit()">
+            <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+            <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+            <!-- Basic Info -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label for="questionClass" class="form-label fw-bold">Class</label>
+                <input type="text" id="questionClass" formControlName="questionClass" class="form-control" placeholder="e.g., 10th">
+              </div>
+              <div class="col-md-4">
+                <label for="subject" class="form-label fw-bold">Subject</label>
+                <input type="text" id="subject" formControlName="subject" class="form-control" placeholder="e.g., Mathematics">
+              </div>
+              <div class="col-md-4">
+                <label for="chapter" class="form-label fw-bold">Chapter</label>
+                <input type="text" id="chapter" formControlName="chapter" class="form-control" placeholder="e.g., Algebra">
+              </div>
+            </div>
+
+            <!-- Question Text -->
+            <div class="mb-3">
+              <label for="question" class="form-label fw-bold">Question</label>
+              <textarea id="question" formControlName="question" class="form-control" rows="4" placeholder="Enter the question text here..."></textarea>
+            </div>
+
+            <!-- Question Type -->
+            <div class="mb-4">
+              <label for="questionType" class="form-label fw-bold">Question Type</label>
+              <select id="questionType" formControlName="questionType" class="form-select">
+                <option *ngFor="let type of questionTypes" [value]="type">{{ type }}</option>
+              </select>
+            </div>
+
+            <!-- Dynamic Fields based on Question Type -->
+            <div [ngSwitch]="questionForm.get('questionType')?.value">
+
+              <!-- Multiple Choice -->
+              <div *ngSwitchCase="'Multiple Choice'">
+                <h5 class="mb-3">Options</h5>
+                <div class="mb-3">
+                  <div *ngFor="let option of options.controls; let i = index" class="input-group mb-2">
+                    <div class="input-group-text">
+                      <input class="form-check-input mt-0" type="radio" [value]="i" formControlName="correctAnswer" [id]="'option' + i" [attr.aria-label]="'Option ' + (i + 1)">
+                    </div>
+                    <div class="w-100" formArrayName="options">
+                      <input type="text" [formControlName]="i" class="form-control" placeholder="Option {{ i + 1 }}">
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeOption(i)" [disabled]="options.length <= 2">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" (click)="addOption()">+ Add Option</button>
+              </div>
+
+              <!-- True/False -->
+              <div *ngSwitchCase="'True/False'">
+                <h5 class="mb-3">Correct Answer</h5>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" id="true" value="true" formControlName="correctAnswer">
+                  <label class="form-check-label" for="true">True</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" id="false" value="false" formControlName="correctAnswer">
+                  <label class="form-check-label" for="false">False</label>
+                </div>
+              </div>
+
+              <!-- Multiple Response -->
+              <div *ngSwitchCase="'Multiple Response'">
+                <h5 class="mb-3">Options (Select all correct answers)</h5>
+                <div formArrayName="options">
+                  <div *ngFor="let option of options.controls; let i = index" class="input-group mb-2">
+                    <div class="input-group-text">
+                      <input class="form-check-input mt-0" type="checkbox" (change)="onCheckboxChange($event, i)">
+                    </div>
+                    <input type="text" [formControlName]="i" class="form-control" placeholder="Option {{ i + 1 }}">
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeOption(i)" [disabled]="options.length <= 2">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" (click)="addOption()">+ Add Option</button>
+              </div>
+
+              <!-- Matching -->
+              <div *ngSwitchCase="'Matching'">
+                <h5 class="mb-3">Matching Pairs</h5>
+                <div formArrayName="matches">
+                  <div *ngFor="let match of matches.controls; let i = index" [formGroupName]="i" class="row g-2 mb-2">
+                    <div class="col-5"><input type="text" formControlName="prompt" class="form-control" placeholder="Prompt {{ i + 1 }}"></div>
+                    <div class="col-1 text-center align-self-center"><i class="bi bi-arrow-left-right"></i></div>
+                    <div class="col-5"><input type="text" formControlName="answer" class="form-control" placeholder="Answer {{ i + 1 }}"></div>
+                    <div class="col-1 align-self-center">
+                      <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeMatch(i)" [disabled]="matches.length <= 1"><i class="bi bi-trash"></i></button>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" (click)="addMatch()">+ Add Pair</button>
+              </div>
+
+              <!-- Fill in the Blanks -->
+              <div *ngSwitchCase="'Fill in the Blanks'">
+                <p class="text-muted small">Use `___` in the question text for blanks. Provide the correct answers below in order.</p>
+                <div formArrayName="fillBlanks">
+                  <div *ngFor="let blank of fillBlanks.controls; let i = index" [formGroupName]="i" class="input-group mb-2">
+                    <span class="input-group-text">Blank {{ i + 1 }}</span>
+                    <input type="text" formControlName="answer" class="form-control" placeholder="Correct answer">
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeFillBlank(i)" [disabled]="fillBlanks.length <= 1"><i class="bi bi-trash"></i></button>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" (click)="addFillBlank()">+ Add Blank</button>
+              </div>
+
+              <!-- Other types -->
+              <div *ngSwitchDefault>
+                <p class="text-muted fst-italic">This question type will be manually graded.</p>
+              </div>
+
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-primary btn-lg" [disabled]="questionForm.invalid || isSubmitting">
+                <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+                {{ isSubmitting ? 'Submitting...' : 'Submit for Approval' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question Lists -->
+    <div class="col-lg-6">
+      <div class="row">
+        <!-- Pending Approval List -->
+        <div class="col-12 mb-4">
+          <h4 class="mb-3"><i class="bi bi-hourglass-split text-warning me-2"></i> Pending Approval</h4>
+          <div *ngIf="isLoadingPendingQuestions" class="text-center">
+            <div class="spinner-border text-primary"></div>
+          </div>
+          <div *ngIf="!isLoadingPendingQuestions && pendingQuestions.length === 0" class="alert alert-secondary">
+            You have no questions pending for approval.
+          </div>
+          <div *ngIf="!isLoadingPendingQuestions && pendingQuestions.length > 0" class="list-group" style="max-height: 300px; overflow-y: auto;">
+            <div *ngFor="let q of pendingQuestions" class="list-group-item list-group-item-action flex-column align-items-start">
+              <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1 fw-bold">{{ q.subject }} - {{ q.chapter }} (Class {{ q.questionClass }})</h6>
+                <small *ngIf="q.createdAt">{{ q.createdAt?.toDate() | date:'shortDate' }}</small>
+              </div>
+              <p class="mb-1" style="white-space: pre-wrap;">{{ q.question }}</p>
+              <small class="text-muted">{{ q.questionType }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Approved Questions List -->
+        <div class="col-12">
+          <h4 class="mb-3"><i class="bi bi-check2-circle text-success me-2"></i> Approved Questions</h4>
+          <div *ngIf="isLoadingQuestions" class="text-center">
+            <div class="spinner-border text-primary"></div>
+          </div>
+          <div *ngIf="!isLoadingQuestions && approvedQuestions.length === 0" class="alert alert-info">
+            You have no approved questions yet.
+          </div>
+          <div *ngIf="!isLoadingQuestions && approvedQuestions.length > 0" class="list-group" style="max-height: 300px; overflow-y: auto;">
+            <div *ngFor="let q of approvedQuestions" class="list-group-item list-group-item-action flex-column align-items-start">
+              <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1 fw-bold">{{ q.subject }} - {{ q.chapter }} (Class {{ q.questionClass }})</h6>
+                <small *ngIf="q.createdAt">{{ q.createdAt?.toDate() | date:'shortDate' }}</small>
+              </div>
+              <p class="mb-1" style="white-space: pre-wrap;">{{ q.question }}</p>
+              <small class="text-muted">{{ q.questionType }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

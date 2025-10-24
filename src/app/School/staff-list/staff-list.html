@@ -1,0 +1,91 @@
+<div class="management-desk-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="container py-5 text-center">
+    <div class="spinner-border spinner-border-lg text-primary pulse" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-4 text-muted fs-4">Discovering our dedicated staff...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!isLoading && error" class="container py-5">
+    <div class="alert alert-danger alert-dismissible fade show shadow-2xl border-0 rounded-5 glassmorphic" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div *ngIf="!isLoading && !error && schoolData" class="container py-5">
+    <div class="text-center mb-5 position-relative overflow-hidden">
+      <div class="header-ornament"></div>
+      <div class="header-ornament secondary"></div>
+      <h1 class="display-3 fw-bold text-gradient mb-3 position-relative z-1">
+        Meet Our Team
+      </h1>
+      <p class="lead text-muted fs-4 position-relative z-1">
+        The dedicated individuals who make {{ schoolData.name }} a place of excellence.
+      </p>
+    </div>
+
+    <!-- Filter Controls -->
+    <div *ngIf="staffByRole.length > 0" class="filter-bar-wrapper mb-5">
+      <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+          <div class="input-group input-group-lg filter-bar shadow-lg">
+            <label class="input-group-text" for="roleFilter"><i class="bi bi-people-fill text-primary"></i></label>
+            <select id="roleFilter" class="form-select form-select-lg" [(ngModel)]="selectedRole" (change)="applyFilter()">
+              <option value="all">All Staff Categories</option>
+              <option *ngFor="let filter of roleFilters" [value]="filter.value">{{ filter.name }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Staff by Role -->
+    <div *ngIf="filteredStaffByRole.length > 0; else noStaff">
+      <div *ngFor="let group of filteredStaffByRole" class="mb-5">
+        <h2 class="display-6 fw-bold text-gradient-secondary mb-4 pb-2 border-bottom border-primary-subtle">{{ group.role }}s</h2>
+        <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3 justify-content-center">
+          <div *ngFor="let staff of group.members; trackBy: trackByStaffId" class="col">
+            <div class="card director-card h-100 overflow-hidden">
+              <div class="row g-0 h-100">
+
+                <!-- Photo & Info -->
+                <div class="director-photo-section position-relative">
+                  <div class="director-photo-wrapper position-relative mb-4">
+                    <div class="photo-placeholder position-absolute inset-0 bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center z-1 opacity-20">
+                      <i class="bi bi-person-circle fs-2 text-white"></i>
+                    </div>
+                    <img [src]="staff.photoURL || 'https://dummyimage.com/250x250/ced4da/6c757d.png'" class="director-photo position-relative z-3" alt="{{ staff.name || 'Staff' }} Photo" [class.d-none]="!staff.photoURL">
+                  </div>
+                  <div class="director-details text-center">
+                    <h3 class="fw-bold mb-1 fs-4">{{ staff.name || 'No Name' }}</h3>
+                    <p class="text-primary fw-semibold mb-2">{{ staff.designation }}</p>
+                    <div class="d-flex align-items-center justify-content-center gap-2">
+                      <i class="bi bi-envelope text-primary fs-5"></i>
+                      <span class="text-light small fw-medium">{{ staff.email || 'No email provided' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noStaff>
+      <div class="text-center py-5">
+        <div class="bg-gradient-light rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-4 glassmorphic-icon" style="width: 140px; height: 140px;">
+          <i class="bi bi-emoji-frown text-muted fs-1"></i>
+        </div>
+        <h3 class="text-muted mb-3 fw-semibold">No Staff Profiles Available</h3>
+        <p class="text-muted fs-5 mb-4">Check back later to meet our team.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-import { Component, EnvironmentInjector, OnInit, inject, runInInjectionContext } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { collection, Firestore, getDocs, query, where, limit } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
 import { QuillModule } from 'ngx-quill';
@@ -14,84 +14,127 @@ interface Director {
   about_director?: string;
 }
 
+interface Principal {
+  id: string;
+  name: string;
+  photoURL?: string;
+  email?: string;
+  message?: string;
+  about_principal?: string;
+}
+
+
 interface School {
   id: string;
   name?: string;
+  slug?: string;
   logoUrl?: string;
   address?: string;
 }
+
 @Component({
   selector: 'app-management-desk',
   standalone: true,
   imports: [CommonModule, QuillModule],
   templateUrl: './managemant-desk.html',
-  styleUrl: './managemant-desk.scss'
+  styleUrls: ['./managemant-desk.scss']
 })
-export class ManagemantDesk implements OnInit {
-  private firestore: Firestore = inject(Firestore);
+export class ManagementDesk implements OnInit {
+  private firestore = inject(Firestore);
   private schoolState = inject(SchoolStateService);
   private route = inject(ActivatedRoute);
-  private injector = inject(EnvironmentInjector);
+  private cdr = inject(ChangeDetectorRef);
 
   directors: Director[] = [];
-  schoolData: School | null = null; // To be populated from Firestore
+  principals: Principal[] = [];
+  schoolData: School | null = null;
   isLoading = true;
   error: string | null = null;
 
-  async ngOnInit() {
-    runInInjectionContext(this.injector, async () => {
-      try {
-        const schoolSlug = this.route.parent?.snapshot.paramMap.get('schoolName');
-        if (!schoolSlug) {
-          this.error = 'School name not found in URL.';
-          this.isLoading = false;
-          return;
-        }
-
-        // Fetch school data based on the slug from the URL
-        const schoolsCol = collection(this.firestore, 'schools');
-        const schoolQuery = query(schoolsCol, where('slug', '==', schoolSlug), limit(1));
-        const schoolSnapshot = await getDocs(schoolQuery);
-
-        if (schoolSnapshot.empty) {
-          this.error = `School with name "${schoolSlug}" not found.`;
-          this.isLoading = false;
-          return;
-        }
-
-        const schoolDoc = schoolSnapshot.docs[0];
-        const school = { id: schoolDoc.id, ...schoolDoc.data() } as School;
-
-        this.schoolData = school;
-
-        // Firestore query to fetch approved directors
-        const directorsCol = collection(this.firestore, `schools/${school.id}/directors`);
-        const directorsQuery = query(directorsCol, where('status', '==', 'approved'));
-        const querySnapshot = await getDocs(directorsQuery);
-
-        // Map docs safely
-        this.directors = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data['name'] || 'No Name',
-            photoURL: data['photoURL'] || null,
-            email: data['email'] || null,
-            message: data['message'] || null,
-            about_director: data['about_director'] || null
-          } as Director;
-        });
-
-      } catch (err: any) {
-        console.error('Error fetching directors:', err);
-        if (err.code === 'permission-denied') {
-          this.error = 'You do not have permission to view director profiles.';
-        } else {
-          this.error = 'An error occurred while fetching director profiles.';
-        }
-      } finally {
+  ngOnInit() {
+    this.route.parent?.paramMap.subscribe(async (params) => {
+      const schoolSlug = params.get('schoolName');
+      if (schoolSlug) { 
+        await this.loadLeadership(schoolSlug);
+      } else {
+        this.error = 'School name not found in the URL.';
         this.isLoading = false;
       }
     });
+  }
+
+  trackByDirectorId(index: number, director: Director): string {
+    return director.id;
+  }
+
+  trackByPrincipalId(index: number, principal: Principal): string {
+    return principal.id;
+  }
+
+  async refreshDirectors() {
+    // Prevent spamming the refresh button
+    if (this.isLoading) {
+      return;
+    }
+    const schoolSlug = this.schoolData?.slug;
+    if (schoolSlug) { 
+      await this.loadLeadership(schoolSlug);
+    }
+  }
+
+  private async loadLeadership(schoolSlug: string) {
+    this.isLoading = true;
+    this.error = null;
+
+    try {
+      // Fetch School Details
+      const schoolsCol = collection(this.firestore, 'schools');
+      const schoolQuery = query(schoolsCol, where('slug', '==', schoolSlug), limit(1));
+      const schoolSnapshot = await getDocs(schoolQuery);
+
+      if (schoolSnapshot.empty) {
+        throw new Error(`School with slug "${schoolSlug}" not found.`);
+      }
+
+      const schoolDoc = schoolSnapshot.docs[0];
+      this.schoolData = { id: schoolDoc.id, slug: schoolSlug, ...schoolDoc.data() } as School;
+
+      // Fetch Approved Directors and Principals concurrently
+      const [directorsSnapshot, principalsSnapshot] = await Promise.all([
+        getDocs(query(collection(this.firestore, `schools/${this.schoolData.id}/directors`), where('status', '==', 'approved'))),
+        getDocs(query(collection(this.firestore, `schools/${this.schoolData.id}/principals`), where('status', '==', 'approved')))
+      ]);
+
+      this.directors = directorsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data['name'] || 'No Name',
+          photoURL: data['photoURL'] || '',
+          email: data['email'] || '',
+          message: data['message'] || '', 
+          about_director: data['about_director'] || ''
+        } as Director;
+      });
+
+      this.principals = principalsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data['name'] || 'No Name',
+          photoURL: data['photoURL'] || '',
+          email: data['email'] || '',
+          message: data['message'] || '',
+          about_principal: data['about_principal'] || ''
+        } as Principal;
+      });
+
+    } catch (err: any) {
+      console.error('Error fetching leadership profiles:', err);
+      this.error = err.message || 'An error occurred while fetching director profiles.';
+    }
+
+    this.isLoading = false;
+    this.cdr.detectChanges();
   }
 }

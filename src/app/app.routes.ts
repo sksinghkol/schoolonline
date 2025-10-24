@@ -86,7 +86,15 @@ import { ParrentDashboard } from './Parrent/parrent-dashboard/parrent-dashboard'
 import { ParrentAuthGuard } from './core/gaurds/parrent.auth.guard';
 import { DirectorProfile } from './Director/director-profile/director-profile';
 import { DirectorUserlist } from './Director/director-userlist/director-userlist';
-import { ManagemantDesk } from './School/managemant-desk/managemant-desk';
+import { ManagementDesk } from './School/managemant-desk/managemant-desk';
+import { Directorexpense } from './Director/directorexpense/directorexpense';
+import { PrincipalProfile } from './Principal/principal-profile/principal-profile';
+import { StaffList } from './School/staff-list/staff-list';
+import { TeacherProfile } from './Teacher/teacher-profile/teacher-profile';
+import { TeacherQuestionbank } from './Teacher/teacher-questionbank/teacher-questionbank';
+import { TeacherYoutubeComponent } from './Teacher/teacher-youtube/teacher-youtube.component';
+import { StudentQuestionBankComponent } from './School/student-question-bank/student-question-bank';
+import { StudentsVideo } from './School/students-video/students-video';
 export const routes: Routes = [
   /* Home & General Login */
   { path: '', component: Home, pathMatch: 'full' },
@@ -152,15 +160,17 @@ export const routes: Routes = [
     ],
   },
   /* Director Dashboard */
-  {
-    path: 'director-dashboard',
-    component: DirectorDashboard,
-    canActivate: [DirectorAuthGuard],
-     children: [
-      { path: 'director-profile', component: DirectorProfile },
-       { path: 'director-userlist', component: DirectorUserlist },
-     ]
-  },
+ {
+  path: 'director-dashboard',
+  component: DirectorDashboard,
+  canActivate: [DirectorAuthGuard],
+  children: [
+    { path: 'director-profile', component: DirectorProfile },
+    { path: 'director-userlist', component: DirectorUserlist },
+    { path: 'director-expenses', component: Directorexpense },
+  ]
+}
+,
   /* Account Dashboard */
   {
     path: 'account-dashboard',
@@ -172,6 +182,9 @@ export const routes: Routes = [
     path: 'principal-dashboard',
     component: PrincipalDashboard,
     canActivate: [PrincipalAuthGuard],
+    children: [
+    { path: 'principal-profile', component: PrincipalProfile },
+    ]
   },
   /* staff Dashboard */
   {
@@ -200,6 +213,11 @@ export const routes: Routes = [
     path: 'teacher-dashboard',
     component: TeacherDashboard,
     canActivate: [TeacherAuthGuard],
+    children: [
+      { path: 'teacher-profile', component: TeacherProfile },
+      { path: 'teacher-questionbank', component: TeacherQuestionbank },
+      { path: 'teacher-youtube-videos', component: TeacherYoutubeComponent }
+    ]
   },
   /* Exam Controller Dashboard */
   {
@@ -249,7 +267,10 @@ export const routes: Routes = [
     children: [
       { path: '', component: SchoolHome, pathMatch: 'full' },
       { path: 'SchoolDetails', component: SchoolDetails },
-      { path: 'ManagemantDesk', component: ManagemantDesk },
+      { path: 'ManagemantDesk', component: ManagementDesk },
+      { path: 'StaffList', component: StaffList },
+      { path: 'question-bank', component: StudentQuestionBankComponent },
+      { path: 'teacher-videos', component: StudentsVideo },
     ],
   },
 

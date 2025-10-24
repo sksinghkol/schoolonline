@@ -1,0 +1,291 @@
+<div class="container-fluid py-4 py-lg-5 bg-gradient min-vh-100 position-relative overflow-hidden">
+  <div class="bg-shapes"></div>
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10 col-xl-9">
+      <div class="card shadow-2xl border-0 rounded-5 overflow-hidden backdrop-blur-lg" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2);">
+        <div class="card-header bg-gradient-modern text-white d-flex justify-content-between align-items-center p-4 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); border-bottom: none; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);">
+          <div class="position-relative z-10">
+            <h2 class="mb-1 fw-bold display-5 lh-1">Teacher Profile</h2>
+            <p class="mb-0 opacity-90 fs-6">Manage your personal and professional details</p>
+          </div>
+          <div *ngIf="!isEditing" class="d-flex align-items-center">
+            <!-- Visiting Card Status/Button -->
+            <ng-container [ngSwitch]="visitingCardApplication?.status">
+              <button *ngSwitchDefault class="btn btn-info btn-sm px-4 py-2 rounded-pill fw-semibold transition-all me-2" (click)="openVisitingCardModal()">
+                <i class="bi bi-postcard-heart me-2"></i> Apply for Visiting Card
+              </button>
+              <span *ngSwitchCase="'for approval'" class="badge bg-warning text-dark rounded-pill px-3 py-2 me-2">
+                <i class="bi bi-hourglass-split me-1"></i> Visiting Card Pending
+              </span>
+              <span *ngSwitchCase="'approved'" class="badge bg-info text-dark rounded-pill px-3 py-2 me-2">
+                <i class="bi bi-printer me-1"></i> Visiting Card Approved
+              </span>
+              <span *ngSwitchCase="'under process'" class="badge bg-primary rounded-pill px-3 py-2 me-2">
+                <i class="bi bi-truck me-1"></i> Expected by: {{ (visitingCardApplication.expectedDeliveryDate?.toDate() | date:'shortDate') || 'N/A' }}
+              </span>
+              <button *ngSwitchCase="'completed'" class="btn btn-info btn-sm px-4 py-2 rounded-pill fw-semibold transition-all me-2" (click)="openVisitingCardModal()">
+                <i class="bi bi-arrow-repeat me-2"></i> Apply for New Visiting Card
+              </button>
+            </ng-container>
+
+            <!-- ID Card Status/Button -->
+            <ng-container [ngSwitch]="idCardApplication?.status">
+              <button *ngSwitchDefault class="btn btn-success btn-sm px-4 py-2 rounded-pill fw-semibold transition-all me-2" (click)="applyForIdCard()" [disabled]="isApplyingForIdCard">
+                <i class="bi bi-person-vcard me-2"></i> {{ isApplyingForIdCard ? 'Submitting...' : 'Apply for ID Card' }}
+              </button>
+              <span *ngSwitchCase="'for approval'" class="badge bg-warning text-dark rounded-pill px-3 py-2 me-2">
+                <i class="bi bi-hourglass-split me-1"></i> ID Card Pending
+              </span>
+              <span *ngSwitchCase="'approved'" class="badge bg-success rounded-pill px-3 py-2 me-2">
+                <i class="bi bi-check-circle-fill me-1"></i> ID Card Approved
+              </span>
+              <span *ngSwitchCase="'under process'" class="badge bg-primary rounded-pill px-3 py-2 me-2">
+                <i class="bi bi-truck me-1"></i> Expected by: {{ (idCardApplication.expectedDeliveryDate?.toDate() | date:'shortDate') || 'N/A' }}
+              </span>
+              <button *ngSwitchCase="'completed'" class="btn btn-success btn-sm px-4 py-2 rounded-pill fw-semibold transition-all me-2" (click)="applyForIdCard()" [disabled]="isApplyingForIdCard">
+                <i class="bi bi-arrow-repeat me-2"></i> Apply for New ID Card
+              </button>
+            </ng-container>
+          </div>
+          <div class="d-flex gap-2 position-relative z-10">
+            <button *ngIf="!isEditing" class="btn btn-light btn-sm px-4 py-2 rounded-pill fw-semibold transition-all" (click)="toggleEdit()">
+              <i class="bi bi-pencil-square me-2"></i> Edit Profile
+            </button>
+            <button class="btn btn-outline-light btn-sm px-4 py-2 rounded-pill fw-semibold transition-all" (click)="backToDashboard()">
+              <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+            </button>
+          </div>
+        </div>
+
+        <!-- Visiting Card Modal -->
+        <div class="modal fade" [class.show]="isVisitingCardModalVisible" [style.display]="isVisitingCardModalVisible ? 'block' : 'none'" tabindex="-1">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content rounded-4 shadow-lg">
+              <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Apply for Visiting Card</h5>
+                <button type="button" class="btn-close" (click)="closeVisitingCardModal()"></button>
+              </div>
+              <div class="modal-body">
+                <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+                <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+                <div *ngIf="isLoadingVisitingCards" class="text-center py-5">
+                  <div class="spinner-border text-primary" role="status"></div>
+                  <p class="mt-2">Loading card designs...</p>
+                </div>
+
+                <div *ngIf="!isLoadingVisitingCards">
+                  <p class="text-muted">Select a design below to proceed with your application.</p>
+                  <div class="row g-3">
+                    <div *ngFor="let card of visitingCards" class="col-md-6 col-lg-4">
+                      <div class="card h-100 card-selectable" [class.selected]="selectedVisitingCard?.id === card.id" (click)="selectVisitingCard(card)">
+                        <img [src]="card.photo[0]?.url || 'https://dummyimage.com/300x200/ced4da/6c757d.png'" class="card-img-top" alt="{{ card.card_name }}">
+                        <div class="card-body text-center">
+                          <h6 class="card-title fw-bold">{{ card.card_name }}</h6>
+                          <p class="card-text small text-muted">{{ card.description }}</p>
+                          <p class="card-text fw-bold fs-5 text-primary">₹{{ card.price }} <span class="text-muted small">/ card</span></p>
+                        </div>
+                        <div *ngIf="selectedVisitingCard?.id === card.id" class="selected-overlay">
+                          <i class="bi bi-check-circle-fill fs-1 text-white"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div *ngIf="selectedVisitingCard" class="mt-4 p-3 bg-light rounded-3">
+                    <h5 class="fw-bold">Application Details</h5>
+                    <div class="row align-items-center g-3">
+                      <div class="col-md-6">
+                        <label for="quantity" class="form-label fw-semibold">Quantity</label>
+                        <input type="number" id="quantity" class="form-control" [(ngModel)]="visitingCardQuantity" min="50" step="50">
+                      </div>
+                      <div class="col-md-6 text-md-end">
+                        <p class="mb-1 fs-5">Total Price:</p>
+                        <p class="fw-bold display-6 text-success">₹{{ (selectedVisitingCard.price * visitingCardQuantity) | number }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" (click)="closeVisitingCardModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" (click)="submitVisitingCardApplication()" [disabled]="!selectedVisitingCard || isSubmittingVisitingCard">
+                  <span *ngIf="isSubmittingVisitingCard" class="spinner-border spinner-border-sm me-2"></span>
+                  {{ isSubmittingVisitingCard ? 'Submitting...' : 'Submit Application' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="isVisitingCardModalVisible" class="modal-backdrop fade show"></div>
+
+        <div class="card-body p-0">
+          <!-- Loading State -->
+          <div *ngIf="isLoading" class="d-flex justify-content-center align-items-center py-5 bg-white/80 backdrop-blur-sm flex-column text-center">
+            <div class="spinner-border spinner-border-xl text-primary mb-3 animate-spin-slow" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <h5 class="text-muted fw-medium mb-3">Loading your profile...</h5>
+            <p class="text-muted small mb-3">This may take a moment if your connection is slow.</p>
+            <button class="btn btn-outline-primary btn-sm" (click)="retryLoad()" [disabled]="isUploading || isSaving">
+              <i class="bi bi-arrow-clockwise me-1"></i> Retry
+            </button>
+          </div>
+
+          <!-- Content -->
+          <div *ngIf="!isLoading && teacherProfile" class="bg-white/80 backdrop-blur-sm p-4 p-lg-5">
+            <!-- Error/Success Messages -->
+            <div *ngIf="errorMessage" class="alert alert-danger border-0 rounded-3 mb-4">{{ errorMessage }}</div>
+            <div *ngIf="successMessage" class="alert alert-success border-0 rounded-3 mb-4">{{ successMessage }}</div>
+
+            <!-- View Mode -->
+            <div *ngIf="!isEditing" class="row g-4">
+              <div class="col-md-4 text-center">
+                <img [src]="teacherProfile.photoURL || 'https://dummyimage.com/200x200/ced4da/6c757d.png'" alt="Teacher Photo" class="rounded-circle shadow-lg mb-3" style="width: 180px; height: 180px; object-fit: cover;">
+                <h3 class="fw-bold text-primary">{{ teacherProfile.name }}</h3>
+                <p class="text-muted fs-5 mb-1">{{ teacherProfile.designation || 'Teacher' }}</p>
+                <p class="text-muted small">{{ teacherProfile.email }}</p>
+              </div>
+              <div class="col-md-8">
+                <div class="row g-4">
+                  <div class="col-sm-6"><strong>{{ teacherProfile.gender === 'Female' && teacherProfile.marital_status === 'Married' ? 'Husband Name' : 'Father\'s Name' }}:</strong> {{ teacherProfile.father_or_husband_name || 'N/A' }}</div>
+                  <div class="col-sm-6"><strong>Mobile:</strong> {{ teacherProfile.mobile_no || 'N/A' }}</div>
+                  <div class="col-sm-6"><strong>WhatsApp:</strong> {{ teacherProfile.whatsapp_no || 'N/A' }}</div>
+                  <div class="col-sm-6"><strong>Qualification:</strong> {{ teacherProfile.qualification || 'N/A' }}</div>
+                  <div class="col-sm-6"><strong>Date of Birth:</strong> {{ teacherProfile.dob || 'N/A' }}</div>
+                  <div class="col-sm-6"><strong>Blood Group:</strong> {{ teacherProfile.blood_group || 'N/A' }}</div>
+                  <div class="col-sm-6"><strong>Date of Joining:</strong> {{ teacherProfile.doj || 'N/A' }}</div>
+                  <div class="col-12"><strong>Address:</strong> {{ teacherProfile.address || 'N/A' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div *ngIf="isEditing">
+              <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" novalidate class="needs-validation">
+                <div class="row g-4">
+                  <!-- Photo Upload Section -->
+                  <div class="col-md-4 text-center position-relative">
+                    <div class="profile-photo-wrapper-edit position-relative d-inline-block">
+                      <img [src]="imagePreviewUrl || 'https://dummyimage.com/200x200/ced4da/6c757d.png'" alt="Preview" class="rounded-circle shadow-lg mb-3" style="width: 180px; height: 180px; object-fit: cover;">
+                      <label class="btn btn-outline-success btn-sm d-block mb-2 w-100">
+                        <i class="bi bi-folder-open me-1"></i> Choose from Gallery
+                        <input type="file" class="d-none" accept="image/*" (change)="onFileSelected($event, false)">
+                      </label>
+                      <ng-container *ngIf="isMobile">
+                        <label class="btn btn-outline-success btn-sm d-block mb-2 w-100">
+                          <i class="bi bi-camera me-1"></i> Take Photo with Camera
+                          <input type="file" class="d-none" accept="image/*" capture="environment" (change)="onFileSelected($event, true)">
+                        </label>
+                      </ng-container>
+                      <ng-container *ngIf="!isMobile">
+                        <div class="d-flex flex-column gap-2">
+                          <button type="button" class="btn btn-outline-info btn-sm" (click)="startDesktopCamera()" [disabled]="isDesktopCameraActive">
+                            <i class="bi bi-camera-video me-1"></i> Use Webcam
+                          </button>
+                          <button *ngIf="isDesktopCameraActive" type="button" class="btn btn-primary btn-sm" (click)="captureDesktopPhoto()">
+                            <i class="bi bi-check-circle me-1"></i> Capture Photo
+                          </button>
+                          <button *ngIf="isDesktopCameraActive" type="button" class="btn btn-outline-secondary btn-sm" (click)="stopDesktopCamera()">
+                            <i class="bi bi-x-circle me-1"></i> Cancel Webcam
+                          </button>
+                        </div>
+                        <video #videoPreview autoplay playsinline class="d-none rounded shadow-sm mt-2 w-100"></video>
+                      </ng-container>
+                      <button *ngIf="imagePreviewUrl && imagePreviewUrl !== (teacherProfile?.photoURL || '')" type="button" class="btn btn-outline-warning btn-sm w-100" (click)="resetPhoto()">
+                        <i class="bi bi-arrow-repeat me-1"></i> Reset to Original
+                      </button>
+                      <div *ngIf="isUploading" class="mt-3 text-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                          <span class="visually-hidden">Uploading...</span>
+                        </div>
+                        <span class="text-muted">Uploading...</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Form Fields -->
+                  <div class="col-md-8">
+                    <div class="row g-3">
+                      <div class="col-12">
+                        <label for="name" class="form-label fw-bold">Full Name *</label>
+                        <input type="text" id="name" formControlName="name" class="form-control" placeholder="Enter full name">
+                      </div>
+                      <div class="col-sm-6">
+                        <label for="gender" class="form-label fw-bold">Gender</label>
+                        <select id="gender" formControlName="gender" class="form-select">
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div class="col-sm-6">
+                        <label for="marital_status" class="form-label fw-bold">Marital Status</label>
+                        <select id="marital_status" formControlName="marital_status" class="form-select">
+                          <option value="">Select Status</option>
+                          <option value="Single">Single</option>
+                          <option value="Married">Married</option>
+                          <option value="Divorced">Divorced</option>
+                          <option value="Widowed">Widowed</option>
+                        </select>
+                      </div>
+                      <div class="col-12">
+                        <label for="father_or_husband_name" class="form-label fw-bold">{{ profileForm.value.gender === 'Female' && profileForm.value.marital_status === 'Married' ? 'Husband\'s Name' : 'Father\'s Name' }}</label>
+                        <input type="text" id="father_or_husband_name" formControlName="father_or_husband_name" class="form-control">
+                      </div>
+                      <div class="col-sm-6">
+                        <label for="mobile_no" class="form-label fw-bold">Mobile Number</label>
+                        <input type="tel" id="mobile_no" formControlName="mobile_no" class="form-control">
+                      </div>
+                      <div class="col-sm-6">
+                        <label for="whatsapp_no" class="form-label fw-bold">WhatsApp Number</label>
+                        <input type="tel" id="whatsapp_no" formControlName="whatsapp_no" class="form-control">
+                      </div>
+                      <div class="col-12">
+                        <label for="qualification" class="form-label fw-bold">Qualification</label>
+                        <input type="text" id="qualification" formControlName="qualification" class="form-control">
+                      </div>
+                      <div class="col-sm-6">
+                        <label for="dob" class="form-label fw-bold">Date of Birth</label>
+                        <input type="date" id="dob" formControlName="dob" class="form-control">
+                      </div>
+                      <div class="col-sm-6">
+                        <label for="blood_group" class="form-label fw-bold">Blood Group</label>
+                        <select id="blood_group" formControlName="blood_group" class="form-select">
+                          <option value="">Select Blood Group</option>
+                          <option *ngFor="let group of bloodGroups" [value]="group">{{ group }}</option>
+                        </select>
+                      </div>
+                      <div class="col-sm-6">
+                        <label for="doj" class="form-label fw-bold">Date of Joining</label>
+                        <input type="date" id="doj" formControlName="doj" class="form-control">
+                      </div>
+                      <div class="col-sm-6">
+                        <label for="designation" class="form-label fw-bold">Designation</label>
+                        <input type="text" id="designation" formControlName="designation" class="form-control">
+                      </div>
+                      <div class="col-12">
+                        <label for="address" class="form-label fw-bold">Address</label>
+                        <textarea id="address" formControlName="address" class="form-control" rows="3"></textarea>
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                      <button type="button" class="btn btn-outline-secondary" (click)="cancelEdit()">Cancel</button>
+                      <button type="submit" class="btn btn-primary" [disabled]="isSaving || profileForm.invalid || isUploading">
+                        <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+                        {{ isSaving ? 'Saving...' : 'Save Profile' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

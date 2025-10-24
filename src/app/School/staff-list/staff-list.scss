@@ -1,0 +1,204 @@
+/* Using styles from management-desk.scss for consistency */
+.management-desk-container {
+    background: #f8f9fa; // A clean, light background
+    min-height: 100vh;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.header-ornament {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 50%;
+    filter: blur(50px);
+    z-index: 0;
+    animation: float1 15s infinite ease-in-out;
+}
+
+.header-ornament.secondary {
+    width: 80px;
+    height: 80px;
+    background: rgba(240, 147, 251, 0.1);
+    animation: float2 18s infinite ease-in-out;
+    top: 50px;
+    right: 10%;
+}
+
+@keyframes float1 {
+    0% { transform: translate(0, 0); }
+    50% { transform: translate(20px, 30px); }
+    100% { transform: translate(0, 0); }
+}
+
+@keyframes float2 {
+    0% { transform: translate(0, 0); }
+    50% { transform: translate(-20px, -30px); }
+    100% { transform: translate(0, 0); }
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.text-gradient-secondary {
+    background: linear-gradient(135deg, #4338ca, #6d28d9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.director-card {
+    border-radius: 1.5rem; // Softer corners
+    overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.4s ease;
+    background: linear-gradient(145deg, #ffffff, #f9f9f9);
+    border: 2px solid transparent;
+    box-shadow: 0 8px 32px rgba(30, 41, 59, 0.05);
+}
+
+.director-card:hover {
+    transform: translateY(-12px) scale(1.03);
+    box-shadow: 0 20px 40px rgba(30, 41, 59, 0.12);
+    border-color: #7c3aed;
+}
+.director-card .row {
+    display: flex;
+    flex-direction: column;
+}
+
+.director-photo-section {
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1.5rem;
+    color: #1f2937;
+    border-bottom: 1px solid #f0f2f5;
+    height: 100%;
+}
+
+.director-photo-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 6px solid #ffffff;
+    box-shadow: 0 12px 24px rgba(30, 41, 59, 0.08), 0 0 0 1px #e5e7eb;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.director-card:hover .director-photo-wrapper {
+    transform: scale(1.1) rotate(4deg);
+}
+
+.director-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.director-details h3 {
+    margin-top: 1rem;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.director-details span {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #4b5563;
+}
+
+.glassmorphic-body {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.divider-wave {
+    height: 2px;
+    background: linear-gradient(to right, #667eea, #764ba2, #f093fb);
+    border-radius: 1px;
+    opacity: 0.5;
+}
+
+.quill-view-wrapper {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #333;
+}
+
+.quill-view-custom .ql-editor {
+    padding: 0;
+}
+
+.glassmorphic-icon {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.photo-placeholder {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  opacity: 0.1;
+}
+
+.director-details .text-light {
+  color: #4b5563 !important;
+}
+
+.filter-bar-wrapper {
+    position: sticky;
+    top: 20px;
+    z-index: 100;
+}
+
+.filter-bar {
+    border-radius: 50px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+}
+
+.filter-bar .input-group-text {
+    background-color: #f8f9fa;
+    border: none;
+}
+
+.filter-bar .form-select {
+    border: none;
+}
+
+@media (max-width: 768px) {
+  .director-photo-section {
+    padding: 1.5rem 1rem;
+    border-radius: 1rem;
+  }
+  .director-card .row {
+    flex-direction: row;
+  }
+  .director-photo-wrapper {
+    width: 100px;
+    height: 100px;
+  }
+  .director-details h3 {
+    font-size: 1.3rem;
+  }
+  .card-body {
+    padding: 1.5rem;
+  }
+}

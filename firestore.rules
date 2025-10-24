@@ -3,20 +3,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 🔹 Common helper functions
+    // ===========================================================
+    // 🔹 Helper Functions
+    // ===========================================================
     function isSignedIn() {
       return request.auth != null;
     }
 
     function getAdminData() {
-      return exists(/databases/$(database)/documents/admin/$(request.auth.uid))
-        ? get(/databases/$(database)/documents/admin/$(request.auth.uid)).data
-        : null;
+      return get(/databases/$(database)/documents/admin/$(request.auth.uid)).data;
     }
 
     function isApprovedAdmin() {
-      let adminData = getAdminData();
-      return isSignedIn() && adminData != null;
+      return isSignedIn() && exists(/databases/$(database)/documents/admin/$(request.auth.uid));
     }
 
     function isSuperAdmin() {
@@ -24,11 +23,9 @@ service cloud.firestore {
       return isApprovedAdmin() && adminData != null && adminData.role == 'super-admin';
     }
 
-    // A director is represented by a document at schools/{schoolId}/directors/{uid}
-    function isDirectorForSchoolId(sid) {
-      return isSignedIn() &&
-        sid != null &&
-        exists(/databases/$(database)/documents/schools/$(sid)/directors/$(request.auth.uid));
+    function isDirectorForSchoolId(schoolId) {
+      return isSignedIn() && schoolId != null &&
+        exists(/databases/$(database)/documents/schools/$(schoolId)/directors/$(request.auth.uid));
     }
 
     // ===========================================================
@@ -36,10 +33,10 @@ service cloud.firestore {
     // ===========================================================
     match /admin/{adminId} {
       allow read, write: if request.auth.uid == adminId;
-
-      // 🔸 Subcollection: login_records
       match /login_records/{recordId} {
-        allow read, write: if request.auth.uid == adminId || isSuperAdmin();
+        // SuperAdmins can read any admin's login records.
+        allow read: if isSuperAdmin() || request.auth.uid == adminId;
+        allow write: if request.auth.uid == adminId;
       }
     }
 
@@ -47,142 +44,191 @@ service cloud.firestore {
     // 🔹 Schools & Directors
     // ===========================================================
     match /schools/{schoolId} {
-      // Allow public read for school info so login pages can resolve the slug
-      // Optionally restrict to active schools only
-      allow read: if true; // or: resource.data.status == 'active';
+      // ✅ Public can read and list schools (for "Select Your School")
+      allow get, list: if true;
+
+      // Only admins can create, update, or delete schools
       allow create, update, delete: if isApprovedAdmin();
 
+      // 🔹 Directors subcollection
       match /directors/{directorId} {
-        allow read: if isSignedIn();
+        allow get, list: if true;
         allow create, update, delete: if isApprovedAdmin();
       }
 
-      // 🔸 Subcollection: students
+      // 🔹 Principals subcollection
+      match /principals/{principalId} {
+        allow get, list: if true;
+        allow create, update, delete: if isApprovedAdmin();
+      }
+
+      match /teachers/{teacherId} {
+        allow get, list: if true;
+        allow create, update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+
+        // ---- YouTube subcollection ----
+        match /youtube/{videoId} {
+          // ✅ Public: can read approved videos.
+          // ✅ Teacher/Director/Admin: can read all their videos.
+          allow read: if resource.data.status == "approved" ||
+            (request.auth != null &&
+             (request.auth.uid == teacherId ||
+              isDirectorForSchoolId(schoolId) ||
+              isApprovedAdmin()));
+          allow write: if request.auth != null && request.auth.uid == teacherId;
+
+          // ---- Reviews subcollection ----
+          match /reviews/{reviewId} {
+            // ✅ Public: can read all reviews for a video.
+            allow get, list: if true;
+            // ✅ Authenticated users: can create a review.
+            allow create: if isSignedIn();
+            // ✅ User: can only update/delete their own review.
+            allow update, delete: if isSignedIn() && request.auth.uid == resource.data.authorId;
+          }
+        }
+
+        // ---- Question Bank subcollection ----
+        match /question_bank/{questionId} {
+          // 👩‍🏫 Teacher: can create, update, or delete their own questions
+          allow create, update, delete: if request.auth != null && request.auth.uid == teacherId;
+
+          // 👩‍🏫 Teacher / Director / Admin: can read all questions for their school
+          allow get, list: if request.auth != null &&
+            (request.auth.uid == teacherId ||
+             isDirectorForSchoolId(schoolId) ||
+             isApprovedAdmin());
+        }
+
+        // ---- Visiting Card Applications subcollection ----
+        match /visiting_applications/{applicationId} {
+          // ✅ Teacher: can create an application for themselves.
+          allow create: if request.auth.uid == teacherId;
+          // ✅ Teacher/Director/Admin: can read/list applications.
+          allow get, list: if request.auth.uid == teacherId || isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+          // ✅ Director/Admin: can update (e.g., approve/reject) or delete applications.
+          allow update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+        }
+
+        // ---- ID Card Applications subcollection ----
+        match /id_card_applications/{applicationId} {
+          // ✅ Teacher: can create an application for themselves.
+          allow create: if request.auth.uid == teacherId;
+          // ✅ Teacher/Director/Admin: can read/list applications.
+          allow get, list: if request.auth.uid == teacherId || isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+          // ✅ Director/Admin: can update (e.g., approve/reject) or delete applications.
+          allow update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+        }
+      }
+                
+         // 🔹 Generic staff-like roles (non-teaching)
+      match /{userCollection}/{userId} {
+        allow get, list: if userCollection in [
+          'staffs', 'frontdesks', 'securitys', 'transports',
+          'itdepartments', 'accounts', 'examcontrollers', 'parents'
+        ];
+        allow list: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+        allow create, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+        allow update: if request.auth.uid == userId || isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+      }
+
+      // 🔹 Students subcollection
       match /students/{studentId} {
-        // Admins can manage all students (read includes get+list)
-        allow read, create, update, delete: if isApprovedAdmin();
-
-        // A signed-in student can only get/update their own doc by UID matching the doc ID
-        allow get, update, create: if isSignedIn() && studentId == request.auth.uid;
-
-        // No listing for non-admins
-        allow list: if false;
+        allow get, list: if true;
+        allow create, update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+        allow update: if request.auth != null && request.auth.uid == studentId;
       }
     }
 
     // ===========================================================
-    // 🔹 Subscription Collection
+    // 🔹 Subscription
     // ===========================================================
     match /subscription/{subId} {
-      allow read: if isSignedIn();
+      allow read, list: if isApprovedAdmin();
       allow create, update, delete: if isApprovedAdmin();
     }
 
     // ===========================================================
-    // 🔹 Admin Login History (Global)
+    // 🔹 Login History
     // ===========================================================
     match /login_history/{docId} {
-      // Any signed-in user can create their own login history entries (student/admin/director, etc.)
       allow create: if isSignedIn();
-
-      // Read/list permissions:
-      // - Approved admins can read all
-      // - Directors can read only entries that match their school (checked via resource.data.schoolId)
-      allow read, list: if isApprovedAdmin() || isDirectorForSchoolId(resource.data.schoolId);
-
-      // Only super-admin can modify/delete
-      allow update, delete: if isSuperAdmin();
+      allow read, update, delete: if isSuperAdmin();
     }
 
 
     // ===========================================================
-    // 🔹 Other Collections (Holders, Hooks, Clip, Lanyards, Cards, Visiting Cards, etc.)
+    // 🔹 Public Product Collections
     // ===========================================================
     match /holders/{holderId} {
-      allow read, write: if isSignedIn();
-      function validHolderData() {
-        return request.resource.data.keys().hasAll(['holder_name','price','photo','description'])
-          && request.resource.data.holder_name is string
-          && request.resource.data.price is number
-          && request.resource.data.description is string
-          && request.resource.data.photo is list;
-      }
-      allow create, update: if validHolderData();
-      allow delete: if isSignedIn();
+      allow read, list: if true;
+      allow create, update, delete: if isApprovedAdmin();
     }
 
     match /hooks/{hookId} {
-      allow read, write: if isSignedIn();
-      function validHookData() {
-        return request.resource.data.keys().hasAll(['hook_name','price','photo','description'])
-          && request.resource.data.hook_name is string
-          && request.resource.data.price is number
-          && request.resource.data.description is string
-          && (request.resource.data.photo is list || request.resource.data.photo == null);
-      }
-      allow create, update: if validHookData();
-      allow delete: if isSignedIn();
+      allow read, list: if true;
+      allow create, update, delete: if isApprovedAdmin();
     }
 
     match /clip/{clipId} {
-      allow read: if isSignedIn();
-      function validClipData() {
-        return request.resource.data.keys().hasAll(['clip_name','price','description','photo'])
-          && request.resource.data.clip_name is string
-          && request.resource.data.price is number
-          && request.resource.data.description is string
-          && (request.resource.data.photo is list || request.resource.data.photo == null);
-      }
-      allow create, update: if validClipData();
-      allow delete: if isSignedIn();
+      allow read, list: if true;
+      allow create, update, delete: if isApprovedAdmin();
     }
 
     match /lanyards/{lanyardId} {
-      allow read, write: if isSignedIn();
-      function validLanyardData() {
-        return request.resource.data.keys().hasAll(['lanyards_name','price','photo','description'])
-          && request.resource.data.lanyards_name is string
-          && request.resource.data.price is number
-          && request.resource.data.description is string
-          && request.resource.data.photo is list;
-      }
-      allow create, update: if validLanyardData();
-      allow delete: if isSignedIn();
+      allow read, list: if true;
+      allow create, update, delete: if isApprovedAdmin();
     }
 
     match /cards/{cardId} {
-      allow read, write: if isSignedIn();
-      function validCardData() {
-        return request.resource.data.keys().hasAll(['card_name','price','photo','description'])
-          && request.resource.data.card_name is string
-          && request.resource.data.price is number
-          && request.resource.data.description is string
-          && request.resource.data.photo is list;
-      }
-      allow create, update: if validCardData();
-      allow delete: if isSignedIn();
+      allow read, list: if true;
+      allow create, update, delete: if isApprovedAdmin();
     }
 
     match /visiting_cards/{cardId} {
-      allow read, write: if isSignedIn();
-      allow create, update: if request.resource.data.card_name is string &&
-                             request.resource.data.price is number &&
-                             request.resource.data.price >= 0;
+      allow read, list: if true;
+      allow create, update, delete: if isApprovedAdmin();
     }
 
     // ===========================================================
     // 🔹 Other Product Collections
     // ===========================================================
-    match /prospectus/{id} { allow read, write: if isSignedIn(); }
-    match /library_card/{id} { allow read, write: if isSignedIn(); }
-    match /medals/{id} { allow read, write: if isSignedIn(); }
-    match /gate_pass/{id} { allow read, write: if isSignedIn(); }
-    match /student_outpass/{id} { allow read, write: if isSignedIn(); }
-    match /vistors_pass/{id} { allow read, write: if isSignedIn(); }
-    match /brochure/{id} { allow read, write: if isSignedIn(); }
-    match /key_ring/{id} { allow read, write: if isSignedIn(); }
-    match /leaflet/{id} { allow read, write: if isSignedIn(); }
-    match /card_design/{id} { allow read, write: if isSignedIn(); }
-    match /lanyard_design/{id} { allow read, write: if isSignedIn(); }
+    match /prospectus/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /library_card/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /medals/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /gate_pass/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /student_outpass/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /vistors_pass/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /brochure/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /key_ring/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /leaflet/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /card_design/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
+    match /lanyard_design/{id} { allow read, list: if true; allow create, update, delete: if isApprovedAdmin(); }
   }
+
+    // ===========================================================
+    // 🔹 Collection Group Rules
+    // ===========================================================
+    // This rule is required for the public-facing "School Question Bank"
+    // It allows anyone to query the 'question_bank' collection group.
+    match /{path=**}/question_bank/{questionId} {
+      // Allow listing/reading questions ONLY if their status is 'approved'.
+      // The query from the client MUST include both:
+      // 1. a `where('status', '==', 'approved')` clause
+      // 2. a `where('schoolId', '==', schoolId)` clause that matches the document's schoolId
+      // It also explicitly allows ordering by 'createdAt'.
+      allow get: if resource.data.status == 'approved';
+      allow list: if request.query.filters.status == 'approved'
+                   && resource.data.schoolId == request.query.filters.schoolId;
+    }
+
+    // This rule is required for the public-facing "Student Video" page.
+    // It allows anyone to query the 'youtube' collection group for approved videos.
+    match /{path=**}/youtube/{videoId} {
+      // Allow reading a single video if its status is 'approved'.
+      allow get: if resource.data.status == 'approved';
+      // Allow listing/querying videos if the query filters by 'status' and 'schoolId'.
+      allow list: if request.query.filters.status == 'approved'
+                   && resource.data.schoolId == request.query.filters.schoolId;
+    }
 }

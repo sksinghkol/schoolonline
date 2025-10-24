@@ -31,7 +31,7 @@ export class DirectorUserlist implements OnInit {
   selectedRole = 'all'; // filter
   roleCollections = [
     'accounts', 'directors', 'examcontrollers', 'frontdesks', 'itdepartments',
-    'parrents', 'principals', 'reviews', 'securitys', 'staffs', 'students', 'teachers'
+    'parrents', 'principals', 'reviews', 'securitys', 'staffs', 'students', 'teachers','transports'
   ];
 
   constructor(

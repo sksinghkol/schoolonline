@@ -1,0 +1,217 @@
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-primary">
+      <i class="bi bi-wallet2 me-2"></i> Director Expense Management
+    </h3>
+    <button class="btn btn-outline-primary" (click)="toggleForm()">
+      <i class="bi" [ngClass]="showForm ? 'bi-x-circle' : 'bi-plus-circle'"></i>
+      {{ showForm ? 'Close Form' : 'Add Expense' }}
+    </button>
+  </div>
+
+  <!-- Add/Edit Expense Form -->
+  <div *ngIf="showForm" class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+      <form [formGroup]="expenseForm" (ngSubmit)="saveExpense()" class="row g-3">
+
+        <div class="col-md-3">
+          <label class="form-label">Date</label>
+          <input type="date" formControlName="date" class="form-control" required />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Category</label>
+          <input type="text" formControlName="category" class="form-control" placeholder="Category" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Item Name</label>
+          <input type="text" formControlName="item_name" class="form-control" placeholder="Item Name" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Amount (₹)</label>
+          <input type="number" formControlName="amount" class="form-control" placeholder="Amount" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Payment Mode</label>
+          <select formControlName="payment_mode" class="form-select">
+            <option>Cash</option>
+            <option>Bank Transfer</option>
+            <option>Cheque</option>
+            <option>Online</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Paid To</label>
+          <input type="text" formControlName="paid_to" class="form-control" placeholder="Paid To" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Invoice No</label>
+          <input type="text" formControlName="invoice_no" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Reference No</label>
+          <input type="text" formControlName="reference_no" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Department</label>
+          <input type="text" formControlName="department" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Budget Head</label>
+          <input type="text" formControlName="budget_head" class="form-control" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Description</label>
+          <textarea formControlName="description" rows="2" class="form-control" placeholder="Description"></textarea>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Remarks</label>
+          <textarea formControlName="remarks" rows="2" class="form-control" placeholder="Remarks"></textarea>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Attachment</label>
+          <input type="file" (change)="onFileSelected($event)" class="form-control" />
+        </div>
+
+        <div class="col-md-4 d-flex align-items-center">
+          <div class="form-check mt-4">
+            <input type="checkbox" class="form-check-input" formControlName="reimbursement_flag" />
+            <label class="form-check-label">Reimbursement</label>
+          </div>
+        </div>
+
+        <div class="col-md-12 text-end mt-3">
+          <button type="submit" class="btn btn-primary me-2" [disabled]="isSaving">
+            <i class="bi bi-save"></i> {{ editingExpenseId ? 'Update' : 'Save' }}
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filters mb-3 d-flex flex-wrap align-items-center gap-2">
+    <select class="form-select w-auto" [(ngModel)]="filterMonth" (change)="applyFilters()">
+      <option value="">All Months</option>
+      <option *ngFor="let month of uniqueMonths">
+        {{ month }}
+      </option>
+    </select>
+
+    <select class="form-select w-auto" [(ngModel)]="filterCategory" (change)="applyFilters()">
+      <option value="">All Categories</option>
+      <option *ngFor="let cat of uniqueCategories">
+        {{ cat }}
+      </option>
+    </select>
+
+    <select class="form-select w-auto" [(ngModel)]="filterStatus" (change)="applyFilters()">
+      <option value="">All Status</option>
+      <option>Pending</option>
+      <option>Approved</option>
+      <option>Paid</option>
+      <option>Cancelled</option>
+    </select>
+
+    <button class="btn btn-success ms-auto" (click)="exportToExcel()">
+      <i class="bi bi-file-earmark-excel"></i> Export Excel
+    </button>
+    <button class="btn btn-danger" (click)="exportToPDF()">
+      <i class="bi bi-file-earmark-pdf"></i> Export PDF
+    </button>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary mb-3">
+    <h6 class="fw-bold text-secondary">Total Expenses: ₹{{ totalExpenses | number }}</h6>
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      <span *ngFor="let month of (monthlyTotals | keyvalue)" class="badge bg-primary">
+        {{ month.key }}: ₹{{ month.value | number }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Expense Table -->
+  <div class="table-responsive card shadow-sm border-0">
+    <table class="table table-striped align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th>
+          <th>Category</th>
+          <th>Item</th>
+          <th>Amount (₹)</th>
+          <th>Status</th>
+          <th>Paid To</th>
+          <th>Created By</th>
+          <th>Attachment</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="filteredExpenses.length; else noData">
+        <tr *ngFor="let expense of filteredExpenses">
+          <td>{{ expense.date | date:'dd-MMM-yyyy' }}</td>
+          <td>{{ expense.category }}</td>
+          <td>{{ expense.item_name }}</td>
+          <td>{{ expense.amount | number:'1.2-2' }}</td>
+          <td>
+            <span class="badge" [ngClass]="getStatusClass(expense.status)">
+              {{ expense.status }}
+            </span>
+          </td>
+          <td>{{ expense.paid_to }}</td>
+          <td>{{ expense.created_by }}</td>
+          <td>
+            <a *ngIf="expense.attachment_url" [href]="expense.attachment_url" target="_blank">
+              <i class="bi bi-paperclip"></i>
+            </a>
+          </td>
+          <td>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline-primary" (click)="editExpense(expense)">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteExpense(expense.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+              <button
+                *ngIf="expense.status === 'Pending'"
+                class="btn btn-sm btn-outline-success"
+                (click)="updateStatus(expense, 'Approved')"
+              >
+                Approve
+              </button>
+              <button
+                *ngIf="expense.status === 'Approved'"
+                class="btn btn-sm btn-outline-info"
+                (click)="updateStatus(expense, 'Paid')"
+              >
+                Mark Paid
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #noData>
+      <tr>
+        <td colspan="9" class="text-center py-4 text-muted">No expenses found.</td>
+      </tr>
+    </ng-template>
+  </div>
+</div>

@@ -1,11 +1,11 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
     <!-- Fallback brand while school data loads -->
-    <a *ngIf="!schoolState.currentSchool()" class="navbar-brand fw-bold" [routerLink]="['/director-dashboard']">
-      <i class="bi bi-mortarboard-fill"></i> Director
+    <a *ngIf="!schoolState.currentSchool()" class="navbar-brand fw-bold" [routerLink]="['/teacher-dashboard']">
+      <i class="bi bi-mortarboard-fill"></i> Teacher
     </a>
     <!-- School brand with logo and name -->
-    <a *ngIf="schoolState.currentSchool()" class="navbar-brand fw-bold d-flex align-items-center" [routerLink]="['/director-dashboard']" [queryParams]="{ directorId: director?.['uid'], schoolId: schoolState.currentSchool()?.id }">
+    <a *ngIf="schoolState.currentSchool()" class="navbar-brand fw-bold d-flex align-items-center" [routerLink]="['/teacher-dashboard']" [queryParams]="{ teacherId: director?.['uid'], schoolId: schoolState.currentSchool()?.id }">
       <img [src]="schoolLogoUrl() || 'https://dummyimage.com/100x100/6c757d/dee2e6.png&text=Logo'" alt="School Logo" height="30" class="me-2 rounded">
       <span>{{ schoolName() }}</span>
     </a>
@@ -18,8 +18,18 @@
       <!-- Left Menu -->
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item" *ngIf="director && schoolState.currentSchool()">
-          <a class="nav-link active" aria-current="page" [routerLink]="['/director-dashboard']" [queryParams]="{ directorId: director['uid'], schoolId: schoolState.currentSchool()?.id }">
+          <a class="nav-link active" aria-current="page" [routerLink]="['/teacher-dashboard']" [queryParams]="{ teacherId: director['uid'], schoolId: schoolState.currentSchool()?.id }">
             <i class="bi bi-house-fill"></i> Home
+          </a>
+        </li>
+        <li class="nav-item" *ngIf="director && schoolState.currentSchool()">
+          <a class="nav-link" [routerLink]="['/teacher-dashboard/teacher-questionbank']" [queryParams]="{ teacherId: director['uid'], schoolId: schoolState.currentSchool()?.id }">
+            <i class="bi bi-bank me-1"></i> Question Bank
+          </a>
+        </li>
+        <li class="nav-item" *ngIf="director && schoolState.currentSchool()">
+          <a class="nav-link" [routerLink]="['/teacher-dashboard/teacher-youtube-videos']" [queryParams]="{ teacherId: director['uid'], schoolId: schoolState.currentSchool()?.id }">
+            <i class="bi bi-bank me-1"></i> Youtube Video
           </a>
         </li>
       </ul>
@@ -49,8 +59,8 @@
               <hr class="dropdown-divider">
             </li>
             <li>
-              <a class="dropdown-item d-flex align-items-center" [routerLink]="['/update-profile']"
-                [queryParams]="{ directorId: director['uid'], schoolId: schoolState.currentSchool() ? schoolState.currentSchool()?.id : null }">
+              <a class="dropdown-item d-flex align-items-center" [routerLink]="['/teacher-dashboard/teacher-profile']"
+                [queryParams]="{ teacherId: director['uid'], schoolId: schoolState.currentSchool() ? schoolState.currentSchool()?.id : null }">
                 <i class="bi bi-person me-2"></i>
                 <span>My Profile</span>
               </a>
@@ -68,4 +78,3 @@
     </div>
   </div>
 </nav>
-

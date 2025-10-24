@@ -74,13 +74,13 @@ export class TransportAwaiting implements OnInit {
     });
   }
 
-  goToSchoolDashboard() {
+   goToSchoolDashboard() {
     const v = this.schoolCodeOrSlug();
     if (v) {
-      this.router.navigate([`/TransportDashboard/${v}`]);
+      this.router.navigate([`/SchoolDashboard/${v}`]);
     } else if (this.schoolId) {
       // Fallback: if no code/slug, try using schoolId
-      this.router.navigate([`/TransportDashboard/${this.schoolId}`]);
+      this.router.navigate([`/SchoolDashboard/${this.schoolId}`]);
     } else {
       this.router.navigate(['/']);
     }

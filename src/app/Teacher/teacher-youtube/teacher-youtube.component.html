@@ -1,0 +1,111 @@
+<div class="container py-4 py-lg-5">
+  <div class="row">
+    <!-- Add Video Form -->
+    <div class="col-lg-6 mb-4 mb-lg-0">
+      <div class="card shadow-lg">
+        <div class="card-header bg-danger text-white">
+          <h4 class="mb-0"><i class="bi bi-youtube me-2"></i> Add New Video</h4>
+        </div>
+        <div class="card-body p-4">
+          <form [formGroup]="youtubeVideoForm" (ngSubmit)="submitYoutubeVideo()">
+            <div *ngIf="successMessage()" class="alert alert-success">{{ successMessage() }}</div>
+            <div *ngIf="errorMessage()" class="alert alert-danger">{{ errorMessage() }}</div>
+
+            <!-- Video Link -->
+            <div class="mb-3">
+              <label for="video_link" class="form-label fw-bold">YouTube Video Link</label>
+              <input type="url" id="video_link" formControlName="video_link" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+              <div *ngIf="youtubeVideoForm.get('video_link')?.invalid && youtubeVideoForm.get('video_link')?.touched" class="text-danger small mt-1">
+                A valid YouTube link is required.
+              </div>
+            </div>
+
+            <!-- Basic Info -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6 mb-3">
+                <label for="class" class="form-label fw-bold">Class</label>
+                <input type="text" id="class" formControlName="class" class="form-control" placeholder="e.g., 10th, 12th">
+                <div *ngIf="youtubeVideoForm.get('class')?.invalid && youtubeVideoForm.get('class')?.touched" class="text-danger small mt-1">
+                  Class is required.
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="subject" class="form-label fw-bold">Subject</label>
+                <input type="text" id="subject" formControlName="subject" class="form-control" placeholder="e.g., Physics, History">
+                <div *ngIf="youtubeVideoForm.get('subject')?.invalid && youtubeVideoForm.get('subject')?.touched" class="text-danger small mt-1">
+                  Subject is required.
+                </div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label for="short_desc" class="form-label fw-bold">Short Description</label>
+              <textarea id="short_desc" formControlName="short_desc" class="form-control" rows="3" placeholder="A brief summary of the video content (max 200 characters)."></textarea>
+              <div *ngIf="youtubeVideoForm.get('short_desc')?.invalid && youtubeVideoForm.get('short_desc')?.touched" class="text-danger small mt-1">
+                Description cannot exceed 200 characters.
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-danger btn-lg" [disabled]="youtubeVideoForm.invalid || isSubmittingYoutubeVideo()">
+                <span *ngIf="isSubmittingYoutubeVideo()" class="spinner-border spinner-border-sm me-2"></span>
+                {{ isSubmittingYoutubeVideo() ? 'Submitting...' : 'Submit for Approval' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Video Lists -->
+    <div class="col-lg-6">
+      <!-- Pending Videos Section -->
+      <div class="mb-4">
+        <h4 class="mb-3"><i class="bi bi-hourglass-split text-warning me-2"></i> Pending Approval</h4>
+        <div *ngIf="isLoadingVideos()" class="text-center py-4">
+          <div class="spinner-border text-primary"></div>
+        </div>
+        <div *ngIf="!isLoadingVideos() && pendingVideos().length === 0" class="alert alert-secondary">
+          You have no videos pending for approval.
+        </div>
+        <div *ngIf="!isLoadingVideos() && pendingVideos().length > 0" class="list-group" style="max-height: 300px; overflow-y: auto;">
+          <div *ngFor="let video of pendingVideos()" class="card mb-3">
+            <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center">
+              <span class="fw-bold">{{ video.subject }} - Class {{ video.class }}</span>
+              <small *ngIf="video.appliedAt">{{ video.appliedAt.toDate() | date:'shortDate' }}</small>
+            </div>
+            <div class="card-body">
+              <div class="ratio ratio-16x9 mb-3"><iframe [src]="getSafeYoutubeUrl(video.video_link)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+              <p class="card-text">{{ video.short_desc }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Approved Videos Section -->
+      <div>
+        <h4 class="mb-3"><i class="bi bi-check2-circle text-success me-2"></i> Approved Videos</h4>
+        <div *ngIf="isLoadingVideos()" class="text-center py-4">
+          <div class="spinner-border text-primary"></div>
+        </div>
+        <div *ngIf="!isLoadingVideos() && approvedVideos().length === 0" class="alert alert-info">
+          You have no approved videos yet.
+        </div>
+        <div *ngIf="!isLoadingVideos() && approvedVideos().length > 0" class="list-group" style="max-height: 300px; overflow-y: auto;">
+          <div *ngFor="let video of approvedVideos()" class="card mb-3">
+            <div class="card-header bg-success-subtle d-flex justify-content-between align-items-center">
+              <span class="fw-bold">{{ video.subject }} - Class {{ video.class }}</span>
+              <small *ngIf="video.appliedAt">{{ video.appliedAt.toDate() | date:'shortDate' }}</small>
+            </div>
+            <div class="card-body">
+              <div class="ratio ratio-16x9 mb-3"><iframe [src]="getSafeYoutubeUrl(video.video_link)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+              <p class="card-text">{{ video.short_desc }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
