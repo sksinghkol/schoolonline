@@ -1,47 +1,51 @@
-import { Injectable, signal, inject, runInInjectionContext, Injector } from '@angular/core';
-import { collection, collectionData, doc, Firestore, getDoc, query, where } from '@angular/fire/firestore';
-import { Observable, of } from 'rxjs';
-import { switchMap, take } from 'rxjs/operators';
+import { Injectable, signal, inject } from '@angular/core';
+import { Firestore, doc, getDoc, collection, query, where, getDocs } from '@angular/fire/firestore';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SchoolStateService {
-  private firestore: Firestore = inject(Firestore);
-  private injector: Injector = inject(Injector);
+  private firestore = inject(Firestore);
 
-  currentSchool = signal<any>(null);
+  private schoolIdSource = new BehaviorSubject<string | null>(null);
+  schoolId$ = this.schoolIdSource.asObservable();
 
-  setSchoolBySlug(slug: string): void {
-    runInInjectionContext(this.injector, () => {
-      const schoolsCollection = collection(this.firestore, 'schools');
-      // Normalize incoming slug to match how we generate and store it (lowercase, no spaces)
-      const normalizedSlug = (slug || '').replace(/\s+/g, '').toLowerCase();
-      const q = query(schoolsCollection, where('slug', '==', normalizedSlug));
+  currentSchool = signal<any | null>(null);
 
-      collectionData(q, { idField: 'id' }).pipe(take(1)).subscribe(schools => {
-        if (schools.length > 0) {
-          this.currentSchool.set(schools[0]);
-        } else {
-          this.currentSchool.set(null);
-        }
-      });
-    });
+  constructor() { }
+
+  setCurrentSchool(school: any | null) {
+    this.currentSchool.set(school);
   }
 
-  async setSchoolById(id: string): Promise<void> {
-    if (!id) return;
-    const schoolRef = doc(this.firestore, 'schools', id);
-    const snap = await getDoc(schoolRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      this.currentSchool.set({ id, ...data });
-    } else {
-      this.currentSchool.set(null);
+  setSchoolId(schoolId: string | null) {
+    if (schoolId !== this.schoolIdSource.getValue()) {
+      this.schoolIdSource.next(schoolId);
+      if (schoolId) {
+        this.setSchoolById(schoolId);
+      } else {
+        this.currentSchool.set(null);
+      }
     }
   }
 
-  setCurrentSchool(school: any): void {
-    this.currentSchool.set(school || null);
+  async setSchoolById(id: string): Promise<void> {
+    const schoolDocRef = doc(this.firestore, `schools/${id}`);
+    const schoolSnap = await getDoc(schoolDocRef);
+    if (schoolSnap.exists()) {
+      this.currentSchool.set({ id: schoolSnap.id, ...schoolSnap.data() });
+    }
+  }
+
+  async setSchoolBySlug(slug: string): Promise<void> {
+    const schoolsCollection = collection(this.firestore, 'schools');
+    const q = query(schoolsCollection, where('slug', '==', slug));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const schoolDoc = querySnapshot.docs[0];
+      this.currentSchool.set({ id: schoolDoc.id, ...schoolDoc.data() });
+      this.setSchoolId(schoolDoc.id);
+    }
   }
 }

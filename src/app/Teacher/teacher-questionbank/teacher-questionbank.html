@@ -15,18 +15,24 @@
             <div class="row g-3 mb-3">
               <div class="col-md-4">
                 <label for="questionClass" class="form-label fw-bold">Class</label>
-                <select id="questionClass" formControlName="questionClass" class="form-select">
+                <select id="questionClass" formControlName="questionClass" class="form-select" (change)="onClassChange($event)">
                   <option value="" disabled>Select Class</option>
                   <option *ngFor="let class of (classes$ | async)" [value]="class.className">{{ class.className }}</option>
                 </select>
               </div>
               <div class="col-md-4">
                 <label for="subject" class="form-label fw-bold">Subject</label>
-                <input type="text" id="subject" formControlName="subject" class="form-control" placeholder="e.g., Mathematics">
+                <select id="subject" formControlName="subject" class="form-select" (change)="onSubjectChange($event)">
+                  <option value="" disabled>Select Subject</option>
+                  <option *ngFor="let subject of (subjects$ | async)" [value]="subject.subjectName">{{ subject.subjectName }}</option>
+                </select>
               </div>
               <div class="col-md-4">
                 <label for="chapter" class="form-label fw-bold">Chapter</label>
-                <input type="text" id="chapter" formControlName="chapter" class="form-control" placeholder="e.g., Algebra">
+                <select id="chapter" formControlName="chapter" class="form-select">
+                  <option value="" disabled>Select Chapter</option>
+                  <option *ngFor="let chapter of (chapters$ | async)" [value]="chapter.chapterName">{{ chapter.chapterName }}</option>
+                </select>
               </div>
             </div>
 

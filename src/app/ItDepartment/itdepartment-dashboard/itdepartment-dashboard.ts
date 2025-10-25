@@ -6,7 +6,7 @@ import { ViewQuestionPapers } from '../view-question-papers/view-question-papers
 
 @Component({
   selector: 'app-itdepartment-dashboard',
-  imports: [RouterOutlet, ItdepartmentMenu, Master, ViewQuestionPapers ],
+  imports: [RouterOutlet, ItdepartmentMenu ],
   templateUrl: './itdepartment-dashboard.html',
   styleUrl: './itdepartment-dashboard.scss'
 })

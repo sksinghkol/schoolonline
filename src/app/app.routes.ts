@@ -96,6 +96,8 @@ import { TexamQuestion } from './Teacher/texam-question/texam-question';
 import { StudentQuestionBankComponent } from './School/student-question-bank/student-question-bank';
 import { StudentsVideo } from './School/students-video/students-video';
 import { ViewQuestionPapers } from './ItDepartment/view-question-papers/view-question-papers';
+import { QuestionListComponent } from './ItDepartment/master/question-list/question-list';
+import { Master } from './ItDepartment/master/master';
 export const routes: Routes = [
   /* Home & General Login */
   { path: '', component: Home, pathMatch: 'full' },
@@ -233,7 +235,9 @@ export const routes: Routes = [
     component: ItdepartmentDashboard,
     canActivate: [ExamcontrollerAuthGuard], // TODO: Create and use an ItdepartmentAuthGuard
     children: [
-      { path: 'question-papers', component: ViewQuestionPapers }
+      { path: 'question-papers', component: ViewQuestionPapers },
+      { path: 'question-list', component: QuestionListComponent },
+       { path: 'Master', component: Master }
     ]
   },
   /* Parent Dashboard */

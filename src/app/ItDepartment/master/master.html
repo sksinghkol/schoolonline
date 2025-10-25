@@ -1,66 +1,1225 @@
 <div class="container mt-4">
-  <div class="card shadow-sm">
-    <div class="card-header">
-      <h4 class="mb-0">{{ isEditing ? 'Edit Class' : 'Add New Class' }}</h4>
+  <!-- Tab Navigation -->
+  <ul class="nav nav-tabs" id="masterTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="class-tab" data-bs-toggle="tab" data-bs-target="#class-panel" type="button" role="tab" aria-controls="class-panel" aria-selected="true">Classes</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="subject-tab" data-bs-toggle="tab" data-bs-target="#subject-panel" type="button" role="tab" aria-controls="subject-panel" aria-selected="false">Subjects</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="chapter-tab" data-bs-toggle="tab" data-bs-target="#chapter-panel" type="button" role="tab" aria-controls="chapter-panel" aria-selected="false">Chapters</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="exam-type-tab" data-bs-toggle="tab" data-bs-target="#exam-type-panel" type="button" role="tab" aria-controls="exam-type-panel" aria-selected="false">Exam Types</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="fee-type-tab" data-bs-toggle="tab" data-bs-target="#fee-type-panel" type="button" role="tab" aria-controls="fee-type-panel" aria-selected="false">Fee Types</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="fee-tab" data-bs-toggle="tab" data-bs-target="#fee-panel" type="button" role="tab" aria-controls="fee-panel" aria-selected="false">Fees</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="transport-tab" data-bs-toggle="tab" data-bs-target="#transport-panel" type="button" role="tab" aria-controls="transport-panel" aria-selected="false">Transport</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="bus-details-tab" data-bs-toggle="tab" data-bs-target="#bus-details-panel" type="button" role="tab" aria-controls="bus-details-panel" aria-selected="false">Bus Details</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="syllabus-tab" data-bs-toggle="tab" data-bs-target="#syllabus-panel" type="button" role="tab" aria-controls="syllabus-panel" aria-selected="false">Syllabus</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="about-tab" data-bs-toggle="tab" data-bs-target="#about-panel" type="button" role="tab" aria-controls="about-panel" aria-selected="false">About Us</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="courses-info-tab" data-bs-toggle="tab" data-bs-target="#courses-info-panel" type="button" role="tab" aria-controls="courses-info-panel" aria-selected="false">Our Courses</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="curriculum-info-tab" data-bs-toggle="tab" data-bs-target="#curriculum-info-panel" type="button" role="tab" aria-controls="curriculum-info-panel" aria-selected="false">Our Curriculum</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="facilities-info-tab" data-bs-toggle="tab" data-bs-target="#facilities-info-panel" type="button" role="tab" aria-controls="facilities-info-panel" aria-selected="false">Our Facilities</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="school-details-tab" data-bs-toggle="tab" data-bs-target="#school-details-panel" type="button" role="tab" aria-controls="school-details-panel" aria-selected="false">School Details</button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content pt-2" id="masterTabsContent">
+    <!-- Class Management Panel -->
+    <div class="tab-pane fade show active" id="class-panel" role="tabpanel" aria-labelledby="class-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header">
+          <h4 class="mb-0">{{ isEditing ? 'Edit Class' : 'Add New Class' }}</h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="classForm" (ngSubmit)="onSubmit()">
+            <div class="row g-3">
+              <div class="col-md-5">
+                <label for="className" class="form-label">Class Name</label>
+                <input type="text" id="className" formControlName="className" class="form-control" placeholder="e.g., 10th">
+              </div>
+              <div class="col-md-5">
+                <label for="section" class="form-label">Section</label>
+                <input type="text" id="section" formControlName="section" class="form-control" placeholder="e.g., A">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100" [disabled]="classForm.invalid">
+                  {{ isEditing ? 'Update' : 'Add' }}
+                </button>
+                <button *ngIf="isEditing" type="button" class="btn btn-secondary ms-2" (click)="resetForm()">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert alert-success mt-3">{{ successMessage }}</div>
+
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h4 class="mb-0">Existing Classes</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="isLoading" class="text-center">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div *ngIf="!isLoading && classes.length === 0" class="text-center text-muted">
+            No classes found. Add one using the form above.
+          </div>
+          <table *ngIf="!isLoading && classes.length > 0" class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Class Name</th>
+                <th>Section</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let class of classes">
+                <td>{{ class.className }}</td>
+                <td>{{ class.section }}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editClass(class)">Edit</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteClass(class.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    <div class="card-body">
-      <form [formGroup]="classForm" (ngSubmit)="onSubmit()">
-        <div class="row g-3">
-          <div class="col-md-5">
-            <label for="className" class="form-label">Class Name</label>
-            <input type="text" id="className" formControlName="className" class="form-control" placeholder="e.g., 10th">
+
+    <!-- Subject Management Panel -->
+    <div class="tab-pane fade" id="subject-panel" role="tabpanel" aria-labelledby="subject-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header">
+          <h4 class="mb-0">{{ isEditingSubject ? 'Edit Subject' : 'Add New Subject' }}</h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="subjectForm" (ngSubmit)="onSubjectSubmit()">
+            <div class="row g-3">
+              <div class="col-md-5">
+                <label for="subjectClassName" class="form-label">Class</label>
+                <select id="subjectClassName" formControlName="className" class="form-select">
+                  <option value="" disabled>Select a class</option>
+                  <option *ngFor="let class of (classes$ | async)" [value]="class.className">{{ class.className }}</option>
+                </select>
+              </div>
+              <div class="col-md-5">
+                <label for="subjectName" class="form-label">Subject Name</label>
+                <input type="text" id="subjectName" formControlName="subjectName" class="form-control" placeholder="e.g., Physics">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100" [disabled]="subjectForm.invalid">
+                  {{ isEditingSubject ? 'Update' : 'Add' }}
+                </button>
+                <button *ngIf="isEditingSubject" type="button" class="btn btn-secondary ms-2" (click)="resetSubjectForm()">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert alert-success mt-3">{{ successMessage }}</div>
+
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h4 class="mb-0">Existing Subjects</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="isLoadingSubjects" class="text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
           </div>
-          <div class="col-md-5">
-            <label for="section" class="form-label">Section</label>
-            <input type="text" id="section" formControlName="section" class="form-control" placeholder="e.g., A">
+          <div *ngIf="!isLoadingSubjects && subjects.length === 0" class="text-center text-muted">
+            No subjects found.
           </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100" [disabled]="classForm.invalid">
-              {{ isEditing ? 'Update' : 'Add' }}
+          <table *ngIf="!isLoadingSubjects && subjects.length > 0" class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Class Name</th>
+                <th>Subject Name</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let subject of subjects">
+                <td>{{ subject.className }}</td>
+                <td>{{ subject.subjectName }}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editSubject(subject)">Edit</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteSubject(subject.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chapter Management Panel -->
+    <div class="tab-pane fade" id="chapter-panel" role="tabpanel" aria-labelledby="chapter-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header">
+          <h4 class="mb-0">{{ isEditingChapter ? 'Edit Chapter' : 'Add New Chapter' }}</h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="chapterForm" (ngSubmit)="onChapterSubmit()">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="chapterClassName" class="form-label">Class</label>
+                <select id="chapterClassName" formControlName="className" class="form-select" (change)="onClassChangeForChapter($event)">
+                  <option value="" disabled>Select a class</option>
+                  <option *ngFor="let class of (classes$ | async)" [value]="class.className">{{ class.className }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="chapterSubjectName" class="form-label">Subject</label>
+                <select id="chapterSubjectName" formControlName="subjectName" class="form-select">
+                  <option value="" disabled>Select a subject</option>
+                  <option *ngFor="let subject of (subjectsForClass$ | async)" [value]="subject.subjectName">{{ subject.subjectName }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="chapterName" class="form-label">Chapter Name</label>
+                <input type="text" id="chapterName" formControlName="chapterName" class="form-control" placeholder="e.g., Introduction to Motion">
+              </div>
+            </div>
+            <div class="row g-3 mt-2">
+              <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary" [disabled]="chapterForm.invalid">
+                  {{ isEditingChapter ? 'Update Chapter' : 'Add Chapter' }}
+                </button>
+                <button *ngIf="isEditingChapter" type="button" class="btn btn-secondary ms-2" (click)="resetChapterForm()">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert alert-success mt-3">{{ successMessage }}</div>
+
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h4 class="mb-0">Existing Chapters</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="isLoadingChapters" class="text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+          </div>
+          <div *ngIf="!isLoadingChapters && chapters.length === 0" class="text-center text-muted">
+            No chapters found.
+          </div>
+          <table *ngIf="!isLoadingChapters && chapters.length > 0" class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Class Name</th>
+                <th>Subject Name</th>
+                <th>Chapter Name</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let chapter of chapters">
+                <td>{{ chapter.className }}</td>
+                <td>{{ chapter.subjectName }}</td>
+                <td>{{ chapter.chapterName }}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editChapter(chapter)">Edit</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteChapter(chapter.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exam Type Management Panel -->
+    <div class="tab-pane fade" id="exam-type-panel" role="tabpanel" aria-labelledby="exam-type-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header">
+          <h4 class="mb-0">{{ isEditingExamType ? 'Edit Exam Type' : 'Add New Exam Type' }}</h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="examTypeForm" (ngSubmit)="onExamTypeSubmit()">
+            <div class="row g-3">
+              <div class="col-md-10">
+                <label for="examName" class="form-label">Exam Type Name</label>
+                <input type="text" id="examName" formControlName="examName" class="form-control" placeholder="e.g., Mid-Term, Final Exam">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100" [disabled]="examTypeForm.invalid">
+                  {{ isEditingExamType ? 'Update' : 'Add' }}
+                </button>
+                <button *ngIf="isEditingExamType" type="button" class="btn btn-secondary ms-2" (click)="resetExamTypeForm()">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert alert-success mt-3">{{ successMessage }}</div>
+
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h4 class="mb-0">Existing Exam Types</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="isLoadingExamTypes" class="text-center">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div *ngIf="!isLoadingExamTypes && examTypes.length === 0" class="text-center text-muted">
+            No exam types found. Add one using the form above.
+          </div>
+          <table *ngIf="!isLoadingExamTypes && examTypes.length > 0" class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Exam Type Name</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let examType of examTypes">
+                <td>{{ examType.examName }}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editExamType(examType)">Edit</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteExamType(examType.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fee Type Management Panel -->
+    <div class="tab-pane fade" id="fee-type-panel" role="tabpanel" aria-labelledby="fee-type-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header">
+          <h4 class="mb-0">{{ isEditingFeeType ? 'Edit Fee Type' : 'Add New Fee Type' }}</h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="feeTypeForm" (ngSubmit)="onFeeTypeSubmit()">
+            <div class="row g-3">
+              <div class="col-md-10">
+                <label for="feeName" class="form-label">Fee Type Name</label>
+                <input type="text" id="feeName" formControlName="feeName" class="form-control" placeholder="e.g., Tuition Fee, Bus Fee">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100" [disabled]="feeTypeForm.invalid">
+                  {{ isEditingFeeType ? 'Update' : 'Add' }}
+                </button>
+                <button *ngIf="isEditingFeeType" type="button" class="btn btn-secondary ms-2" (click)="resetFeeTypeForm()">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert alert-success mt-3">{{ successMessage }}</div>
+
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h4 class="mb-0">Existing Fee Types</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="isLoadingFeeTypes" class="text-center">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div *ngIf="!isLoadingFeeTypes && feeTypes.length === 0" class="text-center text-muted">
+            No fee types found. Add one using the form above.
+          </div>
+          <table *ngIf="!isLoadingFeeTypes && feeTypes.length > 0" class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Fee Type Name</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let feeType of feeTypes">
+                <td>{{ feeType.feeName }}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editFeeType(feeType)">Edit</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteFeeType(feeType.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fee Management Panel -->
+    <div class="tab-pane fade" id="fee-panel" role="tabpanel" aria-labelledby="fee-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header">
+          <h4 class="mb-0">{{ isEditingFee ? 'Edit Fee' : 'Add New Fee' }}</h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="feeForm" (ngSubmit)="onFeeSubmit()">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="feeClassName" class="form-label">Class</label>
+                <select id="feeClassName" formControlName="className" class="form-select">
+                  <option value="" disabled>Select a class</option>
+                  <option *ngFor="let class of (classes$ | async)" [value]="class.className">{{ class.className }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="feeTypeName" class="form-label">Fee Type</label>
+                <select id="feeTypeName" formControlName="feeTypeName" class="form-select">
+                  <option value="" disabled>Select a fee type</option>
+                  <option *ngFor="let feeType of feeTypes" [value]="feeType.feeName">{{ feeType.feeName }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="amount" class="form-label">Amount (in ₹)</label>
+                <input type="number" id="amount" formControlName="amount" class="form-control" placeholder="e.g., 5000">
+              </div>
+            </div>
+            <div class="row g-3 mt-2">
+              <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary" [disabled]="feeForm.invalid">
+                  {{ isEditingFee ? 'Update Fee' : 'Add Fee' }}
+                </button>
+                <button *ngIf="isEditingFee" type="button" class="btn btn-secondary ms-2" (click)="resetFeeForm()">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert alert-success mt-3">{{ successMessage }}</div>
+
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h4 class="mb-0">Existing Fees</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="isLoadingFees" class="text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+          </div>
+          <div *ngIf="!isLoadingFees && fees.length === 0" class="text-center text-muted">
+            No fees configured. Add one using the form above.
+          </div>
+          <table *ngIf="!isLoadingFees && fees.length > 0" class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Class Name</th>
+                <th>Fee Type</th>
+                <th>Amount (₹)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let fee of fees">
+                <td>{{ fee.className }}</td>
+                <td>{{ fee.feeTypeName }}</td>
+                <td>{{ fee.amount | number }}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editFee(fee)">Edit</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteFee(fee.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transport Management Panel -->
+    <div class="tab-pane fade" id="transport-panel" role="tabpanel" aria-labelledby="transport-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header">
+          <h4 class="mb-0">{{ isEditingTransport ? 'Edit Transport Route' : 'Add New Transport Route' }}</h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="transportForm" (ngSubmit)="onTransportSubmit()">
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="routeName" class="form-label">Route Name</label>
+                <input type="text" id="routeName" formControlName="routeName" class="form-control" placeholder="e.g., Route A - North">
+              </div>
+
+              <div class="col-12" formArrayName="stops">
+                <h5 class="mt-3">Stops and Fees</h5>
+                <div *ngFor="let stopGroup of stopsFormArray.controls; let i = index" [formGroupName]="i" class="row g-2 mb-2 align-items-center">
+                  <div class="col-md-6">
+                    <input type="text" formControlName="stopName" class="form-control" placeholder="Stop Name {{ i + 1 }}">
+                  </div>
+                  <div class="col-md-4">
+                    <input type="number" formControlName="fee" class="form-control" placeholder="Fee (₹)">
+                  </div>
+                  <div class="col-md-2">
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100" (click)="removeStop(i)" [disabled]="stopsFormArray.length <= 1">Remove</button>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" (click)="addStop()">+ Add Stop</button>
+              </div>
+            </div>
+            <div class="row g-3 mt-2">
+              <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary" [disabled]="transportForm.invalid">
+                  {{ isEditingTransport ? 'Update Route' : 'Add Route' }}
+                </button>
+                <button *ngIf="isEditingTransport" type="button" class="btn btn-secondary ms-2" (click)="resetTransportForm()">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert alert-success mt-3">{{ successMessage }}</div>
+
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h4 class="mb-0">Existing Transport Routes</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="isLoadingTransports" class="text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+          </div>
+          <div *ngIf="!isLoadingTransports && transports.length === 0" class="text-center text-muted">
+            No transport routes found. Add one using the form above.
+          </div>
+          <table *ngIf="!isLoadingTransports && transports.length > 0" class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Route Name</th>
+                <th>Stops & Fees</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let route of transports">
+                <td>{{ route.routeName }}</td>
+                <td>
+                  <ul class="list-unstyled mb-0">
+                    <li *ngFor="let stop of route.stops">{{ stop.stopName }} - ₹{{ stop.fee | number }}</li>
+                  </ul>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editTransport(route)">Edit</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteTransport(route.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bus Details Management Panel -->
+    <div class="tab-pane fade" id="bus-details-panel" role="tabpanel" aria-labelledby="bus-details-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header">
+          <h4 class="mb-0">{{ isEditingBus ? 'Edit Bus Details' : 'Add New Bus' }}</h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="busForm" (ngSubmit)="onBusSubmit()">
+            <h5 class="mb-3">Bus Details</h5>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="busNumber" class="form-label">Bus Number / Registration</label>
+                <input type="text" id="busNumber" formControlName="busNumber" class="form-control" placeholder="e.g., MH 12 AB 1234">
+              </div>
+              <div class="col-md-4">
+                <label for="busType" class="form-label">Bus Type</label>
+                <input type="text" id="busType" formControlName="busType" class="form-control" placeholder="e.g., AC, Mini, Volvo">
+              </div>
+              <div class="col-md-4">
+                <label for="seatingCapacity" class="form-label">Seating Capacity</label>
+                <input type="number" id="seatingCapacity" formControlName="seatingCapacity" class="form-control" placeholder="e.g., 40">
+              </div>
+              <div class="col-md-12">
+                <label for="routeId" class="form-label">Route</label>
+                <select id="routeId" formControlName="routeId" class="form-select">
+                  <option value="" disabled>Select a route</option>
+                  <option *ngFor="let route of transports" [value]="route.id">{{ route.routeName }}</option>
+                </select>
+              </div>
+            </div>
+
+            <hr class="my-4">
+            <h5 class="mb-3">Driver Details</h5>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="driverName" class="form-label">Driver Name</label>
+                <input type="text" id="driverName" formControlName="driverName" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="driverLicense" class="form-label">License Number</label>
+                <input type="text" id="driverLicense" formControlName="driverLicense" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="driverContact" class="form-label">Contact Number</label>
+                <input type="text" id="driverContact" formControlName="driverContact" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="driverShift" class="form-label">Shift / Duty Hours</label>
+                <input type="text" id="driverShift" formControlName="driverShift" class="form-control" placeholder="e.g., 7 AM - 5 PM">
+              </div>
+              <div class="col-md-6">
+                <label for="driverEmergencyContact" class="form-label">Emergency Contact</label>
+                <input type="text" id="driverEmergencyContact" formControlName="driverEmergencyContact" class="form-control">
+              </div>
+            </div>
+
+            <hr class="my-4">
+            <h5 class="mb-3">Other Details</h5>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="conductorName" class="form-label">Conductor Name (if any)</label>
+                <input type="text" id="conductorName" formControlName="conductorName" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="insurancePermitNumber" class="form-label">Insurance / Permit No.</label>
+                <input type="text" id="insurancePermitNumber" formControlName="insurancePermitNumber" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="maintenanceSchedule" class="form-label">Maintenance Schedule</label>
+                <input type="text" id="maintenanceSchedule" formControlName="maintenanceSchedule" class="form-control" placeholder="e.g., Monthly, Quarterly">
+              </div>
+              <div class="col-12">
+                <label for="fuelLogbook" class="form-label">Fuel Details / Logbook</label>
+                <textarea id="fuelLogbook" formControlName="fuelLogbook" class="form-control" rows="3"></textarea>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-3">
+              <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary" [disabled]="busForm.invalid">
+                  {{ isEditingBus ? 'Update Bus' : 'Add Bus' }}
+                </button>
+                <button *ngIf="isEditingBus" type="button" class="btn btn-secondary ms-2" (click)="resetBusForm()">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h4 class="mb-0">Existing Buses</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="isLoadingBuses" class="text-center"><div class="spinner-border" role="status"></div></div>
+          <div *ngIf="!isLoadingBuses && buses.length === 0" class="text-center text-muted">No buses found.</div>
+          <div class="table-responsive" *ngIf="!isLoadingBuses && buses.length > 0">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Bus Number</th>
+                  <th>Bus Type</th>
+                  <th>Driver Name</th>
+                  <th>Driver Contact</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let bus of buses">
+                  <td>{{ bus.busNumber }}</td>
+                  <td>{{ bus.busType }}</td>
+                  <td>{{ bus.driverName }}</td>
+                  <td>{{ bus.driverContact }}</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-2" (click)="editBus(bus)">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteBus(bus.id)">Delete</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Syllabus Management Panel -->
+    <div class="tab-pane fade" id="syllabus-panel" role="tabpanel" aria-labelledby="syllabus-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">Syllabus Content</h4>
+          <div *ngIf="selectedClassForSyllabus && selectedSubjectForSyllabus && !isEditingSyllabus">
+            <button *ngIf="getSyllabusContent()" class="btn btn-outline-danger btn-sm me-2" (click)="deleteSyllabusContent()">
+              <i class="bi bi-trash-fill me-1"></i> Delete
             </button>
-            <button *ngIf="isEditing" type="button" class="btn btn-secondary ms-2" (click)="resetForm()">Cancel</button>
+            <button class="btn btn-outline-primary btn-sm" (click)="toggleEditSyllabus(true)">
+              <i class="bi bi-pencil-fill me-1"></i> {{ getSyllabusContent() ? 'Edit' : 'Add Content' }}
+            </button>
           </div>
         </div>
-      </form>
-    </div>
-  </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
 
-  <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
-  <div *ngIf="successMessage" class="alert alert-success mt-3">{{ successMessage }}</div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="syllabusClass" class="form-label">Select Class</label>
+              <select id="syllabusClass" class="form-select" (change)="onSyllabusClassChange($event)">
+                <option value="">-- Select a Class --</option>
+                <option *ngFor="let class of (uniqueClassesForDropdown$ | async)" [value]="class.id">{{ class.className }} - {{ class.section }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="syllabusSubject" class="form-label">Select Subject</label>
+              <select id="syllabusSubject" class="form-select" (change)="onSyllabusSubjectChange($event)" [disabled]="!selectedClassForSyllabus">
+                <option value="">-- Select a Subject --</option>
+                <option *ngFor="let subject of (subjectsForSyllabus$ | async)" [value]="subject.id">{{ subject.subjectName }}</option>
+              </select>
+            </div>
+          </div>
 
-  <div class="card shadow-sm mt-4">
-    <div class="card-header">
-      <h4 class="mb-0">Existing Classes</h4>
-    </div>
-    <div class="card-body">
-      <div *ngIf="isLoading" class="text-center">
-        <div class="spinner-border" role="status">
-          <span class="visually-hidden">Loading...</span>
+          <div *ngIf="selectedClassForSyllabus && selectedSubjectForSyllabus">
+            <div *ngIf="isLoadingSyllabus" class="text-center">
+              <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+            </div>
+
+            <div *ngIf="!isLoadingSyllabus">
+              <!-- View Mode -->
+              <div *ngIf="!isEditingSyllabus">
+                <div *ngIf="getSyllabusContent(); else noSyllabusContent" class="ql-snow">
+                  <quill-view-html [content]="getSyllabusContent()!" theme="snow"></quill-view-html>
+                </div>
+                <ng-template #noSyllabusContent>
+                  <div class="text-center text-muted p-4">
+                    <p>No syllabus content has been added for this subject yet.</p>
+                    <button class="btn btn-primary" (click)="toggleEditSyllabus(true)">Add Syllabus</button>
+                  </div>
+                </ng-template>
+              </div>
+
+              <!-- Edit Mode -->
+              <div *ngIf="isEditingSyllabus">
+                <form [formGroup]="syllabusForm" (ngSubmit)="onSyllabusSubmit()">
+                  <quill-editor formControlName="content"
+                                placeholder="Enter syllabus content here..."
+                                [styles]="{height: '300px'}">
+                  </quill-editor>
+
+                  <div class="d-flex justify-content-end mt-3">
+                    <button type="button" class="btn btn-secondary me-2" (click)="toggleEditSyllabus(false)">Cancel</button>
+                    <button type="submit" class="btn btn-primary" [disabled]="syllabusForm.invalid">
+                      Save Syllabus
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="!selectedClassForSyllabus || !selectedSubjectForSyllabus" class="text-center text-muted p-4">
+            <p>Please select a class and subject to view or edit its syllabus.</p>
+          </div>
         </div>
       </div>
-      <div *ngIf="!isLoading && classes.length === 0" class="text-center text-muted">
-        No classes found. Add one using the form above.
-      </div>
-      <table *ngIf="!isLoading && classes.length > 0" class="table table-striped table-hover">
-        <thead>
-          <tr>
-            <th>Class Name</th>
-            <th>Section</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let class of classes">
-            <td>{{ class.className }}</td>
-            <td>{{ class.section }}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary me-2" (click)="editClass(class)">Edit</button>
-              <button class="btn btn-sm btn-outline-danger" (click)="deleteClass(class.id)">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
+
+    <!-- About Us Management Panel -->
+    <div class="tab-pane fade" id="about-panel" role="tabpanel" aria-labelledby="about-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">About Us Content</h4>
+          <div *ngIf="!isEditingAboutSchool">
+            <button *ngIf="aboutSchoolContent" class="btn btn-outline-danger btn-sm me-2" (click)="deleteAboutSchoolContent()">
+              <i class="bi bi-trash-fill me-1"></i> Delete
+            </button>
+            <button class="btn btn-outline-primary btn-sm" (click)="toggleEditAboutSchool(true)">
+              <i class="bi bi-pencil-fill me-1"></i> {{ aboutSchoolContent ? 'Edit' : 'Add Content' }}
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+          <div *ngIf="isLoadingAboutSchool" class="text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+          </div>
+
+          <div *ngIf="!isLoadingAboutSchool">
+            <!-- View Mode -->
+            <div *ngIf="!isEditingAboutSchool">
+              <div *ngIf="aboutSchoolContent; else noContent" class="ql-snow">
+                <quill-view-html [content]="aboutSchoolContent" theme="snow"></quill-view-html>
+              </div>
+              <ng-template #noContent>
+                <div class="text-center text-muted p-4">
+                  <p>No 'About Us' content has been added yet.</p>
+                  <button class="btn btn-primary" (click)="toggleEditAboutSchool(true)">Add Content</button>
+                </div>
+              </ng-template>
+            </div>
+
+            <!-- Edit Mode -->
+            <div *ngIf="isEditingAboutSchool">
+              <form [formGroup]="aboutSchoolForm" (ngSubmit)="onAboutSchoolSubmit()">
+                <quill-editor formControlName="content"
+                              placeholder="Enter content about your school here..."
+                              [styles]="{height: '300px'}">
+                </quill-editor>
+
+                <div class="d-flex justify-content-end mt-3">
+                  <button type="button" class="btn btn-secondary me-2" (click)="toggleEditAboutSchool(false)">Cancel</button>
+                  <button type="submit" class="btn btn-primary" [disabled]="aboutSchoolForm.invalid">
+                    Save Content
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Our Courses Management Panel -->
+    <div class="tab-pane fade" id="courses-info-panel" role="tabpanel" aria-labelledby="courses-info-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">"Our Courses" Content</h4>
+          <div *ngIf="!isEditingCoursesInfo">
+            <button *ngIf="coursesInfoContent" class="btn btn-outline-danger btn-sm me-2" (click)="deleteCoursesInfoContent()">
+              <i class="bi bi-trash-fill me-1"></i> Delete
+            </button>
+            <button class="btn btn-outline-primary btn-sm" (click)="toggleEditCoursesInfo(true)">
+              <i class="bi bi-pencil-fill me-1"></i> {{ coursesInfoContent ? 'Edit' : 'Add Content' }}
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+          <div *ngIf="isLoadingCoursesInfo" class="text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+          </div>
+
+          <div *ngIf="!isLoadingCoursesInfo">
+            <!-- View Mode -->
+            <div *ngIf="!isEditingCoursesInfo">
+              <div *ngIf="coursesInfoContent; else noCoursesContent" class="ql-snow">
+                <quill-view-html [content]="coursesInfoContent" theme="snow"></quill-view-html>
+              </div>
+              <ng-template #noCoursesContent>
+                <div class="text-center text-muted p-4">
+                  <p>No 'Our Courses' content has been added yet.</p>
+                  <button class="btn btn-primary" (click)="toggleEditCoursesInfo(true)">Add Content</button>
+                </div>
+              </ng-template>
+            </div>
+
+            <!-- Edit Mode -->
+            <div *ngIf="isEditingCoursesInfo">
+              <form [formGroup]="coursesInfoForm" (ngSubmit)="onCoursesInfoSubmit()">
+                <quill-editor formControlName="content"
+                              placeholder="Enter content about your school's courses here..."
+                              [styles]="{height: '300px'}">
+                </quill-editor>
+
+                <div class="d-flex justify-content-end mt-3">
+                  <button type="button" class="btn btn-secondary me-2" (click)="toggleEditCoursesInfo(false)">Cancel</button>
+                  <button type="submit" class="btn btn-primary" [disabled]="coursesInfoForm.invalid">
+                    Save Content
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Our Curriculum Management Panel -->
+    <div class="tab-pane fade" id="curriculum-info-panel" role="tabpanel" aria-labelledby="curriculum-info-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">"Our Curriculum" Content</h4>
+          <div *ngIf="!isEditingCurriculumInfo">
+            <button *ngIf="curriculumInfoContent" class="btn btn-outline-danger btn-sm me-2" (click)="deleteCurriculumInfoContent()">
+              <i class="bi bi-trash-fill me-1"></i> Delete
+            </button>
+            <button class="btn btn-outline-primary btn-sm" (click)="toggleEditCurriculumInfo(true)">
+              <i class="bi bi-pencil-fill me-1"></i> {{ curriculumInfoContent ? 'Edit' : 'Add Content' }}
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+          <div *ngIf="isLoadingCurriculumInfo" class="text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+          </div>
+
+          <div *ngIf="!isLoadingCurriculumInfo">
+            <!-- View Mode -->
+            <div *ngIf="!isEditingCurriculumInfo">
+              <div *ngIf="curriculumInfoContent; else noCurriculumContent" class="ql-snow">
+                <quill-view-html [content]="curriculumInfoContent" theme="snow"></quill-view-html>
+              </div>
+              <ng-template #noCurriculumContent>
+                <div class="text-center text-muted p-4">
+                  <p>No 'Our Curriculum' content has been added yet.</p>
+                  <button class="btn btn-primary" (click)="toggleEditCurriculumInfo(true)">Add Content</button>
+                </div>
+              </ng-template>
+            </div>
+
+            <!-- Edit Mode -->
+            <div *ngIf="isEditingCurriculumInfo">
+              <form [formGroup]="curriculumInfoForm" (ngSubmit)="onCurriculumInfoSubmit()">
+                <quill-editor formControlName="content"
+                              placeholder="Enter content about your school's curriculum here..."
+                              [styles]="{height: '300px'}">
+                </quill-editor>
+
+                <div class="d-flex justify-content-end mt-3">
+                  <button type="button" class="btn btn-secondary me-2" (click)="toggleEditCurriculumInfo(false)">Cancel</button>
+                  <button type="submit" class="btn btn-primary" [disabled]="curriculumInfoForm.invalid">
+                    Save Content
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Our Facilities Management Panel -->
+    <div class="tab-pane fade" id="facilities-info-panel" role="tabpanel" aria-labelledby="facilities-info-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">"Our Facilities" Content</h4>
+          <div *ngIf="!isEditingFacilitiesInfo">
+            <button *ngIf="facilitiesInfoContent" class="btn btn-outline-danger btn-sm me-2" (click)="deleteFacilitiesInfoContent()">
+              <i class="bi bi-trash-fill me-1"></i> Delete
+            </button>
+            <button class="btn btn-outline-primary btn-sm" (click)="toggleEditFacilitiesInfo(true)">
+              <i class="bi bi-pencil-fill me-1"></i> {{ facilitiesInfoContent ? 'Edit' : 'Add Content' }}
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+          <div *ngIf="isLoadingFacilitiesInfo" class="text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+          </div>
+
+          <div *ngIf="!isLoadingFacilitiesInfo">
+            <!-- View Mode -->
+            <div *ngIf="!isEditingFacilitiesInfo">
+              <div *ngIf="facilitiesInfoContent; else noFacilitiesContent" class="ql-snow">
+                <quill-view-html [content]="facilitiesInfoContent" theme="snow"></quill-view-html>
+              </div>
+              <ng-template #noFacilitiesContent>
+                <div class="text-center text-muted p-4">
+                  <p>No 'Our Facilities' content has been added yet.</p>
+                  <button class="btn btn-primary" (click)="toggleEditFacilitiesInfo(true)">Add Content</button>
+                </div>
+              </ng-template>
+            </div>
+
+            <!-- Edit Mode -->
+            <div *ngIf="isEditingFacilitiesInfo">
+              <form [formGroup]="facilitiesInfoForm" (ngSubmit)="onFacilitiesInfoSubmit()">
+                <quill-editor formControlName="content"
+                              placeholder="Enter content about your school's facilities here..."
+                              [styles]="{height: '300px'}">
+                </quill-editor>
+
+                <div class="d-flex justify-content-end mt-3">
+                  <button type="button" class="btn btn-secondary me-2" (click)="toggleEditFacilitiesInfo(false)">Cancel</button>
+                  <button type="submit" class="btn btn-primary" [disabled]="facilitiesInfoForm.invalid">
+                    Save Content
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- School Details Management Panel -->
+    <div class="tab-pane fade" id="school-details-panel" role="tabpanel" aria-labelledby="school-details-tab" tabindex="0">
+      <div class="card shadow-sm mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">School Details</h4>
+          <div>
+            <button *ngIf="!isEditingSchoolDetails && schoolData" class="btn btn-outline-primary btn-sm" (click)="toggleEditSchoolDetails(true)">
+              <i class="bi bi-pencil-fill me-1"></i> Edit Details
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+          <div *ngIf="isLoadingSchoolDetails" class="text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+          </div>
+
+          <form *ngIf="!isLoadingSchoolDetails" [formGroup]="schoolDetailsForm" (ngSubmit)="onSchoolDetailsSubmit()">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="schoolName" class="form-label">School Name</label>
+                <input type="text" id="schoolName" formControlName="name" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="slug" class="form-label">Weblink</label>
+                <input type="text" id="slug" formControlName="slug" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="schoolType" class="form-label">School Type</label>
+                <select id="schoolType" formControlName="school_type" class="form-select">
+                  <option value="" disabled>Select Type</option>
+                  <optgroup label="1. Educational Institutions">
+                    <option value="Primary School">Primary School</option>
+                    <option value="Middle School">Middle School</option>
+                    <option value="Secondary School">Secondary School</option>
+                    <option value="Higher Secondary School / Senior Secondary School">Higher Secondary School / Senior Secondary School</option>
+                    <option value="Special Needs School">Special Needs School</option>
+                    <option value="International School (IB, Cambridge, etc.)">International School (IB, Cambridge, etc.)</option>
+                    <option value="Boarding School">Boarding School</option>
+                    <option value="Arts & Science College">Arts & Science College</option>
+                    <option value="Engineering College">Engineering College</option>
+                    <option value="Medical College">Medical College</option>
+                    <option value="Law College">Law College</option>
+                    <option value="Management / Business School (MBA)">Management / Business School (MBA)</option>
+                    <option value="Pharmacy College">Pharmacy College</option>
+                    <option value="Nursing College">Nursing College</option>
+                    <option value="Polytechnic College / Technical College">Polytechnic College / Technical College</option>
+                    <option value="Vocational Training Institute">Vocational Training Institute</option>
+                    <option value="Community College">Community College</option>
+                    <option value="State University">State University</option>
+                    <option value="Central University">Central University</option>
+                    <option value="Private University">Private University</option>
+                    <option value="Open / Distance Learning University">Open / Distance Learning University</option>
+                    <option value="Private Home Tuition">Private Home Tuition</option>
+                    <option value="Group Tuition Centers">Group Tuition Centers</option>
+                    <option value="Competitive Exam Coaching">Competitive Exam Coaching</option>
+                    <option value="IIT-JEE / NEET / AIIMS Coaching">IIT-JEE / NEET / AIIMS Coaching</option>
+                    <option value="UPSC / SSC / Banking Coaching">UPSC / SSC / Banking Coaching</option>
+                    <option value="Government Job Exam Coaching">Government Job Exam Coaching</option>
+                    <option value="Defence / NDA / CAPF Coaching">Defence / NDA / CAPF Coaching</option>
+                    <option value="Language Coaching (English, French, German, etc.)">Language Coaching (English, French, German, etc.)</option>
+                    <option value="Skill-based Coaching (Programming, CAD, Design, Music, Art)">Skill-based Coaching (Programming, CAD, Design, Music, Art)</option>
+                    <option value="School Subject Coaching (Maths, Science, etc.)">School Subject Coaching (Maths, Science, etc.)</option>
+                    <option value="Online Coaching Platforms / E-learning Centers">Online Coaching Platforms / E-learning Centers</option>
+                  </optgroup>
+                  <optgroup label="2. Healthcare & Medical Institutions">
+                    <option value="Hospitals (Government / Private)">Hospitals (Government / Private)</option>
+                    <option value="Clinics">Clinics</option>
+                    <option value="Nursing Homes">Nursing Homes</option>
+                    <option value="Diagnostic / Pathology Labs">Diagnostic / Pathology Labs</option>
+                    <option value="Rehabilitation Centers">Rehabilitation Centers</option>
+                    <option value="Physiotherapy / Therapy Centers">Physiotherapy / Therapy Centers</option>
+                    <option value="Blood Banks">Blood Banks</option>
+                    <option value="Mental Health Centers / Counseling Centers">Mental Health Centers / Counseling Centers</option>
+                    <option value="Alternative Medicine Centers (Ayurveda, Homeopathy, Yoga, Naturopathy)">Alternative Medicine Centers (Ayurveda, Homeopathy, Yoga, Naturopathy)</option>
+                  </optgroup>
+                  <optgroup label="3. Government & Public Institutions">
+                    <option value="Municipal Corporations / Councils">Municipal Corporations / Councils</option>
+                    <option value="Public Libraries">Public Libraries</option>
+                    <option value="Research Institutes (CSIR, ICAR, DRDO, ICMR, ISRO)">Research Institutes (CSIR, ICAR, DRDO, ICMR, ISRO)</option>
+                    <option value="Public Health Centers">Public Health Centers</option>
+                    <option value="Employment Exchanges">Employment Exchanges</option>
+                    <option value="Government Training Institutes">Government Training Institutes</option>
+                    <option value="Defense / Police Academies">Defense / Police Academies</option>
+                    <option value="Administrative Training Institutes">Administrative Training Institutes</option>
+                  </optgroup>
+                  <optgroup label="4. Financial & Commercial Institutions">
+                    <option value="Banks (Public / Private)">Banks (Public / Private)</option>
+                    <option value="Credit Unions / Cooperative Banks">Credit Unions / Cooperative Banks</option>
+                    <option value="Insurance Companies">Insurance Companies</option>
+                    <option value="Investment Firms / Mutual Funds">Investment Firms / Mutual Funds</option>
+                    <option value="Stock Exchanges">Stock Exchanges</option>
+                    <option value="Financial Training Institutes">Financial Training Institutes</option>
+                  </optgroup>
+                  <optgroup label="5. Social, Community & Religious Institutions">
+                    <option value="NGOs / Non-Profit Organizations">NGOs / Non-Profit Organizations</option>
+                    <option value="Community Centers">Community Centers</option>
+                    <option value="Religious Institutions (Temple, Mosque, Church, Gurudwara)">Religious Institutions (Temple, Mosque, Church, Gurudwara)</option>
+                    <option value="Social Welfare Organizations">Social Welfare Organizations</option>
+                    <option value="Orphanages / Old Age Homes">Orphanages / Old Age Homes</option>
+                    <option value="Cultural Centers (Art, Music, Dance)">Cultural Centers (Art, Music, Dance)</option>
+                    <option value="Youth / Sports Clubs">Youth / Sports Clubs</option>
+                  </optgroup>
+                  <optgroup label="6. Corporate & Business Institutions">
+                    <option value="Companies / Corporations (Private / Public)">Companies / Corporations (Private / Public)</option>
+                    <option value="Startups / Incubators / Accelerators">Startups / Incubators / Accelerators</option>
+                    <option value="Trade Associations / Chambers of Commerce">Trade Associations / Chambers of Commerce</option>
+                    <option value="Franchise Organizations">Franchise Organizations</option>
+                    <option value="Co-working Spaces">Co-working Spaces</option>
+                  </optgroup>
+                  <optgroup label="7. Research & Development Institutions">
+                    <option value="Scientific / Technical Labs">Scientific / Technical Labs</option>
+                    <option value="Think Tanks">Think Tanks</option>
+                    <option value="Technology Parks / Innovation Centers">Technology Parks / Innovation Centers</option>
+                    <option value="Biotech / Pharma R&D Centers">Biotech / Pharma R&D Centers</option>
+                    <option value="AI / IT Research Labs">AI / IT Research Labs</option>
+                  </optgroup>
+                  <optgroup label="8. Miscellaneous Specialized Institutions">
+                    <option value="Environmental / Wildlife / Forestry Institutes">Environmental / Wildlife / Forestry Institutes</option>
+                    <option value="Aviation / Aerospace Training Centers">Aviation / Aerospace Training Centers</option>
+                    <option value="Maritime / Naval Training Institutes">Maritime / Naval Training Institutes</option>
+                    <option value="Art & Design Institutes (Fashion, Graphic, Interior)">Art & Design Institutes (Fashion, Graphic, Interior)</option>
+                    <option value="Performing Arts Institutes (Dance, Music, Theater)">Performing Arts Institutes (Dance, Music, Theater)</option>
+                    <option value="Sports Academies / Fitness Institutes">Sports Academies / Fitness Institutes</option>
+                    <option value="Culinary / Hospitality Institutes">Culinary / Hospitality Institutes</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="establishmentYear" class="form-label">Establishment Year</label>
+                <input type="number" id="establishmentYear" formControlName="establishment_year" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="ownershipType" class="form-label">Ownership Type</label>
+                <select id="ownershipType" formControlName="ownership_type" class="form-select">
+                  <option value="" disabled>Select Ownership</option>
+                  <option value="private">Private</option>
+                  <option value="public">Public</option>
+                  <option value="government_aided">Government Aided</option>
+                </select>
+              </div>
+
+              <div class="col-md-9">
+                <div class="position-relative">
+                  <label for="map-search" class="form-label">Location Search</label>
+                  <input id="map-search" #mapSearchField type="text" class="form-control" placeholder="Search for a location to drop a pin" (input)="onLocationInput($event)">
+                  <div *ngIf="autocompletePredictions.length > 0" class="list-group position-absolute w-100" style="z-index: 1000;">
+                    <button type="button" *ngFor="let prediction of autocompletePredictions"
+                            class="list-group-item list-group-item-action" (click)="onPredictionSelected(prediction)">
+                      {{ prediction.description }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label for="zipCode" class="form-label">ZIP Code</label>
+                <input type="text" id="zipCode" formControlName="zip_code" class="form-control" (blur)="geocodeZipCode()">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">School Location</label>
+                <google-map height="400px" width="100%" [options]="mapOptions" (mapClick)="onMapClick($event)">
+                  <map-marker *ngIf="markerPosition" [position]="markerPosition" [options]="{ draggable: true }" (mapDragend)="onMarkerDragEnd($event)"></map-marker>
+                </google-map>
+              </div>
+
+              <div class="col-12">
+                <label for="address" class="form-label">Address</label>
+                <input type="text" id="address" formControlName="address" class="form-control">
+              </div>
+
+              <div class="col-md-4">
+                <label for="city" class="form-label">City</label>
+                <input type="text" id="city" formControlName="city" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="state" class="form-label">State</label>
+                <input type="text" id="state" formControlName="state" class="form-control">
+              </div>
+
+              <div class="col-md-4">
+                <label for="country" class="form-label">Country</label>
+                <input type="text" id="country" formControlName="country" class="form-control">
+              </div>
+              <div class="col-md-4 position-relative">
+                <label for="latitude" class="form-label">Latitude</label>
+                <input type="text" id="latitude" formControlName="latitude" class="form-control" readonly>
+                <small *ngIf="isEditingSchoolDetails" class="form-text text-muted position-absolute top-100 start-0">Select location on the map</small>
+              </div>
+              <div class="col-md-4 position-relative">
+                <label for="longitude" class="form-label">Longitude</label>
+                <input type="text" id="longitude" formControlName="longitude" class="form-control" readonly>
+              </div>
+
+              <div class="col-md-4">
+                <label for="phonePrimary" class="form-label">Primary Phone</label>
+                <input type="tel" id="phonePrimary" formControlName="phone_primary" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="phoneSecondary" class="form-label">Secondary Phone</label>
+                <input type="tel" id="phoneSecondary" formControlName="phone_secondary" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" formControlName="email" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="website" class="form-label">Website</label>
+                <input type="url" id="website" formControlName="website" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="enrollmentCapacity" class="form-label">Enrollment Capacity</label>
+                <input type="number" id="enrollmentCapacity" formControlName="enrollment_capacity" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="curriculumType" class="form-label">Curriculum Type</label>
+                <select id="curriculumType" formControlName="curriculum_type" class="form-select">
+                  <option value="" disabled>Select Curriculum</option>
+                  <option value="CBSE">CBSE</option>
+                  <option value="ICSE">ICSE</option>
+                  <option value="State Board">State Board</option>
+                  <option value="IB">IB</option>
+                </select>
+              </div>
+            </div>
+
+            <div *ngIf="isEditingSchoolDetails" class="d-flex justify-content-end mt-4">
+              <button type="button" class="btn btn-secondary me-2" (click)="toggleEditSchoolDetails(false)">Cancel</button>
+              <button type="submit" class="btn btn-primary" [disabled]="schoolDetailsForm.invalid || !isEditingSchoolDetails">
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
     

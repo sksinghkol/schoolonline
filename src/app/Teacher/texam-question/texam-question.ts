@@ -1,9 +1,9 @@
 import { Component, OnInit, Pipe, PipeTransform, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
-import { Firestore, collection, query, where, getDocs, addDoc, serverTimestamp, doc, updateDoc, orderBy, collectionGroup } from '@angular/fire/firestore';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { Firestore, collection, query, where, getDocs, addDoc, serverTimestamp, doc, updateDoc, orderBy, collectionGroup, limit, startAfter, QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
+import jsPDF from 'jspdf'; // Use default import
+import { applyPlugin } from 'jspdf-autotable';
 import { SchoolStateService } from '../../core/services/school-state.service';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, from, of } from 'rxjs';
@@ -59,6 +59,13 @@ export class TexamQuestion implements OnInit {
   subjects: string[] = ['Mathematics', 'Science', 'English', 'History', 'Geography']; // Example data
   examTypes: string[] = ['Unit Test', 'Mid-Term Exam', 'Final Exam', 'Class Test'];
 
+  // Pagination for questions
+  private questionsPerPage = 10;
+  private lastQuestionVisible: QueryDocumentSnapshot<DocumentData> | null = null;
+  hasNextQuestionsPage = false;
+
+  private examsPerPage = 5;
+
   constructor() {
     this.examDetailsForm = this.fb.group({
       class: ['', Validators.required],
@@ -73,6 +80,10 @@ export class TexamQuestion implements OnInit {
     this.questionPaperForm = this.fb.group({
       selectedQuestions: this.fb.array([], [Validators.required])
     });
+  }
+
+  get selectedQuestionsControls() {
+    return (this.questionPaperForm.get('selectedQuestions') as FormArray).controls;
   }
 
   ngOnInit(): void {
@@ -111,7 +122,8 @@ export class TexamQuestion implements OnInit {
       examsCollection,
       where('teacherId', '==', this.teacherId),
       where('status', 'in', ['Pending Questions', 'approved']),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(this.examsPerPage) // Limit initial load
     );
     try {
       const querySnapshot = await getDocs(q);
@@ -149,7 +161,7 @@ export class TexamQuestion implements OnInit {
       this.examCreated = true; // Unlock the next step in the UI
       this.examDetailsForm.patchValue({ id: docRef.id });
       this.successMessage = `Exam created successfully (ID: ${docRef.id}). Now, please select questions.`;
-      this.examDetailsForm.disable(); // Prevent further edits
+      this.examDetailsForm.disable(); // Prevent further edits to the selected exam
       await this.fetchQuestions(); // Automatically fetch questions
     } catch (error) {
       console.error("Error creating exam:", error);
@@ -160,9 +172,6 @@ export class TexamQuestion implements OnInit {
   }
 
   async selectExistingExam(exam: any) {
-    this.successMessage = `Selected exam for Class ${exam.class} - ${exam.subject}. Now select questions.`;
-    this.errorMessage = null;
-
     // Populate and disable the form
     this.examDetailsForm.patchValue(exam);
     this.examDetailsForm.disable();
@@ -171,30 +180,50 @@ export class TexamQuestion implements OnInit {
     this.examCreated = true;
 
     // Fetch questions for the selected exam
-    await this.fetchQuestions();
+    await this.fetchQuestions(false, `Selected exam for Class ${exam.class} - ${exam.subject}. Now select questions.`);
   }
 
-  private async fetchQuestions() {
+  async fetchQuestions(loadMore = false, successMsg: string | null = null) {
     if (!this.schoolId || !this.teacherId) return;
 
+    // Clear messages unless a new one is provided
+    this.errorMessage = null;
+    this.successMessage = successMsg;
+    
     this.isLoadingQuestions = true;
-    this.questions = [];
-    (this.questionPaperForm.get('selectedQuestions') as FormArray).clear();
 
-    const { class: qClass, subject } = this.examDetailsForm.value;
-    const qbCollection = collectionGroup(this.firestore, `question_bank`);
-    const q = query(
+    if (!loadMore) {
+      // Reset only when fetching for the first time
+      this.questions = [];
+      this.lastQuestionVisible = null;
+      (this.questionPaperForm.get('selectedQuestions') as FormArray).clear();
+    }
+
+    // Query only the current teacher's question bank
+    const qbCollection = collection(this.firestore, `schools/${this.schoolId}/teachers/${this.teacherId}/question_bank`);
+    let q = query(
       qbCollection,
-      where('schoolId', '==', this.schoolId),
-      where('questionClass', '==', qClass),
-      where('subject', '==', subject)
+      where('status', '==', 'approved'), // Only fetch approved questions
+      orderBy('question'), // Add orderBy for consistent pagination
+      limit(this.questionsPerPage)
     );
+
+    if (loadMore && this.lastQuestionVisible) {
+      q = query(q, startAfter(this.lastQuestionVisible));
+    }
 
     try {
       const querySnapshot = await getDocs(q);
-      this.questions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      if (this.questions.length === 0) {
-        this.errorMessage = "Exam created, but no questions were found in your bank for the selected class and subject.";
+      this.lastQuestionVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      const newQuestions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Check if there might be a next page by fetching one more than needed next time (or checking count)
+      this.hasNextQuestionsPage = newQuestions.length === this.questionsPerPage;
+
+      this.questions.push(...newQuestions);
+
+      if (this.questions.length === 0 && !loadMore) {
+        this.errorMessage = "Exam created, but no approved questions were found in your personal question bank.";
       }
     } catch (error) {
       console.error("Error fetching questions:", error);
@@ -209,10 +238,15 @@ export class TexamQuestion implements OnInit {
     const input = event.target as HTMLInputElement;
     try {
       const question = JSON.parse(input.value);
+      const questionGroup = this.fb.group({
+        ...Object.keys(question).reduce((acc, key) => ({ ...acc, [key]: this.fb.control(question[key]) }), {}),
+        marks: [question.marks || '', [Validators.required, Validators.min(1)]]
+      });
+
       if (input.checked) {
-        selectedQuestions.push(this.fb.control(question));
+        selectedQuestions.push(questionGroup);
       } else {
-        const index = selectedQuestions.controls.findIndex(x => x.value.id === question.id);
+        const index = selectedQuestions.controls.findIndex(x => x.value.id === question.id); // Find by id within the FormGroup
         if (index !== -1) {
           selectedQuestions.removeAt(index);
         }
@@ -272,16 +306,34 @@ export class TexamQuestion implements OnInit {
     }
   }
 
-  generatePdf() {
+  async generatePdf() {
     if (this.questionPaperForm.invalid) {
       this.errorMessage = "Cannot generate PDF. Please ensure all details are correct and the paper is saved.";
       return;
     }
 
-    const doc = new jsPDF();
+    applyPlugin(jsPDF); // Apply the autotable plugin
+
+    const doc = new jsPDF('p', 'mm', 'a4');
     const examDetails = this.examDetailsForm.getRawValue();
     const questions = this.questionPaperForm.getRawValue().selectedQuestions;
     const school = this.schoolState.currentSchool();
+
+    // Add logo if it exists
+    if (school?.logoUrl) {
+      try {
+        const response = await fetch(school.logoUrl);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        const dataUrl = await new Promise(resolve => {
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+        doc.addImage(dataUrl as string, 'PNG', 15, 10, 20, 20);
+      } catch (error) {
+        console.error("Error adding school logo to PDF:", error);
+      }
+    }
 
     // Header
     doc.setFontSize(18);
@@ -294,25 +346,24 @@ export class TexamQuestion implements OnInit {
     doc.text(`Duration: ${examDetails.duration}`, 190, 40, { align: 'right' });
     doc.line(20, 45, 190, 45);
 
-    // Questions
-    let y = 60;
-    questions.forEach((q: any, index: number) => {
-      if (y > 270) { // Check for page break
-        doc.addPage();
-        y = 20;
-      }
-      doc.setFontSize(12);
-      doc.text(`${index + 1}. ${q.question}`, 20, y);
-      y += 7;
-
+    // Questions using autoTable for better layout and page breaks
+    const head = [['Q.No.', 'Question', 'Marks']];
+    const body = questions.map((q: any, index: number) => {
+      let questionText = q.question;
       if (q.options && q.options.length > 0) {
-        doc.setFontSize(10);
-        q.options.forEach((opt: string, i: number) => {
-          doc.text(`   (${String.fromCharCode(97 + i)}) ${opt}`, 25, y);
-          y += 6;
-        });
+        questionText += '\n' + q.options.map((opt: string, i: number) => `(${String.fromCharCode(97 + i)}) ${opt}`).join('\n');
       }
-      y += 5; // Space between questions
+      return [index + 1, questionText, q.marks];
+    });
+
+    (doc as any).autoTable({
+      startY: 50,
+      head: head,
+      body: body,
+      theme: 'grid',
+      styles: { cellPadding: 2, fontSize: 10 },
+      headStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 15 }, 2: { cellWidth: 15, halign: 'center' } }
     });
 
     // Save the PDF

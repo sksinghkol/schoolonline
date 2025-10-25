@@ -34,6 +34,11 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/schools/$(schoolId)/teachers/$(request.auth.uid));
     }
 
+    function isItDepartmentForSchoolId(schoolId) {
+      return isSignedIn() && schoolId != null &&
+        exists(/databases/$(database)/documents/schools/$(schoolId)/itdepartments/$(request.auth.uid));
+    }
+
     // ===========================================================
     // 🔹 Admins Collection
     // ===========================================================
@@ -50,11 +55,14 @@ service cloud.firestore {
     // 🔹 Schools & Subcollections
     // ===========================================================
     match /schools/{schoolId} {
-      // Public can read and list schools (for "Select Your School")
-      allow get, list: if true;
+      // Public can list schools (for "Select Your School") and get a school document.
+      // `get` is needed for unauthenticated users to read subcollections like `about_school`.
+      allow get: if true;
+      allow list: if true;
 
-      // Only admins can create, update, or delete schools
-      allow create, update, delete: if isApprovedAdmin();
+      // Only admins can create or delete schools. Directors and IT staff can update.
+      allow create, delete: if isApprovedAdmin();
+      allow update: if isApprovedAdmin() || isDirectorForSchoolId(schoolId) || isItDepartmentForSchoolId(schoolId);
 
       // 🔹 Directors subcollection
       match /directors/{directorId} {

@@ -1,0 +1,93 @@
+<div class="container-fluid p-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">
+        <i class="bi bi-card-checklist me-2"></i>
+        Question Bank Approval
+      </h4>
+      <div class="d-flex align-items-center">
+        <!-- Teacher Filter -->
+        <div class="me-3" *ngIf="teachers.length > 0">
+          <select class="form-select form-select-sm" [(ngModel)]="teacherFilter" (ngModelChange)="applyFilters()">
+            <option value="all">All Teachers</option>
+            <option *ngFor="let teacher of teachers" [value]="teacher.id">{{ teacher.name }}</option>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="btn-group" role="group">
+          <input type="radio" class="btn-check" name="filter" id="pending" autocomplete="off" [(ngModel)]="filter" value="pending" checked>
+          <label class="btn btn-outline-primary btn-sm" for="pending">Pending</label>
+
+          <input type="radio" class="btn-check" name="filter" id="approved" autocomplete="off" [(ngModel)]="filter" value="approved">
+          <label class="btn btn-outline-primary btn-sm" for="approved">Approved</label>
+
+          <input type="radio" class="btn-check" name="filter" id="all" autocomplete="off" [(ngModel)]="filter" value="all">
+          <label class="btn btn-outline-primary btn-sm" for="all">All</label>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div *ngIf="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Loading questions...</p>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+      <div *ngIf="!isLoading && questions.length === 0 && !errorMessage" class="alert alert-info">
+        No questions found in the question bank for this school.
+      </div>
+
+      <div *ngIf="!isLoading && questions.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Question</th>
+              <th>Subject</th>
+              <th>Chapter</th>
+              <th>Teacher</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let q of questions">
+              <tr *ngIf="filter === 'all' || filter === (q.status || 'pending')">
+                <td>{{ q.question }}</td>
+                <td>{{ q.subject }}</td>
+                <td>{{ q.chapter }}</td>
+                <td>{{ q.teacherName }}</td>
+                <td>
+                  <span class="badge" [ngClass]="{'bg-success': q.status === 'approved', 'bg-warning': q.status !== 'approved'}">
+                    {{ q.status || 'Pending' | titlecase }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-success me-2" (click)="approveQuestion(q)" [disabled]="q.status === 'approved'">
+                    <i class="bi bi-check-circle me-1"></i> Approve
+                  </button>
+                  <button class="btn btn-sm btn-danger" (click)="deleteQuestion(q)">
+                    <i class="bi bi-trash me-1"></i> Delete
+                  </button>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-center align-items-center" *ngIf="!isLoading && (page > 1 || hasNextPage)">
+      <nav aria-label="Page navigation">
+        <ul class="pagination mb-0">
+          <li class="page-item" [class.disabled]="page <= 1">
+            <button class="page-link" (click)="prevPage()">Previous</button>
+          </li>
+          <li class="page-item" [class.disabled]="!hasNextPage">
+            <button class="page-link" (click)="nextPage()">Next</button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>

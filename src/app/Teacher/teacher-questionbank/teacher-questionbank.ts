@@ -2,10 +2,29 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, from } from 'rxjs';
-import { Firestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from '@angular/fire/firestore';
+import { Observable, from, BehaviorSubject, of } from 'rxjs';
+import {
+  Firestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  onSnapshot
+} from '@angular/fire/firestore';
 import { SchoolStateService } from '../../core/services/school-state.service';
+import { switchMap, map, distinctUntilChanged } from 'rxjs/operators';
 
+interface SchoolClass {
+  id: string;
+  className: string;
+}
+interface Subject {
+  id: string;
+  subjectName: string;
+}
 @Component({
   selector: 'app-teacher-questionbank',
   standalone: true,
@@ -27,7 +46,12 @@ export class TeacherQuestionbank implements OnInit {
 
   schoolId: string | null = null;
   teacherId: string | null = null;
-  classes$!: Observable<any[]>;
+  classes$!: Observable<SchoolClass[]>;
+
+  subjects$: Observable<Subject[]>;
+  chapters$: Observable<any[]>;
+  private selectedClass$ = new BehaviorSubject<string | null>(null);
+  private selectedSubject$ = new BehaviorSubject<string | null>(null);
 
   approvedQuestions: any[] = [];
   pendingQuestions: any[] = [];
@@ -55,6 +79,41 @@ export class TeacherQuestionbank implements OnInit {
     });
 
     this.onQuestionTypeChange();
+
+    // --- NEW: Observables for dependent dropdowns ---
+    this.subjects$ = this.selectedClass$.pipe(
+      switchMap(className => {
+        if (!className || !this.schoolId) return of([]);
+        const subjectsCollection = collection(this.firestore, `schools/${this.schoolId}/subjects`);
+        const q = query(subjectsCollection, where('className', '==', className), orderBy('subjectName'));
+        return new Observable<Subject[]>(subscriber => {
+          const unsubscribe = onSnapshot(q, snapshot => {
+            subscriber.next(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Subject)));
+          });
+          return unsubscribe;
+        });
+      })
+    );
+
+    this.chapters$ = this.selectedSubject$.pipe(
+      switchMap(subjectName => {
+        const className = this.selectedClass$.getValue();
+        if (!subjectName || !className || !this.schoolId) return of([]);
+        const chaptersCollection = collection(this.firestore, `schools/${this.schoolId}/chapters`);
+        const q = query(chaptersCollection,
+          where('className', '==', className),
+          where('subjectName', '==', subjectName),
+          orderBy('chapterName')
+        );
+        return new Observable<any[]>(subscriber => {
+          const unsubscribe = onSnapshot(q, snapshot => {
+            subscriber.next(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          });
+          return unsubscribe;
+        });
+      })
+    );
+
   }
 
   ngOnInit(): void {
@@ -71,7 +130,31 @@ export class TeacherQuestionbank implements OnInit {
 
   loadClasses(): void {
     const classesCollection = collection(this.firestore, `schools/${this.schoolId}/classes`);
-    this.classes$ = from(getDocs(query(classesCollection, orderBy('className'))).then(snapshot => snapshot.docs.map(doc => doc.data())));
+    this.classes$ = from(getDocs(query(classesCollection, orderBy('className')))).pipe(
+      map(snapshot => {
+        const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SchoolClass));
+        // Deduplicate class names for the dropdown
+        return [...new Map(classes.map(item => [item.className, item])).values()];
+      })
+    );
+  }
+
+  // --- NEW: Event Handlers for Dropdown Changes ---
+  onClassChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const className = target.value;
+    this.selectedClass$.next(className);
+    // Reset dependent dropdowns
+    this.questionForm.patchValue({ subject: '', chapter: '' });
+    this.selectedSubject$.next(null);
+  }
+
+  onSubjectChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const subjectName = target.value;
+    this.selectedSubject$.next(subjectName);
+    // Reset chapter dropdown
+    this.questionForm.patchValue({ chapter: '' });
   }
 
   onQuestionTypeChange(): void {

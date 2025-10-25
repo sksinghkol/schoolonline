@@ -2,7 +2,7 @@
   <div class="container-fluid">
     <!-- Fallback brand while school data loads -->
     <a *ngIf="!schoolState.currentSchool()" class="navbar-brand fw-bold" [routerLink]="['/itdepartment-dashboard']">
-      <i class="bi bi-mortarboard-fill"></i> IT Departmnet
+      <i class="bi bi-mortarboard-fill"></i> IT Department
     </a>
     <!-- School brand with logo and name -->
     <a *ngIf="schoolState.currentSchool()" class="navbar-brand fw-bold d-flex align-items-center" [routerLink]="['/itdepartment-dashboard']" [queryParams]="{ itdepartmentId: itdepartment?.['uid'], schoolId: schoolState.currentSchool()?.id }">
@@ -18,8 +18,18 @@
       <!-- Left Menu -->
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item" *ngIf="itdepartment && schoolState.currentSchool()">
-          <a class="nav-link active" aria-current="page" [routerLink]="['/director-dashboard']" [queryParams]="{ itdepartmentId: itdepartment['uid'], schoolId: schoolState.currentSchool()?.id }">
+          <a class="nav-link active" aria-current="page" [routerLink]="['/itdepartment-dashboard']" [queryParams]="{ itdepartmentId: itdepartment['uid'], schoolId: schoolState.currentSchool()?.id }">
             <i class="bi bi-house-fill"></i> Home
+          </a>
+        </li>
+        <li class="nav-item" *ngIf="itdepartment && schoolState.currentSchool()">
+          <a class="nav-link" [routerLink]="['/itdepartment-dashboard/question-list']" [queryParams]="{ itdepartmentId: itdepartment['uid'], schoolId: schoolState.currentSchool()?.id }">
+            <i class="bi bi-card-checklist"></i> Question Approval
+          </a>
+        </li>
+         <li class="nav-item" *ngIf="itdepartment && schoolState.currentSchool()">
+          <a class="nav-link" [routerLink]="['/itdepartment-dashboard/Master']" [queryParams]="{ itdepartmentId: itdepartment['uid'], schoolId: schoolState.currentSchool()?.id }">
+            <i class="bi bi-card-checklist"></i> Master
           </a>
         </li>
       </ul>
@@ -50,7 +60,7 @@
             </li>
             <li>
               <a class="dropdown-item d-flex align-items-center" [routerLink]="['/update-profile']"
-                [queryParams]="{ directorId: itdepartment['uid'], schoolId: schoolState.currentSchool() ? schoolState.currentSchool()?.id : null }">
+                [queryParams]="{ itdepartmentId: itdepartment['uid'], schoolId: schoolState.currentSchool() ? schoolState.currentSchool()?.id : null }">
                 <i class="bi bi-person me-2"></i>
                 <span>My Profile</span>
               </a>
@@ -68,5 +78,3 @@
     </div>
   </div>
 </nav>
-
-
