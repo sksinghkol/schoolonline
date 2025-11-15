@@ -1,0 +1,60 @@
+.attendance-container {
+  padding: 2rem 0;
+}
+
+.step-indicator {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  padding: 1rem 0.5rem;
+}
+
+.step::after {
+  content: '';
+  position: absolute;
+  top: 2rem;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background-color: #e5e7eb;
+}
+
+.step.active::after {
+  background-color: #10b981;
+}
+
+.step:last-child::after {
+  display: none;
+}
+
+.step-circle {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.5rem;
+  border-radius: 50%;
+  background-color: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #9ca3af;
+  position: relative;
+  z-index: 1;
+}
+
+.step.active .step-circle {
+  background-color: #10b981;
+  color: white;
+}
+
+.step-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}

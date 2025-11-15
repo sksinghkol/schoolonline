@@ -1,0 +1,43 @@
+<div class="curriculum-info-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoadingCurriculumInfo" class="container py-5 text-center">
+    <div class="spinner-border spinner-border-lg text-primary pulse" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-4 text-muted fs-4">Loading curriculum information...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!isLoadingCurriculumInfo && error" class="container py-5">
+    <div class="alert alert-danger alert-dismissible fade show shadow-2xl border-0 rounded-5 glassmorphic" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div *ngIf="!isLoadingCurriculumInfo && !error && curriculumInfoData as data" class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5 position-relative overflow-hidden">
+      <h1 class="display-3 fw-bold text-gradient mb-3 position-relative z-1">
+        Our Curriculum
+      </h1>
+      <p class="lead text-muted fs-4 position-relative z-1">
+        Details about our educational framework and curriculum.
+      </p>
+    </div>
+
+    <!-- Content -->
+    <div class="card shadow-lg border-0 rounded-4">
+      <div class="card-body p-4 p-lg-5">
+        <quill-view [content]="data.content | safeHtml" format="html" theme="snow"></quill-view>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Content State -->
+  <div *ngIf="!isLoadingCurriculumInfo && !error && !curriculumInfoData" class="text-center py-5">
+    <h3 class="text-muted mb-3 fw-semibold">No Curriculum Information Available</h3>
+    <p class="text-muted fs-5 mb-4">Information about our curriculum will be updated soon. Please check back later!</p>
+  </div>
+</div>

@@ -1,0 +1,220 @@
+.attendance-qr-share-container {
+  display: inline-block;
+
+  .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    }
+
+    &:focus,
+    &:active {
+      background: linear-gradient(135deg, #1e9032 0%, #1aa179 100%);
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+  }
+}
+
+/* Ensure modal and backdrop appear above other stacked elements (navbars, fixed headers) */
+:root {
+  --attendance-modal-z: 20000;
+}
+
+/* Bootstrap modal backdrop normally uses z-index: 1040; increase for safety */
+.modal-backdrop {
+  z-index: calc(var(--attendance-modal-z) - 10) !important;
+}
+
+.attendance-qr-share-container {
+  position: relative;
+  z-index: calc(var(--attendance-modal-z) + 1); /* button sits above content */
+}
+
+/* Force modal dialog and content to be on top */
+.modal.show {
+  z-index: var(--attendance-modal-z) !important;
+}
+.modal-dialog {
+  z-index: calc(var(--attendance-modal-z) + 2) !important;
+}
+
+.modal-content {
+  border-radius: 20px;
+  overflow: hidden;
+
+  .modal-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 1.5rem;
+    border: none;
+
+    .modal-title {
+      color: white;
+      font-size: 1.25rem;
+    }
+
+    .btn-close {
+      filter: brightness(0) invert(1);
+    }
+  }
+
+  .modal-body {
+    padding: 2rem;
+
+    .qr-code-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 280px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+      img {
+        border-radius: 10px;
+        background: white;
+        padding: 10px;
+      }
+    }
+
+    .input-group {
+      gap: 0;
+
+      .form-control {
+        border-right: none;
+        padding: 0.75rem 1rem;
+
+        &:focus {
+          border-color: #28a745;
+          box-shadow: none;
+        }
+      }
+
+      .btn {
+        border-left: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background-color: #28a745;
+          color: white;
+          border-color: #28a745;
+        }
+
+        &.btn-success {
+          background-color: #28a745;
+          color: white;
+          border-color: #28a745;
+        }
+      }
+    }
+
+    .btn-outline-success {
+      color: #28a745;
+      border-color: #28a745;
+
+      &:hover {
+        background-color: #28a745;
+        border-color: #28a745;
+      }
+    }
+
+    .btn-outline-primary {
+      &:hover {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+      }
+    }
+
+    .btn-outline-info {
+      &:hover {
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+      }
+    }
+
+    .btn-outline-secondary {
+      &:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+      }
+    }
+
+    .btn-outline-dark {
+      &:hover {
+        background-color: #212529;
+        border-color: #212529;
+      }
+    }
+
+    .row {
+      gap: 0.5rem;
+    }
+  }
+
+  .modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 1.5rem;
+
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      font-weight: 600;
+
+      &:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+      }
+    }
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .modal-content {
+    .modal-body {
+      padding: 1.5rem;
+
+      .qr-code-container {
+        min-height: 250px;
+      }
+
+      .row {
+        .col-6 {
+          flex: 0 0 100%;
+          max-width: 100%;
+        }
+      }
+    }
+  }
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal.fade .modal-dialog {
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Button animations */
+.btn {
+  &:active {
+    transform: scale(0.98);
+  }
+}

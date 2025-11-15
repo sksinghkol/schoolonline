@@ -98,6 +98,18 @@ import { StudentsVideo } from './School/students-video/students-video';
 import { ViewQuestionPapers } from './ItDepartment/view-question-papers/view-question-papers';
 import { QuestionListComponent } from './ItDepartment/master/question-list/question-list';
 import { Master } from './ItDepartment/master/master';
+import { ItLeave } from './ItDepartment/it-leave/it-leave';
+import { SchoolAboutus } from './School/school-aboutus/school-aboutus';
+import { OurCourses } from './School/our-courses/our-courses';
+import { OurCurriculum } from './School/our-crriculam/our-crriculam';
+import { Mission } from './School/mission/mission';
+import { OurSyllabus } from './School/our-syllabus/our-syllabus';
+import { OurFacility } from './School/our-facility/our-facility';
+import { OurVision } from './School/our-vision/our-vision';
+import { FacultyComponent } from './School/faculty/faculty';
+import { SchoolApprovalComponent } from './Admin/school-approval/school-approval.component';
+import { AdminUserList } from './Admin/admin-userlist/admin-userlist';
+import { AdminAlluser } from './Admin/admin-alluser/admin-alluser';
 export const routes: Routes = [
   /* Home & General Login */
   { path: '', component: Home, pathMatch: 'full' },
@@ -136,8 +148,11 @@ export const routes: Routes = [
     children: [
       { path: '', component: AdminHome, pathMatch: 'full' },
       { path: 'schools', component: AddSchool },
+      { path: 'school-approval', component: SchoolApprovalComponent },
       { path: 'schools/:id', component: SchoolDetails },
       { path: 'subscriptions', component: AddSubscription },
+      { path: 'DirectorList', component: AdminUserList },
+      { path: 'UserList', component: AdminAlluser },
       { path: 'director/:schoolId', component: AddDirector },
       { path: 'idcards/:id', component: IdCards },
       { path: 'holder', component: Holder },
@@ -187,6 +202,7 @@ export const routes: Routes = [
     canActivate: [PrincipalAuthGuard],
     children: [
     { path: 'principal-profile', component: PrincipalProfile },
+   
     ]
   },
   /* staff Dashboard */
@@ -237,9 +253,11 @@ export const routes: Routes = [
     children: [
       { path: 'question-papers', component: ViewQuestionPapers },
       { path: 'question-list', component: QuestionListComponent },
-       { path: 'Master', component: Master }
+      { path: 'Master', component: Master },
+      { path: 'ItLeave', component: ItLeave },
     ]
   },
+  /* Attendance route removed */
   /* Parent Dashboard */
   {
     path: 'parrent-dashboard',
@@ -258,7 +276,6 @@ export const routes: Routes = [
   { path: 'director-awaiting-approval', component: Directorawaiting },
   { path: 'account-awaiting-approval', component: AccountAwaiting }, // Add this route
   { path: 'teacher-awaiting-approval', component: TeacherAwating },
-  { path: 'transport-awaiting', component: TransportAwaiting },
    { path: 'transport-awaiting', component: TransportAwaiting },
      { path: 'frontdesk-awaiting', component: FrontdeskAwaiting },
   { path: 'principal-awating', component: PrincipalAwating },
@@ -280,6 +297,14 @@ export const routes: Routes = [
       { path: 'StaffList', component: StaffList },
       { path: 'question-bank', component: StudentQuestionBankComponent },
       { path: 'teacher-videos', component: StudentsVideo },
+      { path: 'AboutUs', component: SchoolAboutus },
+       { path: 'Courses', component: OurCourses },
+       { path: 'Curriculum', component: OurCurriculum },
+       { path: 'Facilities', component: OurFacility },
+       { path: 'Mission', component: Mission },
+       { path: 'Vision', component: OurVision },
+       { path: 'Syllabus', component: OurSyllabus },
+       { path: 'Faculty', component: FacultyComponent },
     ],
   },
 

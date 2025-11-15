@@ -188,4 +188,21 @@ export class AuthService {
   get currentUser() {
     return this.currentUserSubject.value;
   }
+  /** Find any user by email across different roles */
+async findUserDetailsByEmail(email: string) {
+  const roles = ['admin', 'teacher', 'account', 'staff', 'it'];
+  const users: any[] = [];
+
+  for (const role of roles) {
+    // ✅ Firestore doc with collection + docId
+    const docRef = doc(this.firestore, role, email); 
+    const snapshot = await getDoc(docRef);
+    if (snapshot.exists()) {
+      users.push({ role, ...snapshot.data() });
+    }
+  }
+
+  return users;
+}
+
 }

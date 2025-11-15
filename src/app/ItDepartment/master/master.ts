@@ -1,7 +1,7 @@
 /// <reference types="@types/google.maps" />
 import { Component, OnInit, inject, ViewChild, ElementRef, AfterViewInit, NgZone, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { CommonModule, DatePipe } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray } from '@angular/forms';
 import {
   Firestore,
@@ -16,13 +16,16 @@ import {
   orderBy,
   serverTimestamp,
   where,
-  setDoc
+  setDoc,
+  getDoc
 } from '@angular/fire/firestore';
 import { SchoolStateService } from '../../core/services/school-state.service';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { GoogleMap, MapMarker } from '@angular/google-maps';
 import { QuillEditorComponent, QuillViewHTMLComponent } from 'ngx-quill';
+import { AuthService } from '../../core/services/auth.service';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Define interfaces for better type safety
 interface SchoolClass {
@@ -101,6 +104,7 @@ export class Master implements OnInit, AfterViewInit {
   private route = inject(ActivatedRoute);
   private schoolState = inject(SchoolStateService);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
   private ngZone = inject(NgZone);
 
   @ViewChild('mapSearchField') searchField!: ElementRef;
@@ -203,6 +207,18 @@ export class Master implements OnInit, AfterViewInit {
   isEditingFacilitiesInfo = false;
   facilitiesInfoContent: string | null = null;
 
+  // Our Mission management
+  missionInfoForm: FormGroup;
+  isLoadingMissionInfo = true;
+  isEditingMissionInfo = false;
+  missionInfoContent: string | null = null;
+
+  // Our Vision management
+  visionInfoForm: FormGroup;
+  isLoadingVisionInfo = true;
+  isEditingVisionInfo = false;
+  visionInfoContent: string | null = null;
+
   // School Details management
   schoolDetailsForm: FormGroup;
   isLoadingSchoolDetails = true;
@@ -294,6 +310,14 @@ export class Master implements OnInit, AfterViewInit {
     });
 
     this.facilitiesInfoForm = this.fb.group({
+      content: ['', Validators.required]
+    });
+
+    this.missionInfoForm = this.fb.group({
+      content: ['', Validators.required]
+    });
+
+    this.visionInfoForm = this.fb.group({
       content: ['', Validators.required]
     });
 
@@ -472,6 +496,8 @@ export class Master implements OnInit, AfterViewInit {
         this.loadCoursesInfoContent();
         this.loadCurriculumInfoContent();
         this.loadFacilitiesInfoContent();
+        this.loadMissionInfoContent();
+        this.loadVisionInfoContent();
         this.loadSchoolDetails();
       } else {
         this.errorMessage = "School ID not found in URL. Please ensure you are navigating from the dashboard.";
@@ -488,6 +514,8 @@ export class Master implements OnInit, AfterViewInit {
         this.isLoadingTransports = false;
         this.isLoadingBuses = false;
         this.isLoadingSyllabus = false;
+        this.isLoadingMissionInfo = false;
+        this.isLoadingVisionInfo = false;
         this.isLoadingAboutSchool = false;
       }
     });
@@ -536,7 +564,7 @@ export class Master implements OnInit, AfterViewInit {
         await addDoc(classesCollection, { ...this.classForm.value, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
         this.successMessage = "Class added successfully.";
       }
-      this.resetForm();
+      this.resetClassForm();
     } catch (error) {
       console.error("Error saving class:", error);
       this.errorMessage = "Failed to save class.";
@@ -564,7 +592,7 @@ export class Master implements OnInit, AfterViewInit {
     }
   }
 
-  resetForm() {
+  resetClassForm() {
     this.isEditing = false;
     this.currentClassId = null;
     this.classForm.reset();
@@ -1238,11 +1266,12 @@ export class Master implements OnInit, AfterViewInit {
     }
   }
 
-  // --- About School Management ---
+   // --- Load About Us content ---
   async loadAboutSchoolContent() {
     if (!this.schoolId) return;
     this.isLoadingAboutSchool = true;
-    const aboutDocRef = doc(this.firestore, `schools/${this.schoolId}/about_school/main`);
+
+    const aboutDocRef = doc(this.firestore, `schools/${this.schoolId}/about_school/about_us`);
 
     onSnapshot(aboutDocRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -1255,24 +1284,23 @@ export class Master implements OnInit, AfterViewInit {
       }
       this.isLoadingAboutSchool = false;
     }, (error) => {
-      console.error("Error loading about school content:", error);
+      console.error("Error loading About Us content:", error);
       this.errorMessage = "Failed to load 'About Us' content.";
       this.isLoadingAboutSchool = false;
     });
   }
 
+  // --- Save or Update About Us content ---
   async onAboutSchoolSubmit() {
-    if (this.aboutSchoolForm.invalid || !this.schoolId) {
-      return;
-    }
+    if (this.aboutSchoolForm.invalid || !this.schoolId) return;
+
     this.errorMessage = null;
     this.successMessage = null;
 
     const { content } = this.aboutSchoolForm.value;
-    const aboutDocRef = doc(this.firestore, `schools/${this.schoolId}/about_school/main`);
+    const aboutDocRef = doc(this.firestore, `schools/${this.schoolId}/about_school/about_us`);
 
     try {
-      // Use setDoc with merge:true to create or update the document.
       await setDoc(aboutDocRef, {
         content,
         updatedAt: serverTimestamp()
@@ -1286,12 +1314,7 @@ export class Master implements OnInit, AfterViewInit {
     }
   }
 
-  toggleEditAboutSchool(isEditing: boolean) {
-    this.isEditingAboutSchool = isEditing;
-    this.successMessage = null;
-    this.errorMessage = null;
-  }
-
+  // --- Delete About Us content ---
   async deleteAboutSchoolContent() {
     if (!this.schoolId || !confirm("Are you sure you want to delete the 'About Us' content? This action cannot be undone.")) {
       return;
@@ -1299,55 +1322,75 @@ export class Master implements OnInit, AfterViewInit {
 
     this.errorMessage = null;
     this.successMessage = null;
-    const aboutDocRef = doc(this.firestore, `schools/${this.schoolId}/about_school/main`);
+
+    const aboutDocRef = doc(this.firestore, `schools/${this.schoolId}/about_school/about_us`);
 
     try {
       await deleteDoc(aboutDocRef);
       this.successMessage = "'About Us' content has been deleted.";
+      this.aboutSchoolContent = null;
+      this.aboutSchoolForm.reset();
     } catch (error) {
       console.error("Error deleting 'About Us' content:", error);
       this.errorMessage = "Failed to delete 'About Us' content.";
     }
   }
 
+  toggleEditAboutSchool(isEditing: boolean) {
+    this.isEditingAboutSchool = isEditing;
+    this.successMessage = null;
+    this.errorMessage = null;
+  }
   // --- Our Courses Management ---
+  // --- Load "Our Courses" content ---
   async loadCoursesInfoContent() {
     if (!this.schoolId) return;
     this.isLoadingCoursesInfo = true;
-    const coursesInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/courses_info/main`);
 
-    onSnapshot(coursesInfoDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        this.coursesInfoContent = data['content'];
-        this.coursesInfoForm.patchValue({ content: this.coursesInfoContent });
-      } else {
-        this.coursesInfoContent = null;
-        this.coursesInfoForm.reset();
+    const coursesInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/about_school/courses_info`);
+
+    onSnapshot(
+      coursesInfoDocRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          this.coursesInfoContent = data['content'] || '';
+          this.coursesInfoForm.patchValue({ content: this.coursesInfoContent });
+        } else {
+          this.coursesInfoContent = null;
+          this.coursesInfoForm.reset();
+        }
+        this.isLoadingCoursesInfo = false;
+      },
+      (error) => {
+        console.error("Error loading 'Our Courses' content:", error);
+        this.errorMessage = "Failed to load 'Our Courses' content.";
+        this.isLoadingCoursesInfo = false;
       }
-      this.isLoadingCoursesInfo = false;
-    }, (error) => {
-      console.error("Error loading 'Our Courses' content:", error);
-      this.errorMessage = "Failed to load 'Our Courses' content.";
-      this.isLoadingCoursesInfo = false;
-    });
+    );
   }
 
+  // --- Save or update "Our Courses" content ---
   async onCoursesInfoSubmit() {
     if (this.coursesInfoForm.invalid || !this.schoolId) {
       return;
     }
+
     this.errorMessage = null;
     this.successMessage = null;
 
     const { content } = this.coursesInfoForm.value;
-    const coursesInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/courses_info/main`);
+    const coursesInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/about_school/courses_info`);
 
     try {
-      await setDoc(coursesInfoDocRef, {
-        content,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      await setDoc(
+        coursesInfoDocRef,
+        {
+          content,
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
 
       this.successMessage = "'Our Courses' content saved successfully.";
       this.isEditingCoursesInfo = false;
@@ -1357,165 +1400,262 @@ export class Master implements OnInit, AfterViewInit {
     }
   }
 
-  toggleEditCoursesInfo(isEditing: boolean) {
-    this.isEditingCoursesInfo = isEditing;
-    this.successMessage = null;
-    this.errorMessage = null;
-  }
-
+  // --- Delete "Our Courses" content ---
   async deleteCoursesInfoContent() {
     if (!this.schoolId || !confirm("Are you sure you want to delete the 'Our Courses' content? This action cannot be undone.")) {
       return;
     }
+
     this.errorMessage = null;
     this.successMessage = null;
-    const coursesInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/courses_info/main`);
+
+    const coursesInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/about_school/courses_info`);
+
     try {
       await deleteDoc(coursesInfoDocRef);
       this.successMessage = "'Our Courses' content has been deleted.";
+      this.coursesInfoContent = null;
+      this.coursesInfoForm.reset();
     } catch (error) {
       console.error("Error deleting 'Our Courses' content:", error);
       this.errorMessage = "Failed to delete 'Our Courses' content.";
     }
   }
 
+  toggleEditCoursesInfo(isEditing: boolean) {
+    this.isEditingCoursesInfo = isEditing;
+    this.successMessage = null;
+    this.errorMessage = null;
+  }
+
   // --- Our Curriculum Management ---
-  async loadCurriculumInfoContent() {
-    if (!this.schoolId) return;
-    this.isLoadingCurriculumInfo = true;
-    const curriculumInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/our_curriculum/main`);
+async loadCurriculumInfoContent() {
+  if (!this.schoolId) return;
+  this.isLoadingCurriculumInfo = true;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/our_curriculum`);
 
-    onSnapshot(curriculumInfoDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        this.curriculumInfoContent = data['content'];
-        this.curriculumInfoForm.patchValue({ content: this.curriculumInfoContent });
-      } else {
-        this.curriculumInfoContent = null;
-        this.curriculumInfoForm.reset();
-      }
-      this.isLoadingCurriculumInfo = false;
-    }, (error) => {
-      console.error("Error loading 'Our Curriculum' content:", error);
-      this.errorMessage = "Failed to load 'Our Curriculum' content.";
-      this.isLoadingCurriculumInfo = false;
-    });
-  }
-
-  async onCurriculumInfoSubmit() {
-    if (this.curriculumInfoForm.invalid || !this.schoolId) {
-      return;
+  onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      this.curriculumInfoContent = data['content'];
+      this.curriculumInfoForm.patchValue({ content: this.curriculumInfoContent });
+    } else {
+      this.curriculumInfoContent = null;
+      this.curriculumInfoForm.reset();
     }
-    this.errorMessage = null;
-    this.successMessage = null;
+    this.isLoadingCurriculumInfo = false;
+  }, (error) => {
+    console.error("Error loading 'Our Curriculum' content:", error);
+    this.errorMessage = "Failed to load 'Our Curriculum' content.";
+    this.isLoadingCurriculumInfo = false;
+  });
+}
 
-    const { content } = this.curriculumInfoForm.value;
-    const curriculumInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/our_curriculum/main`);
+async onCurriculumInfoSubmit() {
+  if (this.curriculumInfoForm.invalid || !this.schoolId) return;
+  this.errorMessage = this.successMessage = null;
 
-    try {
-      await setDoc(curriculumInfoDocRef, {
-        content,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-
-      this.successMessage = "'Our Curriculum' content saved successfully.";
-      this.isEditingCurriculumInfo = false;
-    } catch (error) {
-      console.error("Error saving 'Our Curriculum' content:", error);
-      this.errorMessage = "Failed to save 'Our Curriculum' content.";
-    }
+  const { content } = this.curriculumInfoForm.value;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/our_curriculum`);
+  try {
+    await setDoc(docRef, { content, updatedAt: serverTimestamp() }, { merge: true });
+    this.successMessage = "'Our Curriculum' content saved successfully.";
+    this.isEditingCurriculumInfo = false;
+  } catch (error) {
+    console.error("Error saving 'Our Curriculum' content:", error);
+    this.errorMessage = "Failed to save 'Our Curriculum' content.";
   }
+}
 
-  toggleEditCurriculumInfo(isEditing: boolean) {
-    this.isEditingCurriculumInfo = isEditing;
-    this.successMessage = null;
-    this.errorMessage = null;
+toggleEditCurriculumInfo(isEditing: boolean) {
+  this.isEditingCurriculumInfo = isEditing;
+  this.errorMessage = this.successMessage = null;
+}
+
+async deleteCurriculumInfoContent() {
+  if (!this.schoolId || !confirm("Delete 'Our Curriculum' content?")) return;
+  this.errorMessage = this.successMessage = null;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/our_curriculum`);
+  try {
+    await deleteDoc(docRef);
+    this.successMessage = "'Our Curriculum' content deleted successfully.";
+  } catch (error) {
+    console.error("Error deleting 'Our Curriculum' content:", error);
+    this.errorMessage = "Failed to delete 'Our Curriculum' content.";
   }
+}
 
-  async deleteCurriculumInfoContent() {
-    if (!this.schoolId || !confirm("Are you sure you want to delete the 'Our Curriculum' content? This action cannot be undone.")) {
-      return;
+
+// --- Our Facilities Management ---
+async loadFacilitiesInfoContent() {
+  if (!this.schoolId) return;
+  this.isLoadingFacilitiesInfo = true;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/facilities`);
+
+  onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      this.facilitiesInfoContent = data['content'];
+      this.facilitiesInfoForm.patchValue({ content: this.facilitiesInfoContent });
+    } else {
+      this.facilitiesInfoContent = null;
+      this.facilitiesInfoForm.reset();
     }
-    this.errorMessage = null;
-    this.successMessage = null;
-    const curriculumInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/our_curriculum/main`);
-    try {
-      await deleteDoc(curriculumInfoDocRef);
-      this.successMessage = "'Our Curriculum' content has been deleted.";
-    } catch (error) {
-      console.error("Error deleting 'Our Curriculum' content:", error);
-      this.errorMessage = "Failed to delete 'Our Curriculum' content.";
-    }
+    this.isLoadingFacilitiesInfo = false;
+  }, (error) => {
+    console.error("Error loading 'Our Facilities' content:", error);
+    this.errorMessage = "Failed to load 'Our Facilities' content.";
+    this.isLoadingFacilitiesInfo = false;
+  });
+}
+
+async onFacilitiesInfoSubmit() {
+  if (this.facilitiesInfoForm.invalid || !this.schoolId) return;
+  this.errorMessage = this.successMessage = null;
+
+  const { content } = this.facilitiesInfoForm.value;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/facilities`);
+  try {
+    await setDoc(docRef, { content, updatedAt: serverTimestamp() }, { merge: true });
+    this.successMessage = "'Our Facilities' content saved successfully.";
+    this.isEditingFacilitiesInfo = false;
+  } catch (error) {
+    console.error("Error saving 'Our Facilities' content:", error);
+    this.errorMessage = "Failed to save 'Our Facilities' content.";
   }
+}
 
-  // --- Our Facilities Management ---
-  async loadFacilitiesInfoContent() {
-    if (!this.schoolId) return;
-    this.isLoadingFacilitiesInfo = true;
-    const facilitiesInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/facilities/main`);
+toggleEditFacilitiesInfo(isEditing: boolean) {
+  this.isEditingFacilitiesInfo = isEditing;
+  this.errorMessage = this.successMessage = null;
+}
 
-    onSnapshot(facilitiesInfoDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        this.facilitiesInfoContent = data['content'];
-        this.facilitiesInfoForm.patchValue({ content: this.facilitiesInfoContent });
-      } else {
-        this.facilitiesInfoContent = null;
-        this.facilitiesInfoForm.reset();
-      }
-      this.isLoadingFacilitiesInfo = false;
-    }, (error) => {
-      console.error("Error loading 'Our Facilities' content:", error);
-      this.errorMessage = "Failed to load 'Our Facilities' content.";
-      this.isLoadingFacilitiesInfo = false;
-    });
+async deleteFacilitiesInfoContent() {
+  if (!this.schoolId || !confirm("Delete 'Our Facilities' content?")) return;
+  this.errorMessage = this.successMessage = null;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/facilities`);
+  try {
+    await deleteDoc(docRef);
+    this.successMessage = "'Our Facilities' content deleted successfully.";
+  } catch (error) {
+    console.error("Error deleting 'Our Facilities' content:", error);
+    this.errorMessage = "Failed to delete 'Our Facilities' content.";
   }
+}
 
-  async onFacilitiesInfoSubmit() {
-    if (this.facilitiesInfoForm.invalid || !this.schoolId) {
-      return;
+
+// --- Our Mission Management ---
+async loadMissionInfoContent() {
+  if (!this.schoolId) return;
+  this.isLoadingMissionInfo = true;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/our_mission`);
+
+  onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      this.missionInfoContent = data['content'];
+      this.missionInfoForm.patchValue({ content: this.missionInfoContent });
+    } else {
+      this.missionInfoContent = null;
+      this.missionInfoForm.reset();
     }
-    this.errorMessage = null;
-    this.successMessage = null;
+    this.isLoadingMissionInfo = false;
+  }, (error) => {
+    console.error("Error loading 'Our Mission' content:", error);
+    this.errorMessage = "Failed to load 'Our Mission' content.";
+    this.isLoadingMissionInfo = false;
+  });
+}
 
-    const { content } = this.facilitiesInfoForm.value;
-    const facilitiesInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/facilities/main`);
+async onMissionInfoSubmit() {
+  if (this.missionInfoForm.invalid || !this.schoolId) return;
+  this.errorMessage = this.successMessage = null;
 
-    try {
-      await setDoc(facilitiesInfoDocRef, {
-        content,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-
-      this.successMessage = "'Our Facilities' content saved successfully.";
-      this.isEditingFacilitiesInfo = false;
-    } catch (error) {
-      console.error("Error saving 'Our Facilities' content:", error);
-      this.errorMessage = "Failed to save 'Our Facilities' content.";
-    }
+  const { content } = this.missionInfoForm.value;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/our_mission`);
+  try {
+    await setDoc(docRef, { content, updatedAt: serverTimestamp() }, { merge: true });
+    this.successMessage = "'Our Mission' content saved successfully.";
+    this.isEditingMissionInfo = false;
+  } catch (error) {
+    console.error("Error saving 'Our Mission' content:", error);
+    this.errorMessage = "Failed to save 'Our Mission' content.";
   }
+}
 
-  toggleEditFacilitiesInfo(isEditing: boolean) {
-    this.isEditingFacilitiesInfo = isEditing;
-    this.successMessage = null;
-    this.errorMessage = null;
-  }
+toggleEditMissionInfo(isEditing: boolean) {
+  this.isEditingMissionInfo = isEditing;
+  this.errorMessage = this.successMessage = null;
+}
 
-  async deleteFacilitiesInfoContent() {
-    if (!this.schoolId || !confirm("Are you sure you want to delete the 'Our Facilities' content? This action cannot be undone.")) {
-      return;
-    }
-    this.errorMessage = null;
-    this.successMessage = null;
-    const facilitiesInfoDocRef = doc(this.firestore, `schools/${this.schoolId}/facilities/main`);
-    try {
-      await deleteDoc(facilitiesInfoDocRef);
-      this.successMessage = "'Our Facilities' content has been deleted.";
-    } catch (error) {
-      console.error("Error deleting 'Our Facilities' content:", error);
-      this.errorMessage = "Failed to delete 'Our Facilities' content.";
-    }
+async deleteMissionInfoContent() {
+  if (!this.schoolId || !confirm("Delete 'Our Mission' content?")) return;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/our_mission`);
+  try {
+    await deleteDoc(docRef);
+    this.successMessage = "'Our Mission' content deleted successfully.";
+  } catch (error) {
+    console.error("Error deleting 'Our Mission' content:", error);
+    this.errorMessage = "Failed to delete 'Our Mission' content.";
   }
+}
+
+
+// --- Our Vision Management ---
+async loadVisionInfoContent() {
+  if (!this.schoolId) return;
+  this.isLoadingVisionInfo = true;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/our_vision`);
+
+  onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      this.visionInfoContent = data['content'];
+      this.visionInfoForm.patchValue({ content: this.visionInfoContent });
+    } else {
+      this.visionInfoContent = null;
+      this.visionInfoForm.reset();
+    }
+    this.isLoadingVisionInfo = false;
+  }, (error) => {
+    console.error("Error loading 'Our Vision' content:", error);
+    this.errorMessage = "Failed to load 'Our Vision' content.";
+    this.isLoadingVisionInfo = false;
+  });
+}
+
+async onVisionInfoSubmit() {
+  if (this.visionInfoForm.invalid || !this.schoolId) return;
+  this.errorMessage = this.successMessage = null;
+
+  const { content } = this.visionInfoForm.value;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/our_vision`);
+  try {
+    await setDoc(docRef, { content, updatedAt: serverTimestamp() }, { merge: true });
+    this.successMessage = "'Our Vision' content saved successfully.";
+    this.isEditingVisionInfo = false;
+  } catch (error) {
+    console.error("Error saving 'Our Vision' content:", error);
+    this.errorMessage = "Failed to save 'Our Vision' content.";
+  }
+}
+
+toggleEditVisionInfo(isEditing: boolean) {
+  this.isEditingVisionInfo = isEditing;
+  this.errorMessage = this.successMessage = null;
+}
+
+async deleteVisionInfoContent() {
+  if (!this.schoolId || !confirm("Delete 'Our Vision' content?")) return;
+  const docRef = doc(this.firestore, `schools/${this.schoolId}/about_school/our_vision`);
+  try {
+    await deleteDoc(docRef);
+    this.successMessage = "'Our Vision' content deleted successfully.";
+  } catch (error) {
+    console.error("Error deleting 'Our Vision' content:", error);
+    this.errorMessage = "Failed to delete 'Our Vision' content.";
+  }
+}
 
   // --- School Details Management ---
   async loadSchoolDetails() {
@@ -1667,6 +1807,36 @@ export class Master implements OnInit, AfterViewInit {
         }
       });
     });
+  }
+
+  useCurrentLocation() {
+    if (!navigator.geolocation) {
+      this.errorMessage = 'Geolocation is not supported by this browser.';
+      return;
+    }
+
+    this.isLoadingSchoolDetails = true;
+    this.errorMessage = null;
+    this.successMessage = null;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.ngZone.run(() => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          this.updateMarkerAndForm(coords);
+          this.isLoadingSchoolDetails = false;
+        });
+      },
+      (error) => {
+        this.ngZone.run(() => {
+          this.errorMessage = 'Could not get your current location. Please ensure location services are enabled and permissions are granted.';
+          this.isLoadingSchoolDetails = false;
+        });
+      }
+    );
   }
 }
 /*

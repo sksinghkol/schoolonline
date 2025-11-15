@@ -1,0 +1,62 @@
+<div class="container py-4" *ngIf="!loading; else loadingTpl">
+  <h3 class="fw-bold text-primary mb-4">School Approval Management</h3>
+
+  <!-- Awaiting Approval -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-warning-subtle fw-bold fs-5">
+      <i class="bi bi-hourglass-split me-2"></i>Awaiting Approval ({{ awaitingSchools.length }})
+    </div>
+    <div class="list-group list-group-flush">
+      <div *ngIf="awaitingSchools.length === 0" class="list-group-item text-muted text-center py-3">
+        No schools are currently awaiting approval.
+      </div>
+      <div *ngFor="let school of awaitingSchools" class="list-group-item d-flex justify-content-between align-items-center p-3">
+        <div class="d-flex align-items-center">
+          <img [src]="school.logoUrl || 'https://dummyimage.com/60x60/dee2e6/6c757d.png'"
+               alt="Logo" width="50" height="50"
+               class="rounded-circle me-3 border shadow-sm">
+          <div>
+            <div class="fw-semibold fs-6">{{ school.name }}</div>
+            <small class="text-muted">{{ school.city || 'City not specified' }}</small>
+          </div>
+        </div>
+        <button class="btn btn-success btn-sm" (click)="approveSchool(school)">
+          <i class="bi bi-check-circle-fill me-1"></i> Approve
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approved Schools -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-success-subtle fw-bold fs-5">
+      <i class="bi bi-patch-check-fill me-2"></i>Approved Schools ({{ approvedSchools.length }})
+    </div>
+    <div class="list-group list-group-flush">
+      <div *ngIf="approvedSchools.length === 0" class="list-group-item text-muted text-center py-3">
+        No schools have been approved yet.
+      </div>
+      <div *ngFor="let school of approvedSchools" class="list-group-item d-flex justify-content-between align-items-center p-3">
+        <div class="d-flex align-items-center">
+          <img [src]="school.logoUrl || 'https://dummyimage.com/60x60/dee2e6/6c757d.png'"
+               alt="Logo" width="50" height="50"
+               class="rounded-circle me-3 border shadow-sm">
+          <div>
+            <div class="fw-semibold fs-6">{{ school.name }}</div>
+            <small class="text-muted">{{ school.city || 'City not specified' }}</small>
+          </div>
+        </div>
+        <button class="btn btn-outline-danger btn-sm" (click)="deleteSchool(school.id)">
+          <i class="bi bi-trash3-fill"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+    <p class="fs-5 text-muted">Loading schools...</p>
+  </div>
+</ng-template>

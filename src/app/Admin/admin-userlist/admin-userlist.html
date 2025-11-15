@@ -1,0 +1,174 @@
+<div class="container py-4" *ngIf="!loading; else loadingTpl">
+  <!-- Filter Section -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Search</label>
+          <input type="text" class="form-control" [(ngModel)]="searchTerm" 
+                 placeholder="Search by name, email..." (input)="applyFilters()">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">School</label>
+          <select class="form-select" [(ngModel)]="selectedSchool" (change)="applyFilters()">
+            <option value="all">All Schools</option>
+            <option *ngFor="let school of schools" [value]="school.id">
+              {{school.name}}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Role</label>
+          <select class="form-select" [(ngModel)]="selectedRole" (change)="applyFilters()">
+            <option value="all">All Roles</option>
+            <option *ngFor="let role of subCollections" [value]="role">
+              {{role | titlecase}}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Awaiting Approval -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-warning-subtle">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Awaiting Approval</h5>
+        <span class="badge bg-warning">{{filteredAwaitingUsers.length}} Pending</span>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>School</th>
+            <th>Role</th>
+            <th>Contact</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredAwaitingUsers">
+            <td>
+              <div class="d-flex align-items-center">
+                <img [src]="user['photoURL'] || 'assets/default-avatar.png'" 
+                     class="rounded-circle me-2" width="32" height="32">
+                <span>{{user['name']}}</span>
+              </div>
+            </td>
+            <td>{{user['schoolName']}}</td>
+            <td>
+              <span class="badge bg-secondary">{{user['role'] | titlecase}}</span>
+            </td>
+            <td>
+              <div>{{user['email']}}</div>
+              <small class="text-muted">{{user['phone']}}</small>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-success me-1" (click)="approveUser(user)">
+                <i class="bi bi-check-circle"></i> Approve
+              </button>
+              <button class="btn btn-sm btn-primary" (click)="editUser(user)">
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Approved Users -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-success-subtle">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Approved Users</h5>
+        <span class="badge bg-success">{{filteredApprovedUsers.length}} Active</span>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>School</th>
+            <th>Role</th>
+            <th>Contact</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredApprovedUsers">
+            <td>
+              <div class="d-flex align-items-center">
+                <img [src]="user['photoURL'] || 'assets/default-avatar.png'" 
+                     class="rounded-circle me-2" width="32" height="32">
+                <span>{{user['name']}}</span>
+              </div>
+            </td>
+            <td>{{user['schoolName']}}</td>
+            <td>
+              <span class="badge bg-secondary">{{user['role'] | titlecase}}</span>
+            </td>
+            <td>
+              <div>{{user['email']}}</div>
+              <small class="text-muted">{{user['phone']}}</small>
+            </td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-primary" (click)="editUser(user)">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="deleteUser(user)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Template -->
+<ng-template #loadingTpl>
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary mb-3" role="status"></div>
+    <p>Loading users...</p>
+  </div>
+</ng-template>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" *ngIf="editingUser">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editUserModalLabel">Edit: {{ editingUser['name'] }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form #editForm="ngForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="userName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="userName" 
+                   [(ngModel)]="editingUser['name']" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="userEmail" class="form-label">Email</label>
+            <input type="email" class="form-control" id="userEmail" 
+                   [(ngModel)]="editingUser['email']" name="email" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" 
+                  (click)="cancelEdit()">Cancel</button>
+          <button type="submit" class="btn btn-primary" (click)="updateUser()" 
+                  [disabled]="!editForm.valid">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

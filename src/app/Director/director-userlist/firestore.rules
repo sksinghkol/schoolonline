@@ -1,0 +1,184 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===========================================================
+    // Helper functions
+    // ===========================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getAdminData() {
+      return get(/databases/$(database)/documents/admin/$(request.auth.uid)).data;
+    }
+
+    function isApprovedAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admin/$(request.auth.uid));
+    }
+
+    function isSuperAdmin() {
+      let adminData = getAdminData();
+      return isApprovedAdmin() && adminData != null && adminData.role == 'super-admin';
+    }
+
+    function isDirectorForSchool(schoolId) {
+      return isSignedIn() && schoolId != null && exists(/databases/$(database)/documents/schools/$(schoolId)/directors/$(request.auth.uid));
+    }
+
+    function isPrincipalForSchool(schoolId) {
+      return isSignedIn() && schoolId != null && exists(/databases/$(database)/documents/schools/$(schoolId)/principals/$(request.auth.uid));
+    }
+
+    function isITForSchool(schoolId) {
+      return isSignedIn() && schoolId != null && exists(/databases/$(database)/documents/schools/$(schoolId)/itdepartments/$(request.auth.uid));
+    }
+
+    function isTeacherForSchool(schoolId) {
+      return isSignedIn() && schoolId != null && exists(/databases/$(database)/documents/schools/$(schoolId)/teachers/$(request.auth.uid));
+    }
+
+    // An admin of a school is a director. This can be expanded later.
+    function isSchoolAdmin(schoolId) {
+      return isDirectorForSchool(schoolId);
+    }
+
+    function isSchoolStaff(schoolId) {
+      return isDirectorForSchool(schoolId) || isPrincipalForSchool(schoolId) || isITForSchool(schoolId) || isTeacherForSchool(schoolId);
+    }
+
+    // ===========================================================
+    // Admins collection
+    // ===========================================================
+    match /admin/{adminId} {
+      allow read, write: if request.auth.uid == adminId;
+
+      match /login_records/{recordId} {
+        allow read: if isSuperAdmin() || request.auth.uid == adminId;
+        allow write: if request.auth.uid == adminId;
+      }
+    }
+
+    // ===========================================================
+    // Schools & subcollections
+    // ===========================================================
+    match /schools/{schoolId} {
+      allow get, list: if true;
+      allow create, update, delete: if isApprovedAdmin();
+
+      // Subcollections for different user roles within a school
+      match /{collection}/{userId} {
+        allow get, list: if true;
+
+        // Admins can create any user.
+        allow create: if isApprovedAdmin();
+
+        // School admins (directors) can create users in their school.
+        allow create: if isSchoolAdmin(schoolId);
+
+        // School admins can update/delete any user in their school.
+        // This also allows them to approve users by changing the 'status' field.
+        allow update, delete: if isSchoolAdmin(schoolId) || isApprovedAdmin();
+
+        // A user can update their own profile.
+        allow update: if request.auth.uid == userId;
+      }
+
+      // Teachers subcollection with special rules for its subcollections
+      match /teachers/{teacherId} {
+        // Question Bank
+        match /question_bank/{questionId} {
+          allow create: if (request.auth.uid == teacherId && request.resource.data.teacherId == teacherId) || isSchoolStaff(schoolId) || isApprovedAdmin();
+          allow update, delete: if isSchoolStaff(schoolId) || isApprovedAdmin();
+          allow list: if isSchoolStaff(schoolId) || isApprovedAdmin();
+          allow get: if isSchoolStaff(schoolId) || isApprovedAdmin() || resource.data.status == "approved";
+        }
+
+        // YouTube videos
+        match /youtube/{videoId} {
+          allow list: if request.auth.uid == teacherId || isSchoolStaff(schoolId) || isApprovedAdmin();
+          allow get: if request.auth.uid == teacherId || isSchoolStaff(schoolId) || isApprovedAdmin() || resource.data.status == "approved";
+          allow create, update, delete: if request.auth.uid == teacherId || isSchoolStaff(schoolId) || isApprovedAdmin();
+        }
+
+        // Visiting card applications
+        match /visiting_applications/{applicationId} {
+          allow create: if request.auth.uid == teacherId;
+          allow get, list: if request.auth.uid == teacherId || isDirectorForSchool(schoolId) || isApprovedAdmin();
+          allow update, delete: if isDirectorForSchool(schoolId) || isApprovedAdmin();
+        }
+
+        // ID card applications
+        match /id_card_applications/{applicationId} {
+          allow create: if request.auth.uid == teacherId;
+          allow get, list: if request.auth.uid == teacherId || isDirectorForSchool(schoolId) || isApprovedAdmin();
+          allow update, delete: if isDirectorForSchool(schoolId) || isApprovedAdmin();
+        }
+      }
+
+      // Other school-specific subcollections
+      match /{collection}/{docId}
+      where collection in ['classes', 'subjects', 'chapters', 'exam_types', 'fee_types', 'fees', 'transports', 'buses', 'about_school', 'courses_info', 'our_curriculum', 'facilities', 'syllabus', 'leave_applications'] {
+        allow read, write: if isSchoolStaff(schoolId) || isApprovedAdmin();
+      }
+
+      // Exams at school root level
+      match /exams/{examId} {
+        allow create: if isSignedIn() && request.resource.data.schoolId == schoolId && request.auth.uid == request.resource.data.teacherId;
+        allow get, list: if isSignedIn() && (isSchoolStaff(schoolId) || isApprovedAdmin());
+        allow update: if request.auth.uid == resource.data.teacherId || isSchoolStaff(schoolId) || isApprovedAdmin();
+      }
+
+      // Teacher question papers
+      match /teachers/{tId}/question_papers/{paperId} {
+        allow create: if request.auth.uid == tId;
+        allow get, list: if request.auth.uid == tId || isSchoolStaff(schoolId) || isApprovedAdmin();
+      }
+    }
+
+    // ===========================================================
+    // Public/Global collections
+    // ===========================================================
+    match /{collection}/{docId}
+    where collection in ['reviews', 'subscription', 'holders', 'hooks', 'clip', 'lanyards', 'cards', 'visiting_cards', 'prospectus', 'library_card', 'medals', 'gate_pass', 'student_outpass', 'vistors_pass', 'brochure', 'key_ring', 'leaflet', 'card_design', 'lanyard_design'] {
+      allow read, list: if true;
+      allow create, update, delete: if isApprovedAdmin();
+    }
+
+    // Login history
+    match /login_history/{docId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    // ===========================================================
+    // Collection group rules
+    // ===========================================================
+    match /{path=**}/question_bank/{questionId} {
+      allow list: if isSignedIn();
+      allow get: if resource.data.status == "approved" || (isSignedIn() && (request.auth.uid == resource.data.teacherId || isSchoolStaff(resource.data.schoolId) || isApprovedAdmin()));
+      allow create: if isSignedIn() && ((request.auth.uid == request.resource.data.teacherId && exists(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)/teachers/$(request.auth.uid))) || isSchoolStaff(request.resource.data.schoolId) || isApprovedAdmin());
+      allow update, delete: if isSignedIn() && (request.auth.uid == resource.data.teacherId || isSchoolStaff(resource.data.schoolId) || isApprovedAdmin());
+    }
+
+    match /{path=**}/youtube/{videoId} {
+      allow list: if isSignedIn();
+      allow get: if resource.data.status == "approved" || (isSignedIn() && (request.auth.uid == resource.data.teacherId || isSchoolStaff(resource.data.schoolId) || isApprovedAdmin()));
+      allow create, write, update, delete: if isSignedIn() && (request.auth.uid == request.resource.data.teacherId || isSchoolStaff(request.resource.data.schoolId) || isApprovedAdmin());
+    }
+
+    match /{path=**}/question_papers/{paperId} {
+      allow get: if isSignedIn() && (isDirectorForSchool(resource.data.schoolId) || isApprovedAdmin() || exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)/itdepartments/$(request.auth.uid)));
+      allow list: if isSignedIn() && (isDirectorForSchool(request.query.filters.schoolId) || isApprovedAdmin() || exists(/databases/$(database)/documents/schools/$(request.query.filters.schoolId)/itdepartments/$(request.auth.uid)));
+    }
+  }
+}
+
+    // Rule for the 'directors' collection group query
+    match /{path=**}/directors/{directorId} {
+      // Allow approved admins to list all directors from all schools.
+      allow list: if isApprovedAdmin();
+    }
+  }
+}

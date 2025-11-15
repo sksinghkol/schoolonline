@@ -85,4 +85,10 @@ export class TransportAwaiting implements OnInit {
       this.router.navigate(['/']);
     }
   }
+
+  // image error fallback
+  onImageError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    if (img) img.src = 'assets/default-user.png';
+  }
 }

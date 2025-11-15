@@ -1,0 +1,113 @@
+@use "sass:color"; // For color.adjust()
+
+// 1. Use Bootstrap and override variables in a single statement
+@use "bootstrap/scss/bootstrap" with (
+  $primary: #4a90e2,
+  $secondary: #50e3c2,
+  $danger: #d0021b,
+  $info: #4a4a4a,
+  $success: #7ed321,
+  $warning: #f5a623,
+  $table-hover-bg: rgba(0, 0, 0, 0.04),
+  // Enable gradients for our custom buttons
+  $enable-gradients: true
+);
+
+// 2. Your custom styles
+.leave-container {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+  min-height: 100vh;
+}
+
+.card {
+  border: none;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease-in-out;
+
+  &.card-form {
+    background-color: rgba(255, 255, 255, 0.9);
+    @include bootstrap.media-breakpoint-up(lg) {
+      backdrop-filter: blur(10px);
+    }
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+.card-header {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 0.75rem 0.75rem 0 0 !important;
+
+  h4 {
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, bootstrap.$primary, color.adjust(bootstrap.$primary, $lightness: 15%));
+  border: none;
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(bootstrap.$primary, 0.4);
+  }
+}
+
+.btn-info {
+  background: linear-gradient(45deg, bootstrap.$info, color.adjust(bootstrap.$info, $lightness: 20%));
+    border: none;
+  color: white;
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(bootstrap.$info, 0.4);
+  }
+}
+
+.table {
+  th {
+    font-weight: 600;
+  }
+  .badge {
+    font-size: 0.75em;
+    padding: 0.4em 0.7em;
+  }
+  .text-truncate {
+    cursor: help;
+  }
+}
+
+.badge {
+  &.bg-secondary { background-color: bootstrap.$info !important; }
+  &.bg-warning { background-color: bootstrap.$warning !important; }
+  &.bg-success { background-color: bootstrap.$success !important; }
+  &.bg-danger { background-color: bootstrap.$danger !important; }
+}
+
+.btn-group .btn {
+  transition: all 0.2s ease-in-out;
+  &:hover {
+    transform: scale(1.1);
+    z-index: 2;
+  }
+}
+
+.summary-item {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease-in-out;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.15) !important;
+  }
+}

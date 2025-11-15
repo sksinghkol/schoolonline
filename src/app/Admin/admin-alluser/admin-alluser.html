@@ -1,0 +1,113 @@
+<div class="container py-4" *ngIf="!loading; else loadingTpl">
+  <h3 class="fw-bold text-primary mb-4">All Users Management</h3>
+
+  <!-- Tabs for user roles -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item" *ngFor="let role of userRoles">
+      <a class="nav-link" 
+         [class.active]="selectedRole === role" 
+         (click)="selectRole(role)"
+         href="javascript:void(0)">
+        {{ role | titlecase }}
+      </a>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div *ngFor="let role of userRoles">
+    <div *ngIf="selectedRole === role">
+      <!-- Awaiting Approval -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-warning-subtle fw-bold">Awaiting Approval</div>
+        <ul class="list-group list-group-flush">
+          <li *ngFor="let user of usersByRole[role].awaiting" class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <img [src]="user.photoURL || 'assets/default-user.png'"
+                   alt="User Photo" width="45" height="45"
+                   class="rounded-circle me-3 border shadow-sm">
+              <div>
+                <div class="fw-semibold">{{ user.name }}</div>
+                <small class="text-muted">{{ user.schoolName }} — {{ user.email }}</small>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-success btn-sm me-2" (click)="approveUser(user)">
+                <i class="bi bi-check-circle me-1"></i> Approve
+              </button>
+              <button class="btn btn-outline-danger btn-sm" (click)="deleteUser(user)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </li>
+          <li *ngIf="usersByRole[role].awaiting.length === 0" class="list-group-item text-muted">
+            No users awaiting approval for this role.
+          </li>
+        </ul>
+      </div>
+
+      <!-- Approved Users -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-success-subtle fw-bold">Approved Users</div>
+        <ul class="list-group list-group-flush">
+          <li *ngFor="let user of usersByRole[role].approved" class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <img [src]="user.photoURL || 'assets/default-user.png'"
+                   alt="User Photo" width="45" height="45"
+                   class="rounded-circle me-3 border shadow-sm">
+              <div>
+                <div class="fw-semibold">{{ user.name }}</div>
+                <small class="text-muted">{{ user.schoolName }} — {{ user.email }}</small>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-outline-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#editUserModal" (click)="selectUserForEdit(user)">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm" (click)="deleteUser(user)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </li>
+          <li *ngIf="usersByRole[role].approved.length === 0" class="list-group-item text-muted">
+            No approved users for this role.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary mb-3" role="status"></div>
+    <p>Loading all users...</p>
+  </div>
+</ng-template>
+
+<!-- Edit User Modal (same as in admin-userlist) -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" *ngIf="editingUser">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editUserModalLabel">Edit: {{ editingUser.name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form #editForm="ngForm">
+          <div class="mb-3">
+            <label for="userName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="userName" [(ngModel)]="editingUser.name" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="userEmail" class="form-label">Email</label>
+            <input type="email" class="form-control" id="userEmail" [(ngModel)]="editingUser.email" name="email" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" (click)="updateUser()" [disabled]="!editForm.form.valid" data-bs-dismiss="modal">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5,7 +5,7 @@
       <ng-template #loaded>
         <div *ngIf="schoolName() as sn" style="margin-bottom:1rem;">
           <div *ngIf="schoolLogoUrl()" style="margin-bottom:0.5rem;">
-            <img [src]="schoolLogoUrl()!" [alt]="sn" style="max-height:70px; object-fit:contain;" />
+            <img [src]="schoolLogoUrl()!" [alt]="sn" style="max-height:70px; object-fit:contain;" (error)="onImageError($event)" />
           </div>
           <h3 style="margin: 0 0 0.25rem 0;">{{ sn }}</h3>
           <div *ngIf="schoolAddress()" style="color:#6b7280;">{{ schoolAddress() }}</div>

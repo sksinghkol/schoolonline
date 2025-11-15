@@ -1,0 +1,13 @@
+.text-gradient {
+  background: linear-gradient(90deg, #0d6efd, #6f42c1);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.curriculum-info-container .lead {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}

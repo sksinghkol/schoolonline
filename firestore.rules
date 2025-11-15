@@ -15,7 +15,11 @@ service cloud.firestore {
     }
 
     function isApprovedAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/admin/$(request.auth.uid));
+      // Check for an admin record in the 'admin' collection OR a profile in 'AdminDashboard'.
+      // This makes the rule more robust if admin data is stored in different places. Also check for
+      // a profile in the AdminProfile subcollection.
+      return isSignedIn() && (exists(/databases/$(database)/documents/admin/$(request.auth.uid)) ||
+        exists(/databases/$(database)/documents/AdminDashboard/$(request.auth.uid)) || exists(/databases/$(database)/documents/AdminDashboard/$(request.auth.uid)/AdminProfile/$(request.auth.uid)));
     }
 
     function isSuperAdmin() {
@@ -150,6 +154,22 @@ service cloud.firestore {
         allow create, update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
       }
 
+      // Allow IT staff to manage their own leave applications
+      match /itdepartments/{userId}/leave_applications/{applicationId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
+      // 🔹 Attendance subcollection - for marking attendance
+      match /attendance/{attendanceId} {
+        // Any authenticated staff member can create their own attendance record
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        // Users can read their own attendance, directors and admins can read all
+        allow read: if isSignedIn() && (request.auth.uid == resource.data.userId ||
+          isDirectorForSchoolId(schoolId) || isApprovedAdmin());
+        // Only directors and admins can update or delete
+        allow update, delete: if isDirectorForSchoolId(schoolId) || isApprovedAdmin();
+      }
+
       // Students
       match /students/{studentId} {
         allow get, list: if true;
@@ -253,6 +273,9 @@ service cloud.firestore {
           request.auth.token.teacher_for_school_id == request.query.filters.schoolId ||
           isApprovedAdmin()
         );
+      // This rule ensures the user is a staff member of the school they are querying for.
+      allow list: if isSignedIn() && request.query.schoolId == resource.data.schoolId &&
+        (isDirectorForSchoolId(request.query.schoolId) || isTeacherForSchoolId(request.query.schoolId) || isApprovedAdmin());
 
       allow write, update, delete: if request.auth != null &&
                                    (request.auth.uid == resource.data.teacherId ||
@@ -293,4 +316,45 @@ service cloud.firestore {
         allow list: if request.query.filters.schoolId == resource.data.schoolId;
         allow get: if true;
     }
+
+    // ===========================================================
+    // Admin User List Collection Group Queries
+    // ===========================================================
+    // These rules allow an approved admin to query across all schools
+    // for users that are awaiting approval or are already approved.
+    // A rule is needed for each collection group.
+    match /{path=**}/accounts/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/directors/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/examcontrollers/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/frontdesks/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/itdepartments/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/parents/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/principals/{docId} { allow list: if isApprovedAdmin(); }
+    // The 'reviews' rule above is sufficient, but this makes it consistent
+    // match /{path=**}/reviews/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/securitys/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/staffs/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/students/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/teachers/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/transports/{docId} { allow list: if isApprovedAdmin(); }
+}
+
+    // ===========================================================
+    // Admin User List Collection Group Queries
+    // ===========================================================
+    // These rules allow an approved admin to query across all schools
+    // for users that are awaiting approval or are already approved.
+    // A rule is needed for each collection group.
+    match /{path=**}/accounts/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/directors/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/examcontrollers/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/frontdesks/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/itdepartments/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/parents/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/principals/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/securitys/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/staffs/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/students/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/teachers/{docId} { allow list: if isApprovedAdmin(); }
+    match /{path=**}/transports/{docId} { allow list: if isApprovedAdmin(); }
 }

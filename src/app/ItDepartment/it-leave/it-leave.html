@@ -1,0 +1,171 @@
+<div class="leave-container">
+<div class="container pt-4 pb-5">
+  <!-- Alerts -->
+  <div *ngIf="message" class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" (click)="message = ''" aria-label="Close"></button>
+  </div>
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''" aria-label="Close"></button>
+  </div>
+
+  <!-- Form Card -->
+  <div class="card card-form shadow-sm mb-5">
+    <div class="card-header">
+      <h4 class="mb-0">{{ editing ? 'Edit Leave Application' : 'Apply for Leave' }}</h4>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="leaveForm">
+        <div class="row g-3">
+          <div class="col-lg-4 col-md-6">
+            <label for="leaveType" class="form-label">Leave Type</label>
+            <select id="leaveType" class="form-select" formControlName="leaveType">
+              <option value="" disabled>Select type</option>
+              <option>Sick Leave</option>
+              <option>Casual Leave</option>
+              <option>Earned Leave</option>
+              <option>Maternity/Paternity Leave</option>
+              <option>Leave Without Pay</option>
+            </select>
+          </div>
+          <div class="col-lg-4 col-md-6">
+            <label for="fromDate" class="form-label">From Date</label>
+            <input id="fromDate" type="date" class="form-control" formControlName="fromDate">
+          </div>
+          <div class="col-lg-4 col-md-12">
+            <label for="toDate" class="form-label">To Date</label>
+            <input id="toDate" type="date" class="form-control" formControlName="toDate">
+          </div>
+          <div class="col-12">
+            <label for="reason" class="form-label">Reason</label>
+            <textarea id="reason" class="form-control" formControlName="reason" rows="3" placeholder="Enter reason..."></textarea>
+          </div>
+          <div class="col-12">
+            <label for="attachment" class="form-label">Attachment (optional)</label>
+            <input id="attachment" type="file" class="form-control" (change)="onFileSelect($event)">
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mt-4 gap-2">
+          <button type="button" *ngIf="editing" class="btn btn-secondary" (click)="resetForm()">Cancel</button>
+          <button type="button" class="btn btn-info" (click)="saveDraft()">{{ editing ? 'Update Draft' : 'Save as Draft' }}</button>
+          <button type="button" class="btn btn-primary" [disabled]="leaveForm.invalid" (click)="submitForApproval()">
+            {{ editing ? 'Update & Submit' : 'Submit for Approval' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Leave Summary Table -->
+  <div class="card shadow-sm mb-5">
+    <div class="card-header">
+      <h4 class="mb-0">Leave Summary</h4>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped text-center mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Period</th>
+              <th scope="col" class="text-warning">Pending</th>
+              <th scope="col" class="text-success">Approved</th>
+              <th scope="col" class="text-danger">Rejected</th>
+              <th scope="col" class="text-primary">Total Days</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">This Month</th>
+              <td>{{ leaveSummary.month.pending }}</td>
+              <td>{{ leaveSummary.month.approved }}</td>
+              <td>{{ leaveSummary.month.rejected }}</td>
+              <td class="fw-bold">{{ leaveSummary.month.total }}</td>
+            </tr>
+            <tr>
+              <th scope="row">This Year</th>
+              <td>{{ leaveSummary.year.pending }}</td>
+              <td>{{ leaveSummary.year.approved }}</td>
+              <td>{{ leaveSummary.year.rejected }}</td>
+              <td class="fw-bold">{{ leaveSummary.year.total }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- List Card -->
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <h4 class="mb-0">My Leave Applications</h4>
+    </div>
+    <div class="card-body">
+    <!-- Filters -->
+    <form [formGroup]="leaveFilterForm" class="row row-cols-1 row-cols-sm-auto g-2 align-items-center mb-3">
+      <div class="col">
+        <select class="form-select form-select-sm" [formControl]="leaveFilterForm.controls['month']" (change)="filterLeaves()">
+          <option [ngValue]="null">All Months</option>
+          <option *ngFor="let m of availableMonths" [ngValue]="m.value">{{ m.name }}</option>
+        </select>
+      </div>
+      <div class="col">
+        <select class="form-select form-select-sm" [formControl]="leaveFilterForm.controls['year']" (change)="filterLeaves()">
+          <option [ngValue]="null">All Years</option>
+          <option *ngFor="let y of availableYears" [ngValue]="y">{{ y }}</option>
+        </select>
+      </div>
+      <div class="col">
+        <select class="form-select form-select-sm" [formControl]="leaveFilterForm.controls['status']" (change)="filterLeaves()">
+          <option value="all">All Statuses</option>
+          <option value="Unapproved">Unapproved</option>
+          <option value="Pending">Pending</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+    </form>
+      <div *ngIf="loading" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div *ngIf="!loading && !filteredLeaves.length" class="text-center text-muted py-4">
+        No records found.
+      </div>
+      <div class="table-responsive" *ngIf="!loading && filteredLeaves.length">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Type</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Reason</th>
+              <th class="text-center">Status</th>
+              <th class="d-none d-md-table-cell">Applied On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let app of filteredLeaves">
+              <td>{{ app.leaveType }}</td>
+              <td>{{ formatDate(app.fromDate) }}</td>
+              <td>{{ formatDate(app.toDate) }}</td>
+              <td class="text-truncate" style="max-width: 200px;" [title]="app.reason">{{ app.reason }}</td>
+              <td class="text-center"><span class="badge {{ badgeClass(app.status) }}">{{ app.status }}</span></td>
+              <td class="d-none d-md-table-cell">{{ formatDate(app.appliedDate) }}</td>
+              <td>
+                <div class="btn-group btn-group-sm" *ngIf="app.status === 'Unapproved'">
+                  <button class="btn btn-outline-primary" (click)="startEdit(app)"><i class="bi bi-pencil-square"></i></button>
+                  <button class="btn btn-outline-danger" (click)="confirmDeleteLeave(app)"><i class="bi bi-trash"></i></button>
+                </div>
+                <a *ngIf="app.attachmentUrl" [href]="app.attachmentUrl" target="_blank" class="btn btn-sm btn-outline-secondary ms-2"><i class="bi bi-paperclip"></i></a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

@@ -3,13 +3,17 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Pipe({
   name: 'safeHtml',
-  standalone: true,
+  standalone: true
 })
 export class SafeHtmlPipe implements PipeTransform {
+
   constructor(private sanitizer: DomSanitizer) {}
 
-  transform(value: string | null | undefined): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(value || '');
+  transform(value: string | null): string {
+    if (value === null) {
+      return '';
+    }
+    // This will decode HTML entities like &lt; into <
+    return new DOMParser().parseFromString(value, 'text/html').documentElement.textContent || '';
   }
 }
-

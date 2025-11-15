@@ -1,0 +1,11 @@
+.list-group-item {
+    transition: background-color 0.2s ease-in-out;
+  
+    &:hover {
+      background-color: #f8f9fa;
+    }
+  }
+  
+  .btn {
+    transition: all 0.2s ease-in-out;
+  }

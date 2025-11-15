@@ -9,7 +9,8 @@ export const environment = {
       storageBucket: "bestschoolweb.firebasestorage.app",
       messagingSenderId: "616371678013",
       appId: "1:616371678013:web:49252dfdacdb66b69e7354",
-      measurementId: "G-65MZ96VNDY"
+      measurementId: "G-65MZ96VNDY",
+   
     }
   };
   

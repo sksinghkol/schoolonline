@@ -21,10 +21,12 @@
             <span class="badge bg-success bg-gradient px-3 py-2 rounded-pill shadow-sm">{{ schoolData.ownership_type || 'N/A' }}</span>
             <span class="badge bg-secondary bg-gradient px-3 py-2 rounded-pill shadow-sm">{{ schoolData.curriculum_type || 'N/A' }}</span>
             
-            <!-- Share Button -->
-            <button class="btn btn-outline-primary btn-sm rounded-pill ms-auto" data-bs-toggle="modal" data-bs-target="#shareModal">
-              <i class="bi bi-share-fill me-1"></i> Share
-            </button>
+            <!-- Share Buttons -->
+            <div class="ms-auto d-flex gap-2">
+              <button class="btn btn-outline-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#shareModal">
+                <i class="bi bi-share-fill me-1"></i> Share
+              </button>
+            </div>
 
           </div>
         </div>

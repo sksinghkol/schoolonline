@@ -31,7 +31,9 @@
             About Us <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
           </a>
           <ul class="dropdown-menu shadow">
-            <li><a class="dropdown-item" [routerLink]="['/about-us']"><i class="bi bi-building me-2 nav-link-icon text-primary"></i> About Us</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'AboutUs']"><i class="bi bi-building me-2 nav-link-icon text-primary"></i> About Us</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'Mission']"><i class="bi bi-bullseye me-2 nav-link-icon text-danger"></i> Our Mission</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'Vision']"><i class="bi bi-eye-fill me-2 nav-link-icon text-info"></i> Our Vision</a></li>
             <li>
               <a *ngIf="school()" class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'ManagemantDesk']"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i> Management Desk ({{school()?.name}})</a>
           
@@ -49,9 +51,19 @@
             Academics <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
           </a>
           <ul class="dropdown-menu shadow">
-            <li><a class="dropdown-item" [routerLink]="['/courses']"><i class="bi bi-journal-text me-2 nav-link-icon text-info"></i> Our Courses</a></li>
-            <li><a class="dropdown-item" [routerLink]="['/curriculum']"><i class="bi bi-book me-2 nav-link-icon text-warning"></i> Our Curriculum</a></li>
-            <li><a class="dropdown-item" [routerLink]="['/faculty']"><i class="bi bi-people me-2 nav-link-icon text-secondary"></i> Our Faculty</a></li>
+            <li><a *ngIf="school()" class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'Courses']"><i class="bi bi-journal-text me-2 nav-link-icon text-info"></i> Our Courses</a></li>
+            <li><a *ngIf="school()" class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'Curriculum']"><i class="bi bi-book me-2 nav-link-icon text-warning"></i> Our Curriculum</a></li>
+            <li><a *ngIf="school()" class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'Faculty']"><i class="bi bi-people me-2 nav-link-icon text-secondary"></i> Our Faculty</a></li>
+          </ul>
+        </li>
+
+        <!-- Campus -->
+        <li class="nav-item dropdown ms-lg-3">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Campus <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
+          </a>
+          <ul class="dropdown-menu shadow">
+            <li><a *ngIf="school()" class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'Facilities']"><i class="bi bi-building-gear me-2 nav-link-icon text-primary"></i> Our Facilities</a></li>
           </ul>
         </li>
 
@@ -61,27 +73,28 @@
             Students Corner <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
           </a>
           <ul class="dropdown-menu shadow">
-            <li><a class="dropdown-item" [routerLink]="['/syllabus']"><i class="bi bi-cloud-download me-2 nav-link-icon text-danger"></i> Download Syllabus</a></li>
+            <li><a *ngIf="school()" class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'Syllabus']"><i class="bi bi-cloud-download me-2 nav-link-icon text-danger"></i> Our Syllabus</a></li>
             <li>
               <a *ngIf="school()" class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'question-bank']"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i>Question Bank ({{school()?.name}})</a>
             </li>
             <li>
               <a *ngIf="school()" class="dropdown-item" [routerLink]="['/SchoolDashboard', school()?.slug, 'teacher-videos']"><i class="bi bi-collection-play me-2 nav-link-icon text-danger"></i> Video Lectures ({{school()?.name}})</a>
             </li>
+            <!-- Attendance link removed -->
           </ul>
         </li>
       </ul>
 
       <!-- Login Dropdown -->
       <ul class="navbar-nav ms-auto">
+        <!-- (Attendance QR Share moved to dashboard) -->
+
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle btn btn-outline-light btn-sm d-flex align-items-center px-3 rounded-pill" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-box-arrow-in-right me-1"></i> Login <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
           </a>
           <ul class="dropdown-menu dropdown-menu-end shadow">
-            <li><a class="dropdown-item" [routerLink]="['/admin/login']"><i class="bi bi-shield-lock me-2 nav-link-icon text-primary"></i> Admin</a></li>
-
-            <!-- Director, Account, Teacher, and Student logins -->
+          <!-- Director, Account, Teacher, and Student logins -->
             <ng-container *ngIf="school() as school; else noSchoolLogin">
               <li>
                 <a class="dropdown-item" [routerLink]="['/director-login', school.slug]"><i class="bi bi-person-video3 me-2 nav-link-icon text-success"></i> Director</a>
